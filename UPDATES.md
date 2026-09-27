@@ -2,6 +2,15 @@
 
 ## 2026-09-27
 
+### Committed shutdown session disconnect and login logging fixes
+
+- Fixed shutdown walking the online-account map while each disconnect changes that same map, which could skip other connected players. Shutdown now captures all player sessions first and releases the map lock before disconnecting them, including multiple accounts or characters sharing one IP.
+- The initial disconnect message now counts sessions rather than accounts. The existing wait reports a warning if players remain connected instead of always reporting success. Logout behavior, the wait duration, and final save/cleanup ordering are preserved.
+- All 14 standalone regression checks passed; the previous code failed nine. Source/caller, lock-order, and whitespace review passed. The reviewed user-run server logged four distinct players across two accounts on one IP, then processed all four disconnects at `14:51:56` without exhausting the wait. The save and zone cleanup completed without shutdown warnings/errors. The user confirmed all four clients disconnected appropriately and subsequently verified the final changes work as intended before requesting this commit.
+- Investigated the console showing only three logged-in players during that run: the fourth login was recorded correctly, but arrived 4.175 seconds after the third, inside the existing five-second console-summary throttle. During shutdown, a separate three-player snapshot was recorded after the first player was marked offline. Clarified the message to say `Online player snapshot: N players currently online` so it describes current status rather than appearing to count completed logins or disconnects.
+- Completed logins now force an immediate console snapshot, including logins less than five seconds apart or with an unchanged total. Normal status updates retain the throttle, and session-change file logging still follows its existing setting.
+- Normal shutdown now forces the full online snapshot before the disconnect-start messages and suppresses intermediate shutdown snapshots on the console. File records and statistics continue updating during each logout. All 14 existing disconnect regression checks still pass; source/order and whitespace review passed. The user's final verification supersedes the earlier pending runtime checklist. No necessary verification remains for this commit.
+
 ### Committed shutdown cleanup improvement
 
 - Corrected ground and space cleanup to remove the departing object from nearby-object lists. The previous calls targeted the zone instead, leaving the object's list populated and causing repeated scans.

@@ -6270,47 +6270,55 @@ int PlayerManagerImplementation::getOnlineCharCount(unsigned int accountId) {
  */
 
 void PlayerManagerImplementation::disconnectAllPlayers() {
-	Locker locker(&onlineMapMutex);
+	Vector<Reference<ZoneClientSession*> > clientsToDisconnect;
 
-	info(true) << "Disconnecting " << onlineZoneClientMap.size() << " players.";
+	{
+		Locker locker(&onlineMapMutex);
+		HashTableIterator<uint32, Vector<Reference<ZoneClientSession*> > > iter = onlineZoneClientMap.iterator();
+
+		while (iter.hasNext()) {
+			Vector<Reference<ZoneClientSession*> > clients = iter.next();
+
+			for (int i = 0; i < clients.size(); ++i) {
+				if (clients.get(i) != nullptr)
+					clientsToDisconnect.add(clients.get(i));
+			}
+		}
+	}
+
+	// Disconnecting removes sessions from the online map. Keep them alive in a
+	// snapshot and release the map lock before taking player/session locks.
+	info(true) << "Disconnecting " << clientsToDisconnect.size() << " player sessions.";
 
 	Time now, last_rpt;
 	Timer profile;
 	int countDisconnected = 0;
 
 	profile.start();
-	HashTableIterator<uint32, Vector<Reference<ZoneClientSession*> > > iter = onlineZoneClientMap.iterator();
 
-	while (iter.hasNext()) {
-		Vector<Reference<ZoneClientSession*> > clients = iter.next();
+	for (int i = 0; i < clientsToDisconnect.size(); ++i) {
+		ZoneClientSession* session = clientsToDisconnect.get(i);
+		ManagedReference<CreatureObject*> player = session->getPlayer();
 
-		for (int i = 0; i < clients.size(); i++) {
-			ZoneClientSession* session = clients.get(i);
+		if (player != nullptr) {
+			Locker plocker(player);
+			PlayerObject* ghost = player->getPlayerObject();
 
-			if (session != nullptr) {
-				CreatureObject* player = session->getPlayer();
-
-				if (player != nullptr) {
-					PlayerObject* ghost = player->getPlayerObject();
-
-					if (ghost != nullptr) {
-						Locker plocker(player);
-						ghost->setLinkDead(true);
-						ghost->disconnect(true, true);
-						++countDisconnected;
-					}
-				}
+			if (ghost != nullptr && player->getClient() == session) {
+				ghost->setLinkDead(true);
+				ghost->disconnect(true, true);
+				++countDisconnected;
 			}
+		}
 
-			now.updateToCurrentTime();
-			int delta = now.getTime() - last_rpt.getTime();
+		now.updateToCurrentTime();
+		int delta = now.getTime() - last_rpt.getTime();
 
-			if (delta > 5) {
-				last_rpt.updateToCurrentTime();
-				auto elapsedMs = profile.elapsedToNow() / 1000000;
-				auto ps = countDisconnected / (elapsedMs / 1000.0f);
-				info(true) << "Disconnected " << commas << countDisconnected << " players (" << ps << "/s)";
-			}
+		if (delta > 5) {
+			last_rpt.updateToCurrentTime();
+			auto elapsedMs = profile.elapsedToNow() / 1000000;
+			auto ps = countDisconnected / (elapsedMs / 1000.0f);
+			info(true) << "Disconnected " << commas << countDisconnected << " players (" << ps << "/s)";
 		}
 	}
 
@@ -7206,7 +7214,7 @@ Vector<uint64> PlayerManagerImplementation::getOnlinePlayerList() {
 	return playerList;
 }
 
-void PlayerManagerImplementation::logOnlinePlayers(bool onlyWho) {
+void PlayerManagerImplementation::logOnlinePlayers(bool onlyWho, bool forceConsoleMessage) {
 	int countOnline = 0;
 	int countAccounts = 0;
 	int countPlayers = 0;
@@ -7410,11 +7418,14 @@ void PlayerManagerImplementation::logOnlinePlayers(bool onlyWho) {
 			statisticsManager->setDistinctIPsCount(countDistinctIPs);
 		}
 
-		// Throttle to no more often than once per 5s and only if something to report
-		if (lastOnlinePlayerLogMsg.miliDifference() >= 5000 && LogSum != onlinePlayerLogSum) {
+		// Force login and pre-disconnect snapshots. Keep intermediate shutdown
+		// snapshots in the files without interleaving partial counts on the console.
+		const bool isShuttingDown = server != nullptr && server->isServerShuttingDown();
+
+		if (forceConsoleMessage || (!isShuttingDown && lastOnlinePlayerLogMsg.miliDifference() >= 5000 && LogSum != onlinePlayerLogSum)) {
 			StringBuffer logMsg;
 
-			logMsg << "Logged " << countOnline << " players (" << countAccounts << " accounts, " << countDistinctIPs << " distinct IPs) to " << fileName;
+			logMsg << "Online player snapshot: " << countOnline << " players currently online (" << countAccounts << " accounts, " << countDistinctIPs << " distinct IPs), saved to " << fileName;
 
 			if (countnullptrClient > 0)
 				logMsg << "; " << countnullptrClient << " null clients";

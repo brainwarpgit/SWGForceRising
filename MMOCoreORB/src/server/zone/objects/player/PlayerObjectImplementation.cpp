@@ -1930,7 +1930,7 @@ void PlayerObjectImplementation::resetSessionStats(bool isSessionStart) {
 	}
 
 	if (isSessionStart) {
-		getZoneServer()->getPlayerManager()->updateOnlinePlayers();
+		getZoneServer()->getPlayerManager()->updateOnlinePlayers(true);
 
 		if (sessionStatsLastCredits == -1 && playerCreature != nullptr)
 			sessionStatsLastCredits = playerCreature->getCashCredits() + playerCreature->getBankCredits();

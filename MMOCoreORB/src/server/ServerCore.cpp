@@ -909,11 +909,12 @@ void ServerCore::shutdown() {
 		if (nextShutdownFlags & ShutdownFlags::FAST) {
 			info(true) << "Skip disconnecting players";
 		} else {
-			info(true) << "Disconnecting all players";
-
 			PlayerManager* playerManager = zoneServer->getPlayerManager();
 
 			playerManager->stopOnlinePlayerLogTask();
+			playerManager->logOnlinePlayers(false, true);
+
+			info(true) << "Disconnecting all players";
 			playerManager->disconnectAllPlayers();
 
 			int count = 0;
@@ -922,7 +923,12 @@ void ServerCore::shutdown() {
 				count++;
 			}
 
-			info("All players disconnected", true);
+			const int remainingPlayers = zoneServer->getConnectionCount();
+
+			if (remainingPlayers > 0)
+				warning() << "Player disconnect wait expired: " << remainingPlayers << " players remain connected";
+			else
+				info("All players disconnected", true);
 		}
 	}
 
