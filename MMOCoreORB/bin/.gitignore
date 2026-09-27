@@ -2,3 +2,4 @@ core3
 core3client
 odb3
 o_screenlog*
+/scripts/managers/resource_manager_spawns.lua
