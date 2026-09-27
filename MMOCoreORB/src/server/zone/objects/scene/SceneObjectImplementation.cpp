@@ -484,6 +484,12 @@ void SceneObjectImplementation::notifyLoadFromDatabase() {
 
 				Locker locker(obj);
 
+				// Login may have stored a vehicle while this task was queued. Do not
+				// restore it after storage, a zone change, or another insertion.
+				if (obj->getLocalZone() != zone || obj->isInQuadTree() || obj->isInOctree()) {
+					return;
+				}
+
 				zone->transferObject(obj, -1, true);
 			}
 		};

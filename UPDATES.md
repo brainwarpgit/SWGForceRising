@@ -2,6 +2,12 @@
 
 ## 2026-09-27
 
+### Committed vehicle recovery fix
+
+- Fixed a database-load race that could put a vehicle back into the world after login had already stored it and cleared its owner link. Deferred insertion now checks that the object still belongs to the saved zone and has not already been inserted.
+- All 11 isolated task regression cases passed; the same harness reproduced six failures against the pre-fix committed task. Source/locking review and whitespace checks passed. The user subsequently tested the fix several times in game and confirmed it works as intended.
+- Existing affected vehicles with intact datapad references can use the normal login storage and subsequent call path to recover. User-confirmed runtime testing supersedes the pending verification for the reported vehicle issue. No necessary verification remains for this commit.
+
 ### Committed configuration cleanup
 
 - Audited main configuration consumers in `src` and `bin`, then organized both Lua config files into matching sections. Each now documents 150 active settings, 15 optional overrides, and five dynamic key families. Added missing source-backed settings, removed seven unused entries, and renamed `DeleteCharacters` to `PurgeDeletedCharacters`.
