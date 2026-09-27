@@ -260,7 +260,7 @@ bool SpaceZoneContainerComponent::removeObject(SceneObject* sceneObject, SceneOb
 		if (closeObjects != nullptr) {
 			SortedVector<ManagedReference<TreeEntry*> > closeSceneObjects;
 
-			SpaceZoneComponent::removeAllObjectsFromCOV(closeObjects, closeSceneObjects, sceneObject, object);
+			SpaceZoneComponent::removeAllObjectsFromCOV(closeObjects, closeSceneObjects, object, object);
 		} else {
 #ifdef COV_DEBUG
 			if (object->isPlayerShip()) {

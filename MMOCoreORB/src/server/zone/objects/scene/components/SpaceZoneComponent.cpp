@@ -412,7 +412,11 @@ void SpaceZoneComponent::notifySelfPositionUpdate(SceneObject* sceneObject) cons
 }
 
 void SpaceZoneComponent::removeAllObjectsFromCOV(CloseObjectsVector* closeobjects, SortedVector<ManagedReference<TreeEntry*>>& closeSceneObjects, SceneObject* sceneObject, SceneObject* vectorOwner) {
-	for (int i = 0; closeobjects->size() != 0 && i < 100; i++) {
+	// A borrowed parent list stays populated; only an owned list needs draining
+	// and retries for entries changed by disappearance callbacks.
+	const int maxPasses = vectorOwner == sceneObject ? 100 : 1;
+
+	for (int i = 0; closeobjects->size() != 0 && i < maxPasses; i++) {
 		closeobjects->safeCopyTo(closeSceneObjects);
 
 		for (auto& obj : closeSceneObjects) {

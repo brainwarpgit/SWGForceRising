@@ -294,7 +294,7 @@ bool GroundZoneContainerComponent::removeObject(SceneObject* sceneObject, SceneO
 		if (closeObjects != nullptr) {
 			SortedVector<ManagedReference<TreeEntry*> > closeSceneObjects;
 
-			GroundZoneComponent::removeAllObjectsFromCOV(closeObjects, closeSceneObjects, sceneObject, object);
+			GroundZoneComponent::removeAllObjectsFromCOV(closeObjects, closeSceneObjects, object, object);
 		} else {
 #ifdef COV_DEBUG
 			object->info("Null closeobjects vector in GroundZoneContainerComponent::removeObject", true);

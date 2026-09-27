@@ -2,6 +2,13 @@
 
 ## 2026-09-27
 
+### Committed shutdown cleanup improvement
+
+- Corrected ground and space cleanup to remove the departing object from nearby-object lists. The previous calls targeted the zone instead, leaving the object's list populated and causing repeated scans.
+- Limited cleanup through a parent's nearby-object list to one pass while preserving the parent's relationships. Objects with their own lists retain the existing cleanup retries. The full save, player disconnection, shutdown ordering, and remaining object cleanup are unchanged.
+- All 20 standalone cleanup regression checks passed; the previous code failed six. Representative affected cases now require one list scan instead of 100. Source/locking review and whitespace checks passed. The user subsequently rebuilt, started, and shut down Core3.
+- Verified the latest normal shutdown at `08:12:15`: logged shutdown time fell from 59.329 to 26.587 seconds (55.2% shorter), all-ground cleanup from 48.713 to 14.205 seconds, and Tatooine from 40.029 to 12.840 seconds with the same 10,639 objects. Both runs cleared the same 12 ground and 10 space zones. The full save completed before cleanup; the latest shutdown logged no warnings or errors. The user subsequently confirmed the post-shutdown saved-data and ground/space interaction checks passed. No necessary verification remains for this commit.
+
 ### Committed vehicle recovery fix
 
 - Fixed a database-load race that could put a vehicle back into the world after login had already stored it and cleared its owner link. Deferred insertion now checks that the object still belongs to the saved zone and has not already been inserted.
