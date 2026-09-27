@@ -2,6 +2,12 @@
 
 ## 2026-09-27
 
+### Committed configuration cleanup
+
+- Audited main configuration consumers in `src` and `bin`, then organized both Lua config files into matching sections. Each now documents 150 active settings, 15 optional overrides, and five dynamic key families. Added missing source-backed settings, removed seven unused entries, and renamed `DeleteCharacters` to `PurgeDeletedCharacters`.
+- The user restored the commented TEST-zone options in both configurations: 17 ground zones and six space zones. They remain disabled; the enabled-world lists are unchanged. Lua syntax/evaluation and whitespace checks passed after the additions.
+- Corrected the orphan-removal spelling, victim-list namespace, and ship AI logging reader. Legacy aliases remain supported. Preserved existing effective settings and private local values; the local file stays ignored. Standalone Lua/value/coverage checks passed. The updated executable and September 27 startup/login logs verify the current changes: startup completed with no errors and only the seven known asset warnings, followed by a player entering a world. The user confirmed everything looks good. Optional switch/debug behavior remains covered by static checks rather than dedicated runtime tests; no necessary verification remains for this commit.
+
 ### Committed startup and asset changes
 
 - Reviewed 11 user-added assets in `SWGFR_update_01`: a pilot-chair template, six empty ship-table placeholders, and four populated ship tables. The chair references an existing pilot-station slot descriptor; the four populated tables still require 45 missing client attachments and matching server definitions. Preserved all additions and documented their limitations.

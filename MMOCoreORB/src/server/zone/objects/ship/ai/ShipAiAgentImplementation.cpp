@@ -2437,7 +2437,7 @@ void ShipAiAgentImplementation::setShipAiDebug(bool flag) {
 		debug() << "behaviorEvent->isScheduled = " << (behaviorEvent != nullptr ? behaviorEvent->isScheduled() : -1);
 		debug() << "numberOfPlayersInRange = " << numberOfPlayersInRange.get();
 	} else {
-		auto aiLogLevel = ConfigManager::instance()->getInt("Core3.AiAgent.LogLevel", -1);
+		auto aiLogLevel = ConfigManager::instance()->getInt("Core3.ShipAiAgent.LogLevel", -1);
 
 		if (aiLogLevel >= 0) {
 			setLogLevel(static_cast<Logger::LogLevel>(aiLogLevel));

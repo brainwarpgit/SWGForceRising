@@ -6900,7 +6900,11 @@ void PlayerManagerImplementation::doPvpDeathRatingUpdate(CreatureObject* player,
 	int frsXpAdjustment = 0;
 	bool throttleOnly = true;
 
-	bool accountVictimList = ConfigManager::instance()->getBool("PlayerManager.accountVictimList", false);
+	auto config = ConfigManager::instance();
+	// Preserve the old unprefixed setting when the canonical key is absent.
+	bool accountVictimList = config->contains("Core3.PlayerManager.AccountVictimList")
+		? config->getBool("Core3.PlayerManager.AccountVictimList", false)
+		: config->getBool("PlayerManager.accountVictimList", false);
 
 	for (int i = 0; i < threatMap->size(); ++i) {
 		ThreatMapEntry* entry = &threatMap->elementAt(i).getValue();

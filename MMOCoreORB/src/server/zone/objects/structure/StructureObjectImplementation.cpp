@@ -225,7 +225,13 @@ void StructureObjectImplementation::notifyInsertToZone(Zone* zone) {
 }
 
 void StructureObjectImplementation::destroyOrphanCivicStructure() {
-	if (!ConfigManager::instance()->getBool("Core3.Tweaks.StructureObject.DestoryOrphans", false)) {
+	auto config = ConfigManager::instance();
+	// An explicit corrected setting takes precedence over the legacy spelling.
+	bool destroyOrphans = config->contains("Core3.Tweaks.StructureObject.DestroyOrphans")
+		? config->getBool("Core3.Tweaks.StructureObject.DestroyOrphans", false)
+		: config->getBool("Core3.Tweaks.StructureObject.DestoryOrphans", false);
+
+	if (!destroyOrphans) {
 		return;
 	}
 
