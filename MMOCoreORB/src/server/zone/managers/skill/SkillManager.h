@@ -85,6 +85,10 @@ public:
 	void surrenderAllSkills(CreatureObject* creature, bool notifyClient = true, bool removeForceProgression = true, bool removePilot = false);
 	void requestSkillSurrender(CreatureObject* creature, const String& selection);
 	void confirmSkillSurrender(CreatureObject* creature, const String& selection, const Vector<String>& confirmedSkills);
+	bool canRevokeSkills(CreatureObject* actor) const;
+	// Command and SUI callers hold the actor lock; these methods cross-lock the target.
+	void requestSkillRevocation(CreatureObject* actor, CreatureObject* target, const String& selection);
+	void confirmSkillRevocation(CreatureObject* actor, CreatureObject* target, const String& selection, const Vector<String>& confirmedSkills);
 
 	/**
 	 * Checks if the player can learn the skill (fulfills skill prerequisites, enough skill points and enough XP).
@@ -147,7 +151,8 @@ public:
 	void getPlayerDroidCommands(PlayerObject* ghost, Vector<String>& playerDroidCommands);
 
 private:
-	bool buildSurrenderSkillPlan(CreatureObject* creature, const String& selection, Vector<String>& skills, String& error);
+	bool buildSurrenderSkillPlan(CreatureObject* creature, const String& selection, Vector<String>& skills, String& error, bool allowPilot = false);
+	bool validateSkillRevocation(CreatureObject* actor, CreatureObject* target);
 };
 
 }

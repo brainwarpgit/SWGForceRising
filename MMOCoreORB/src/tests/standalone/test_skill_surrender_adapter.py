@@ -84,7 +84,7 @@ struct JediManager {
     }
 };
 struct SkillManager {
-    bool buildSurrenderSkillPlan(CreatureObject*, const String&, Vector<String>&, String&);
+    bool buildSurrenderSkillPlan(CreatureObject*, const String&, Vector<String>&, String&, bool allowPilot = false);
 };
 '''
 
@@ -151,6 +151,15 @@ int main() {
     check(manager.buildSurrenderSkillPlan(&player, "all", result, error) &&
         result == Vector<String>({"force_sensitive_test_02", "social_politician_novice"}));
     check(!manager.buildSurrenderSkillPlan(&player, "unknown_novice", result, error) && result.empty());
+    Skill zeroPilot = {"pilot_rebel_navy_novice", 0, {}};
+    check(!isPlayerSurrenderableSkill(&zeroPilot) && isPlayerSurrenderableSkill(&zeroPilot, true));
+    Skill rank = {"force_rank_light_rank_01", 1, {}};
+    check(!isPlayerSurrenderableSkill(&rank) && !isPlayerSurrenderableSkill(&rank, true));
+    setup({zeroPilot, {"pilot_rebel_navy_01", 0, {"pilot_rebel_navy_novice"}}, rank,
+        {"social_entertainer_novice", 15, {}}});
+    check(manager.buildSurrenderSkillPlan(&player, "all", result, error) && result == Vector<String>{"social_entertainer_novice"});
+    check(manager.buildSurrenderSkillPlan(&player, "all", result, error, true) &&
+        result == Vector<String>({"pilot_rebel_navy_01", "pilot_rebel_navy_novice", "social_entertainer_novice"}));
     std::cout << passed << " surrender eligibility/adapter checks passed\n";
 }
 '''

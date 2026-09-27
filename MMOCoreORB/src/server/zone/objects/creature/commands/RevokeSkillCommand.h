@@ -10,16 +10,30 @@
 class RevokeSkillCommand : public QueueCommand {
 public:
 	RevokeSkillCommand(const String& name, ZoneProcessServer* server) : QueueCommand(name, server) {
+		setCharacterAbility("admin");
 	}
 
 	int doQueueCommand(CreatureObject* creature, const uint64& target, const UnicodeString& arguments) const {
+		if (creature == nullptr)
+			return GENERALERROR;
+
 		if (!checkStateMask(creature))
 			return INVALIDSTATE;
 
 		if (!checkInvalidLocomotions(creature))
 			return INVALIDLOCOMOTION;
 
-		ManagedReference<SceneObject*> object = server->getZoneServer()->getObject(target);
+		SkillManager* skillManager = SkillManager::instance();
+
+		if (skillManager == nullptr)
+			return GENERALERROR;
+
+		if (!skillManager->canRevokeSkills(creature)) {
+			creature->sendSystemMessage("@error_message:insufficient_permissions");
+			return INSUFFICIENTPERMISSION;
+		}
+
+		ManagedReference<SceneObject*> object = target == 0 ? creature : server->getZoneServer()->getObject(target).get();
 
 		if (object == nullptr || !object->isPlayerCreature())
 			return INVALIDTARGET;
@@ -27,26 +41,9 @@ public:
 		CreatureObject* targetCreature = object->asCreatureObject();
 
 		if (targetCreature == nullptr)
-			return GENERALERROR;
+			return INVALIDTARGET;
 
-		String skillString = arguments.toString();
-
-		if (!targetCreature->hasSkill(skillString)) {
-			creature->sendSystemMessage(targetCreature->getFirstName() + " does not have the skill: " + skillString);
-			return GENERALERROR;
-		}
-
-		Locker clocker(targetCreature, creature);
-
-		SkillManager* skillManager = SkillManager::instance();
-
-		if (skillManager == nullptr)
-			return GENERALERROR;
-
-		if (skillManager->surrenderSkill(skillString, targetCreature, true, true, true)) {
-			creature->sendSystemMessage("Successfully revoked skill: " + skillString + " from player " + targetCreature->getFirstName());
-			targetCreature->sendSystemMessage("Skill: " + skillString + " has been revoked.");
-		}
+		skillManager->requestSkillRevocation(creature, targetCreature, arguments.toString().trim().toLowerCase());
 
 		return SUCCESS;
 	}

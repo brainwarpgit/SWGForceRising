@@ -27,20 +27,24 @@
 #include "server/zone/objects/player/sui/messagebox/SuiMessageBox.h"
 #include "server/zone/objects/player/sui/callbacks/SurrenderPilotSuiCallback.h"
 #include "server/zone/objects/player/sui/callbacks/SurrenderSkillSuiCallback.h"
+#include "server/zone/objects/player/sui/callbacks/RevokeSkillSuiCallback.h"
 #include "server/zone/objects/player/sui/listbox/SuiListBox.h"
 #include "templates/faction/Factions.h"
 #include <algorithm>
 #include <utility>
 
 namespace {
-bool isPlayerSurrenderableSkill(Skill* skill) {
+bool isPlayerSurrenderableSkill(Skill* skill, bool allowPilot = false) {
 	if (skill == nullptr || skill->isGodOnly())
 		return false;
 
 	const String& name = skill->getSkillName();
 	if (name.beginsWith("admin_") || name.beginsWith("species_") || name.beginsWith("social_language_") ||
-		name.beginsWith("pilot_") || name.beginsWith("force_title_"))
+		name.beginsWith("force_title_") || name.beginsWith("force_rank_"))
 		return false;
+
+	if (name.beginsWith("pilot_"))
+		return allowPilot;
 
 	if (skill->getSkillPointsRequired() > 0)
 		return true;
@@ -552,7 +556,7 @@ void SkillManager::removeSkillRelatedMissions(CreatureObject* creature, Skill* s
 	}
 }
 
-bool SkillManager::buildSurrenderSkillPlan(CreatureObject* creature, const String& selection, Vector<String>& skills, String& error) {
+bool SkillManager::buildSurrenderSkillPlan(CreatureObject* creature, const String& selection, Vector<String>& skills, String& error, bool allowPilot) {
 	skills.removeAll();
 	error = "";
 	std::vector<SkillSurrenderPlan::Node> owned;
@@ -566,7 +570,7 @@ bool SkillManager::buildSurrenderSkillPlan(CreatureObject* creature, const Strin
 
 		SkillSurrenderPlan::Node node;
 		node.name = skill->getSkillName().toCharArray();
-		node.eligible = isPlayerSurrenderableSkill(skill);
+		node.eligible = isPlayerSurrenderableSkill(skill, allowPilot);
 		auto required = skill->getSkillsRequired();
 
 		for (int j = 0; j < required->size(); ++j)
@@ -769,6 +773,177 @@ void SkillManager::confirmSkillSurrender(CreatureObject* creature, const String&
 	}
 
 	creature->sendSystemMessage("Surrendered " + String::valueOf(removed) + " skills and returned their skill points.");
+}
+
+bool SkillManager::canRevokeSkills(CreatureObject* actor) const {
+	if (actor == nullptr || !actor->isPlayerCreature())
+		return false;
+
+	auto ghost = actor->getPlayerObject();
+	return ghost != nullptr && ghost->isOnline() && ghost->hasGodMode() && ghost->hasAbility("revokeskill");
+}
+
+bool SkillManager::validateSkillRevocation(CreatureObject* actor, CreatureObject* target) {
+	if (!canRevokeSkills(actor)) {
+		actor->sendSystemMessage("@error_message:insufficient_permissions");
+		return false;
+	}
+
+	auto zoneServer = actor->getZoneServer();
+	auto targetGhost = target->getPlayerObject();
+
+	if (zoneServer == nullptr || target->getZoneServer() != zoneServer || targetGhost == nullptr || !targetGhost->isOnline()) {
+		actor->sendSystemMessage("The player selected for skill revocation is no longer available. No skills were revoked.");
+		return false;
+	}
+
+	auto controller = zoneServer->getObjectController();
+	const QueueCommand* command = controller != nullptr ? controller->getQueueCommand(String("revokeskill")) : nullptr;
+
+	if (command == nullptr || !command->checkStateMask(actor) || !command->checkInvalidLocomotions(actor)) {
+		actor->sendSystemMessage("You cannot revoke skills in your current state. No skills were revoked.");
+		return false;
+	}
+
+	return true;
+}
+
+void SkillManager::requestSkillRevocation(CreatureObject* actor, CreatureObject* target, const String& selection) {
+	if (actor == nullptr || target == nullptr || !actor->isPlayerCreature() || !target->isPlayerCreature())
+		return;
+
+	Locker targetLocker(target, actor);
+
+	// Cross-locking can temporarily release the actor lock. Check permissions
+	// and both players again only after the target is locked.
+	if (!validateSkillRevocation(actor, target))
+		return;
+
+	auto ghost = actor->getPlayerObject();
+	ghost->closeSuiWindowType(SuiWindowType::REVOKE_SKILL_SELECT);
+	ghost->closeSuiWindowType(SuiWindowType::REVOKE_SKILL_CONFIRM);
+
+	Vector<String> skills;
+	String error;
+	const bool confirmation = !selection.isEmpty();
+
+	if (confirmation) {
+		if (!buildSurrenderSkillPlan(target, selection, skills, error, true)) {
+			actor->sendSystemMessage("Cannot revoke skills from " + target->getFirstName() + ": " + error);
+			return;
+		}
+	} else {
+		const SkillList* owned = target->getSkillList();
+
+		for (int i = 0; i < owned->size(); ++i) {
+			Skill* skill = owned->get(i);
+
+			if (!isPlayerSurrenderableSkill(skill, true))
+				continue;
+
+			Vector<String> plan;
+
+			if (buildSurrenderSkillPlan(target, skill->getSkillName(), plan, error, true))
+				skills.add(skill->getSkillName());
+		}
+
+		if (skills.size() == 0) {
+			actor->sendSystemMessage(target->getFirstName() + " has no skills that can currently be revoked.");
+			return;
+		}
+	}
+
+	auto windowType = confirmation ? SuiWindowType::REVOKE_SKILL_CONFIRM : SuiWindowType::REVOKE_SKILL_SELECT;
+	ManagedReference<SuiListBox*> box = new SuiListBox(actor, windowType, SuiListBox::HANDLETWOBUTTON);
+	box->setUsingObject(actor);
+	box->setForceCloseDisabled();
+	box->setPromptTitle(confirmation ? "Confirm Skill Revocation" : "Revoke Skills");
+	box->setOkButton(true, "@ok");
+	box->setCancelButton(true, "@cancel");
+
+	StringBuffer prompt;
+	prompt << "Player: " << target->getFirstName() << "\n\n";
+
+	if (confirmation) {
+		int points = 0;
+
+		for (int i = 0; i < skills.size(); ++i)
+			points += getSkill(skills.get(i))->getSkillPointsRequired();
+
+		prompt << "Press OK to revoke ALL " << skills.size() << " skills listed below and return " << points
+			<< " skill points to this player. Selecting a row does not change the list. Cancel keeps every skill.\n\n";
+
+		if (selection == "all")
+			prompt << "This is the full list of currently revocable skills, including pilot skills.";
+		else
+			prompt << "The selected skill and all learned skills that depend on it are included.";
+
+		prompt << " Innate, language, staff and protected progression skills are kept.";
+	} else {
+		prompt << "Select a skill to revoke. The next window lists that skill and every learned skill that depends on it."
+			<< " Nothing is removed until you confirm.\n\nUse /revokeSkill all to review all revocable skills."
+			<< " With no target, this command applies to you.";
+	}
+
+	box->setPromptText(prompt.toString());
+	const Vector<String> displayedSkills = getSkillsByDisplayName(skills);
+
+	for (int i = 0; i < displayedSkills.size(); ++i)
+		box->addMenuItem("@skl_n:" + displayedSkills.get(i));
+
+	box->setCallback(new RevokeSkillSuiCallback(actor->getZoneServer(), target->getObjectID(), selection, confirmation ? skills : displayedSkills, confirmation));
+	ghost->addSuiBox(box);
+	actor->sendMessage(box->generateMessage());
+}
+
+void SkillManager::confirmSkillRevocation(CreatureObject* actor, CreatureObject* target, const String& selection, const Vector<String>& confirmedSkills) {
+	if (actor == nullptr || target == nullptr || !actor->isPlayerCreature() || !target->isPlayerCreature() ||
+		selection.isEmpty() || confirmedSkills.size() == 0)
+		return;
+
+	Locker targetLocker(target, actor);
+
+	if (!validateSkillRevocation(actor, target))
+		return;
+
+	Vector<String> currentSkills;
+	String error;
+
+	if (!buildSurrenderSkillPlan(target, selection, currentSkills, error, true)) {
+		actor->sendSystemMessage("Cannot revoke skills from " + target->getFirstName() + ": " + error + " No skills were revoked.");
+		return;
+	}
+
+	bool changed = currentSkills.size() != confirmedSkills.size();
+
+	for (int i = 0; !changed && i < currentSkills.size(); ++i)
+		changed = currentSkills.get(i) != confirmedSkills.get(i);
+
+	if (changed) {
+		actor->sendSystemMessage("The player's skills or revocation requirements changed. Review the updated list and confirm again. No skills were revoked.");
+		requestSkillRevocation(actor, target, selection);
+		return;
+	}
+
+	int removed = 0;
+
+	for (int i = 0; i < currentSkills.size(); ++i) {
+		if (!surrenderSkill(currentSkills.get(i), target, true, true, true)) {
+			actor->sendSystemMessage("Skill revocation for " + target->getFirstName() + " stopped after " + String::valueOf(removed)
+				+ " skills. A remaining skill could not be revoked; review the player's skills before trying again.");
+
+			if (target != actor && removed > 0)
+				target->sendSystemMessage("An administrator revoked " + String::valueOf(removed) + " of your skills and returned their skill points before the operation stopped.");
+			return;
+		}
+
+		++removed;
+	}
+
+	actor->sendSystemMessage("Revoked " + String::valueOf(removed) + " skills from " + target->getFirstName() + " and returned their skill points.");
+
+	if (target != actor)
+		target->sendSystemMessage("An administrator revoked " + String::valueOf(removed) + " of your skills and returned their skill points.");
 }
 
 bool SkillManager::surrenderSkill(const String& skillName, CreatureObject* creature, bool notifyClient, bool checkFrs, bool allowPilot) {

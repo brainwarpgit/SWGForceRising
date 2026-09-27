@@ -2,6 +2,13 @@
 
 ## 2026-09-27
 
+### Committed admin skill revocation selection and confirmation
+
+- `/revokeSkill` now opens an alphabetical skill list for the targeted player, or for the admin issuing the command when no target is selected. Invalid explicit targets are rejected. `/revokeSkill all` previews all revocable skills for either target choice.
+- Selecting a skill previews its learned dependents and the returned skill points before confirmation. Both lists are alphabetical. The window identifies and retains the original player, and changed skill plans require another confirmation.
+- Admin access is checked when the command starts and again during selection/confirmation. Pilot revocation remains available to admins; innate, language, staff, and protected progression skills remain. The shared eligibility check explicitly protects Force ranking skills against unlisted rank-removal effects.
+- All 39 new revocation checks, 17 updated eligibility/planning checks, and 28 surrender confirmation checks pass. Earlier results for the unchanged dependency planner and Jedi rules remain applicable, for 127 related standalone checks in total. Source/caller/locking review and whitespace checks passed. The user confirmed `/revokeSkill` is working appropriately and requested this commit. This overall runtime confirmation supersedes the pending verification checklist; no necessary verification remains. The assistant has not built or run Core3.
+
 ### Committed skill surrender selection and confirmation
 
 - `/surrenderSkill` now lists learned skills that can be surrendered. Both the selection and confirmation lists are alphabetical by skill display name, ignoring capitalization. Selecting a skill previews that skill and every learned skill that requires it, including dependent professions. Selecting Novice Entertainer therefore includes its learned Entertainer, Dancer, and Musician dependents.
