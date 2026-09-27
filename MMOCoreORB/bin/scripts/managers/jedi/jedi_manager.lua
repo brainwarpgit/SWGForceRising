@@ -81,6 +81,33 @@ function JediManager:canSurrenderSkill(pPlayer, skillName)
 	return true
 end
 
+-- Custom progression managers with state-dependent surrender rules must override
+-- this hook to validate multiple Force skills against their projected state.
+function JediManager:canSurrenderSkills(pPlayer, skillNames, ownedSkillNames)
+	if pPlayer == nil then
+		return false
+	end
+
+	local forceSkills = {}
+	for skillName in string.gmatch(skillNames, "%S+") do
+		if string.find(skillName, "force_", 1, true) == 1 then
+			table.insert(forceSkills, skillName)
+		end
+	end
+
+	if #forceSkills > 1 and self.canSurrenderSkill ~= JediManager.canSurrenderSkill then
+		return false
+	end
+
+	for _, skillName in ipairs(forceSkills) do
+		if not self:canSurrenderSkill(pPlayer, skillName) then
+			return false
+		end
+	end
+
+	return true
+end
+
 function JediManager:onFSTreeCompleted(pCreatureObject, branch)
 	-- Default behaviour for the onFSTreesCompleted event, do nothing.
 end

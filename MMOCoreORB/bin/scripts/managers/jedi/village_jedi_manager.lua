@@ -141,6 +141,81 @@ function VillageJediManager:canSurrenderSkill(pPlayer, skillName)
 	return true
 end
 
+-- Simulate the complete ordered plan so cumulative prerequisite failures are
+-- caught before any skill is removed. Keep this check free of player messages.
+function VillageJediManager:canSurrenderSkills(pPlayer, skillNames, ownedSkillNames)
+	if pPlayer == nil then
+		return false
+	end
+
+	local owned = {}
+	local forceSensitiveCount = 0
+	local jediPoints = 0
+	local fullTrees = 0
+	local skillManager = LuaSkillManager()
+
+	for skillName in string.gmatch(ownedSkillNames, "%S+") do
+		local pSkill = skillManager:getSkill(skillName)
+		if pSkill == nil then
+			return false
+		end
+
+		owned[skillName] = LuaSkill(pSkill):getSkillPointsRequired()
+		if string.find(skillName, "force_sensitive", 1, true) and string.find(skillName, "0", 1, true) then
+			forceSensitiveCount = forceSensitiveCount + 1
+		end
+
+		if string.find(skillName, "force_discipline_", 1, true) and
+			(string.find(skillName, "0", 1, true) or string.find(skillName, "novice", 1, true) or string.find(skillName, "master", 1, true)) then
+			jediPoints = jediPoints + owned[skillName]
+			if string.find(skillName, "4", 1, true) then
+				fullTrees = fullTrees + 1
+			end
+		end
+	end
+
+	for skillName in string.gmatch(skillNames, "%S+") do
+		local points = owned[skillName]
+		if points == nil then
+			return false
+		end
+
+		if skillName == "force_title_jedi_rank_02" or skillName == "force_title_jedi_novice" then
+			return false
+		end
+
+		local forceSensitive = string.find(skillName, "force_sensitive_", 1, true)
+		local forceDiscipline = string.find(skillName, "force_discipline_", 1, true)
+		local completeTree = string.find(skillName, "4", 1, true) ~= nil
+
+		-- The existing single-skill rule also blocks novice/master removal when
+		-- the remaining tier-box count has reached 24, even though they cost no tier box.
+		if forceSensitive and owned["force_title_jedi_rank_02"] ~= nil and forceSensitiveCount <= 24 then
+			return false
+		end
+
+		if forceDiscipline and owned["force_title_jedi_rank_03"] ~= nil and
+			(jediPoints - points < 206 or fullTrees - (completeTree and 1 or 0) < 2) then
+			return false
+		end
+
+		owned[skillName] = nil
+		if string.find(skillName, "force_sensitive", 1, true) and string.find(skillName, "0", 1, true) then
+			forceSensitiveCount = forceSensitiveCount - 1
+		end
+
+		if forceDiscipline and
+			(string.find(skillName, "0", 1, true) or string.find(skillName, "novice", 1, true) or string.find(skillName, "master", 1, true)) then
+			jediPoints = jediPoints - points
+			if completeTree then
+				fullTrees = fullTrees - 1
+			end
+		end
+	end
+
+	return true
+end
+
 -- Handling of the onFSTreesCompleted event.
 -- @param pPlayer pointer to the creature object of the player
 function VillageJediManager:onFSTreeCompleted(pPlayer, branch)

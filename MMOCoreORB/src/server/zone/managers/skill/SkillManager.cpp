@@ -5,6 +5,7 @@
 
 #include "SkillManager.h"
 #include "SkillModManager.h"
+#include "SkillSurrenderPlan.h"
 #include "PerformanceManager.h"
 #include "server/zone/objects/creature/variables/Skill.h"
 #include "server/zone/objects/creature/CreatureObject.h"
@@ -13,6 +14,7 @@
 #include "server/zone/objects/group/GroupObject.h"
 #include "server/zone/managers/player/PlayerManager.h"
 #include "server/zone/managers/jedi/JediManager.h"
+#include "server/zone/managers/stringid/StringIdManager.h"
 #include "templates/manager/TemplateManager.h"
 #include "templates/datatables/DataTableIff.h"
 #include "templates/datatables/DataTableRow.h"
@@ -20,9 +22,62 @@
 #include "server/zone/packets/creature/CreatureObjectDeltaMessage4.h"
 #include "server/zone/managers/mission/MissionManager.h"
 #include "server/zone/managers/frs/FrsManager.h"
+#include "server/zone/managers/objectcontroller/ObjectController.h"
+#include "server/zone/objects/creature/commands/QueueCommand.h"
 #include "server/zone/objects/player/sui/messagebox/SuiMessageBox.h"
 #include "server/zone/objects/player/sui/callbacks/SurrenderPilotSuiCallback.h"
+#include "server/zone/objects/player/sui/callbacks/SurrenderSkillSuiCallback.h"
+#include "server/zone/objects/player/sui/listbox/SuiListBox.h"
 #include "templates/faction/Factions.h"
+#include <algorithm>
+#include <utility>
+
+namespace {
+bool isPlayerSurrenderableSkill(Skill* skill) {
+	if (skill == nullptr || skill->isGodOnly())
+		return false;
+
+	const String& name = skill->getSkillName();
+	if (name.beginsWith("admin_") || name.beginsWith("species_") || name.beginsWith("social_language_") ||
+		name.beginsWith("pilot_") || name.beginsWith("force_title_"))
+		return false;
+
+	if (skill->getSkillPointsRequired() > 0)
+		return true;
+
+	// Some ordinary profession boxes (including Force-sensitive and Politician
+	// boxes) cost no points. Keep them eligible without exposing innate skills.
+	bool profession = name.beginsWith("combat_") || name.beginsWith("crafting_") || name.beginsWith("social_") ||
+		name.beginsWith("science_") || name.beginsWith("outdoors_") || name.beginsWith("force_sensitive_") ||
+		name.beginsWith("force_discipline_");
+	bool box = name.endsWith("_novice") || name.endsWith("_master") || name.endsWith("_01") ||
+		name.endsWith("_02") || name.endsWith("_03") || name.endsWith("_04");
+	return profession && box;
+}
+
+Vector<String> getSkillsByDisplayName(const Vector<String>& skills) {
+	std::vector<std::pair<std::string, std::string>> names;
+	auto stringIdManager = StringIdManager::instance();
+
+	for (int i = 0; i < skills.size(); ++i) {
+		const String& name = skills.get(i);
+		String label = stringIdManager->getStringId(String("@skl_n:" + name).hashCode()).toString();
+
+		if (label.isEmpty())
+			label = name;
+
+		names.emplace_back(label.toLowerCase().toCharArray(), name.toCharArray());
+	}
+
+	std::sort(names.begin(), names.end());
+	Vector<String> sortedSkills;
+
+	for (const auto& entry : names)
+		sortedSkills.add(String(entry.second.c_str()));
+
+	return sortedSkills;
+}
+}
 
 SkillManager::SkillManager()
 	: Logger("SkillManager") {
@@ -495,6 +550,225 @@ void SkillManager::removeSkillRelatedMissions(CreatureObject* creature, Skill* s
 			}
 		}
 	}
+}
+
+bool SkillManager::buildSurrenderSkillPlan(CreatureObject* creature, const String& selection, Vector<String>& skills, String& error) {
+	skills.removeAll();
+	error = "";
+	std::vector<SkillSurrenderPlan::Node> owned;
+	const SkillList* skillList = creature->getSkillList();
+
+	for (int i = 0; i < skillList->size(); ++i) {
+		Skill* skill = skillList->get(i);
+
+		if (skill == nullptr)
+			continue;
+
+		SkillSurrenderPlan::Node node;
+		node.name = skill->getSkillName().toCharArray();
+		node.eligible = isPlayerSurrenderableSkill(skill);
+		auto required = skill->getSkillsRequired();
+
+		for (int j = 0; j < required->size(); ++j)
+			node.required.emplace_back(required->get(j).toCharArray());
+
+		owned.push_back(node);
+	}
+
+	const bool all = selection == "all";
+	auto plan = SkillSurrenderPlan::build(owned, selection.toCharArray(), all);
+
+	if (!plan.error.empty()) {
+		error = String(plan.error.c_str());
+		return false;
+	}
+
+	for (const auto& name : plan.skills) {
+		String skillName(name.c_str());
+
+		if (all) {
+			// A progression restriction can keep a dependent skill. Its prerequisites
+			// must then remain too, even when the generic dependency plan permits them.
+			bool requiredByRetainedSkill = false;
+
+			for (const auto& node : owned) {
+				if (!skills.contains(String(node.name.c_str())) &&
+					std::find(node.required.begin(), node.required.end(), name) != node.required.end()) {
+					requiredByRetainedSkill = true;
+					break;
+				}
+			}
+
+			if (requiredByRetainedSkill)
+				continue;
+
+			Vector<String> candidate = skills;
+			candidate.add(skillName);
+
+			if (!JediManager::instance()->canSurrenderSkills(creature, candidate))
+				continue;
+		}
+
+		skills.add(skillName);
+	}
+
+	if (!all && !JediManager::instance()->canSurrenderSkills(creature, skills)) {
+		error = "Your progression requirements prevent surrendering this skill and its dependent skills.";
+		skills.removeAll();
+		return false;
+	}
+
+	if (skills.size() == 0) {
+		error = "You have no skills that can be surrendered with this selection.";
+		return false;
+	}
+
+	return true;
+}
+
+void SkillManager::requestSkillSurrender(CreatureObject* creature, const String& selection) {
+	if (creature == nullptr || !creature->isPlayerCreature())
+		return;
+
+	Locker locker(creature);
+	auto ghost = creature->getPlayerObject();
+
+	if (ghost == nullptr || !ghost->isOnline() || creature->getZoneServer() == nullptr)
+		return;
+
+	ghost->closeSuiWindowType(SuiWindowType::SURRENDER_SKILL_SELECT);
+	ghost->closeSuiWindowType(SuiWindowType::SURRENDER_SKILL_CONFIRM);
+
+	Vector<String> skills;
+	String error;
+	const bool confirmation = !selection.isEmpty();
+
+	if (confirmation) {
+		if (!buildSurrenderSkillPlan(creature, selection, skills, error)) {
+			creature->sendSystemMessage(error);
+			return;
+		}
+	} else {
+		SortedVector<String> choices;
+		const SkillList* owned = creature->getSkillList();
+
+		for (int i = 0; i < owned->size(); ++i) {
+			Skill* skill = owned->get(i);
+
+			if (!isPlayerSurrenderableSkill(skill))
+				continue;
+
+			Vector<String> plan;
+
+			if (buildSurrenderSkillPlan(creature, skill->getSkillName(), plan, error))
+				choices.put(skill->getSkillName());
+		}
+
+		for (int i = 0; i < choices.size(); ++i)
+			skills.add(choices.get(i));
+
+		if (skills.size() == 0) {
+			creature->sendSystemMessage("You have no skills that can currently be surrendered.");
+			return;
+		}
+	}
+
+	auto windowType = confirmation ? SuiWindowType::SURRENDER_SKILL_CONFIRM : SuiWindowType::SURRENDER_SKILL_SELECT;
+	ManagedReference<SuiListBox*> box = new SuiListBox(creature, windowType, SuiListBox::HANDLETWOBUTTON);
+	box->setUsingObject(creature);
+	box->setForceCloseDisabled();
+	box->setPromptTitle(confirmation ? "Confirm Skill Surrender" : "Surrender Skills");
+	box->setOkButton(true, "@ok");
+	box->setCancelButton(true, "@cancel");
+
+	StringBuffer prompt;
+
+	if (confirmation) {
+		int points = 0;
+
+		for (int i = 0; i < skills.size(); ++i)
+			points += getSkill(skills.get(i))->getSkillPointsRequired();
+
+		prompt << "Press OK to surrender ALL " << skills.size() << " skills listed below and recover " << points
+			<< " skill points. Selecting a row does not change the list. Cancel keeps your skills.\n\n";
+
+		if (selection == "all")
+			prompt << "This is your full list of currently surrenderable skills.";
+		else
+			prompt << "The selected skill and all learned skills that depend on it are included.";
+
+		prompt << " Innate, language, staff, pilot and protected progression skills are kept.";
+	} else {
+		prompt << "Select a skill to surrender. The next window lists that skill and every learned skill that depends on it."
+			<< " Nothing is removed until you confirm.\n\nUse /surrenderSkill all to review all surrenderable skills.";
+	}
+
+	box->setPromptText(prompt.toString());
+
+	const Vector<String> displayedSkills = getSkillsByDisplayName(skills);
+
+	for (int i = 0; i < displayedSkills.size(); ++i)
+		box->addMenuItem("@skl_n:" + displayedSkills.get(i));
+
+	// Selection indices follow the displayed rows; confirmation retains the
+	// dependency order used to validate and apply the complete surrender plan.
+	box->setCallback(new SurrenderSkillSuiCallback(creature->getZoneServer(), selection, confirmation ? skills : displayedSkills, confirmation));
+	ghost->addSuiBox(box);
+	creature->sendMessage(box->generateMessage());
+}
+
+void SkillManager::confirmSkillSurrender(CreatureObject* creature, const String& selection, const Vector<String>& confirmedSkills) {
+	if (creature == nullptr || !creature->isPlayerCreature() || selection.isEmpty() || confirmedSkills.size() == 0)
+		return;
+
+	Locker locker(creature);
+	auto ghost = creature->getPlayerObject();
+
+	if (ghost == nullptr || !ghost->isOnline() || creature->getZoneServer() == nullptr)
+		return;
+
+	// The character may have changed state while the confirmation was open.
+	auto controller = creature->getZoneServer()->getObjectController();
+	const QueueCommand* command = controller != nullptr ? controller->getQueueCommand(String("surrenderskill")) : nullptr;
+
+	if (command == nullptr || !command->checkStateMask(creature) || !command->checkInvalidLocomotions(creature)) {
+		creature->sendSystemMessage("You cannot surrender skills in your current state. No skills were surrendered.");
+		return;
+	}
+
+	Vector<String> currentSkills;
+	String error;
+
+	if (!buildSurrenderSkillPlan(creature, selection, currentSkills, error)) {
+		creature->sendSystemMessage(error + " No skills were surrendered.");
+		return;
+	}
+
+	bool changed = currentSkills.size() != confirmedSkills.size();
+
+	for (int i = 0; !changed && i < currentSkills.size(); ++i)
+		changed = currentSkills.get(i) != confirmedSkills.get(i);
+
+	if (changed) {
+		creature->sendSystemMessage("Your skills or surrender requirements changed. Review the updated list and confirm again. No skills were surrendered.");
+		requestSkillSurrender(creature, selection);
+		return;
+	}
+
+	int removed = 0;
+
+	for (int i = 0; i < currentSkills.size(); ++i) {
+		const String& name = currentSkills.get(i);
+
+		if (!surrenderSkill(name, creature, true)) {
+			creature->sendSystemMessage("Skill surrender stopped after " + String::valueOf(removed) + " skills. A remaining skill could not be surrendered; review your skills before trying again.");
+			return;
+		}
+
+		++removed;
+	}
+
+	creature->sendSystemMessage("Surrendered " + String::valueOf(removed) + " skills and returned their skill points.");
 }
 
 bool SkillManager::surrenderSkill(const String& skillName, CreatureObject* creature, bool notifyClient, bool checkFrs, bool allowPilot) {

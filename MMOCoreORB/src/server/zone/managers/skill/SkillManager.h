@@ -83,6 +83,8 @@ public:
 
 	bool surrenderSkill(const String& skillName, CreatureObject* creature, bool notifyClient = true, bool verifyFrs = true, bool allowPilot = false);
 	void surrenderAllSkills(CreatureObject* creature, bool notifyClient = true, bool removeForceProgression = true, bool removePilot = false);
+	void requestSkillSurrender(CreatureObject* creature, const String& selection);
+	void confirmSkillSurrender(CreatureObject* creature, const String& selection, const Vector<String>& confirmedSkills);
 
 	/**
 	 * Checks if the player can learn the skill (fulfills skill prerequisites, enough skill points and enough XP).
@@ -143,6 +145,9 @@ public:
 	}
 
 	void getPlayerDroidCommands(PlayerObject* ghost, Vector<String>& playerDroidCommands);
+
+private:
+	bool buildSurrenderSkillPlan(CreatureObject* creature, const String& selection, Vector<String>& skills, String& error);
 };
 
 }

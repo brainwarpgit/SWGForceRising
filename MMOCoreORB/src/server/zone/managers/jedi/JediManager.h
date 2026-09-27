@@ -139,6 +139,12 @@ public:
 	bool canSurrenderSkill(CreatureObject* creature, const String& skillName);
 
 	/**
+	 * Check an ordered surrender plan without changing the player's skills.
+	 * The caller must hold the creature lock while checking and applying the plan.
+	 */
+	bool canSurrenderSkills(CreatureObject* creature, const Vector<String>& skillNames);
+
+	/**
 	 * Decides what to do next pending learning an FS tree.
 	 * Calls the onFSTreeCompleted in the lua manager.
 	 * @param creature the creature object.

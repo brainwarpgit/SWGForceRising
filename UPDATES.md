@@ -2,6 +2,13 @@
 
 ## 2026-09-27
 
+### Committed skill surrender selection and confirmation
+
+- `/surrenderSkill` now lists learned skills that can be surrendered. Both the selection and confirmation lists are alphabetical by skill display name, ignoring capitalization. Selecting a skill previews that skill and every learned skill that requires it, including dependent professions. Selecting Novice Entertainer therefore includes its learned Entertainer, Dancer, and Musician dependents.
+- The confirmation lists all planned removals and the skill points to recover. Cancel keeps every skill. `/surrenderSkill all` previews all currently surrenderable skills through the same confirmation flow; innate, language, staff, pilot, and protected progression skills remain.
+- Removal follows prerequisite order and uses the existing surrender behavior for refunds, abilities, modifiers, and schematics. Changed skill lists require another confirmation, and Jedi progression requirements are checked against the complete plan before surrender starts. Zero-point profession boxes are included.
+- All 84 standalone dependency, eligibility, display ordering, confirmation/cancellation, and Jedi progression checks pass. Source/caller and whitespace review passed. After the alphabetical-list refinement, the user confirmed everything is working correctly and requested this commit. This overall runtime confirmation supersedes the pending verification checklist; no necessary verification remains. The assistant has not built or run Core3.
+
 ### Committed shutdown session disconnect and login logging fixes
 
 - Fixed shutdown walking the online-account map while each disconnect changes that same map, which could skip other connected players. Shutdown now captures all player sessions first and releases the map lock before disconnecting them, including multiple accounts or characters sharing one IP.

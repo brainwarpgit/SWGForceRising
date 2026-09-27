@@ -4,6 +4,7 @@
 
 #include "JediManager.h"
 #include "server/zone/managers/director/DirectorManager.h"
+#include "server/zone/objects/creature/variables/Skill.h"
 
 JediManager::JediManager() : Logger("JediManager") {
 	jediProgressionType = NOJEDIPROGRESSION;
@@ -150,6 +151,44 @@ bool JediManager::canSurrenderSkill(CreatureObject* creature, const String& skil
 
 	lua_pop(L, 1);
 
+	return result;
+}
+
+bool JediManager::canSurrenderSkills(CreatureObject* creature, const Vector<String>& skillNames) {
+	if (creature == nullptr) {
+		return false;
+	}
+
+	StringBuffer plannedNames;
+	bool hasForceSkill = false;
+	for (int i = 0; i < skillNames.size(); ++i) {
+		plannedNames << skillNames.get(i) << " ";
+		hasForceSkill = hasForceSkill || skillNames.get(i).beginsWith("force_");
+	}
+
+	if (!hasForceSkill) {
+		return true;
+	}
+
+	StringBuffer ownedNames;
+	const auto* skills = creature->getSkillList();
+	for (int i = 0; i < skills->size(); ++i) {
+		Skill* skill = skills->get(i);
+		if (skill == nullptr) {
+			return false;
+		}
+		ownedNames << skill->getSkillName() << " ";
+	}
+
+	Lua* lua = DirectorManager::instance()->getLuaInstance();
+	Reference<LuaFunction*> function = lua->createFunction(getJediManagerName(), "canSurrenderSkills", 1);
+	*function << creature;
+	*function << plannedNames.toString();
+	*function << ownedNames.toString();
+
+	lua_State* L = function->callFunction();
+	bool result = lua_toboolean(L, -1);
+	lua_pop(L, 1);
 	return result;
 }
 

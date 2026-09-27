@@ -25,7 +25,10 @@ public:
 			return GENERALERROR;
 		}
 
-		skillManager->surrenderSkill(arguments.toString(), creature, true);
+		if (!creature->isPlayerCreature())
+			return GENERALERROR;
+
+		skillManager->requestSkillSurrender(creature, arguments.toString().trim().toLowerCase());
 
 		return SUCCESS;
 	}
