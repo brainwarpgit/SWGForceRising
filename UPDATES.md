@@ -2,6 +2,12 @@
 
 ## 2026-09-27
 
+### Committed Empty Mail Target command-browser assets
+
+- Added the missing English `cmd_n:emptymailtarget` name, **Empty Mail Target**, and `cmd_d:emptymailtarget` description explaining mailbox deletion for a selected player or specified first name, with `/emptyMail` for the admin's own mailbox.
+- Assigned the existing mail-envelope icon to the command in both ground and space UI styles. All three client files are staged only in `SWGFR_update_01`; no new texture or server behavior change is needed.
+- Binary string-table and UI dependency checks passed, including independent verification that every existing entry is preserved. The user confirmed the changes are working and requested this commit. This overall client verification supersedes the pending deployment/display checklist; no necessary verification remains. The assistant did not rebuild or install a TRE or run Core3.
+
 ### Committed admin skill revocation selection and confirmation
 
 - `/revokeSkill` now opens an alphabetical skill list for the targeted player, or for the admin issuing the command when no target is selected. Invalid explicit targets are rejected. `/revokeSkill all` previews all revocable skills for either target choice.
