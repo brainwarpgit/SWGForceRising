@@ -1,4 +1,7 @@
-object_resource_container_resource_spawn = object_resource_container_shared_simple:new {	playerRaces = {
+-- Resource spawns are server-only records; harvested containers use the resource tree templates.
+object_resource_container_resource_spawn = SharedObjectTemplate:new {
+	clientTemplateFileName = "",
+	playerRaces = {
 		"object/creature/player/bothan_male.iff",
 		"object/creature/player/bothan_female.iff",
 		"object/creature/player/human_male.iff",

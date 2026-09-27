@@ -1,0 +1,3 @@
+-- Core3 engine configuration entry point for non-Windows servers.
+-- No overrides are required: retain the engine's built-in defaults,
+-- including its worker and scheduler sizing.

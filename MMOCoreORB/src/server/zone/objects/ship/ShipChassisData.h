@@ -9,6 +9,7 @@
 #include "ComponentSlots.h"
 
 class DataTableRow;
+class DataTableIff;
 
 class ShipChassisData : public Object {
 
@@ -98,17 +99,22 @@ protected:
 	int type;
 
 	VectorMap<String, ComponentSlotData*> componentMap;
-	void loadComponentHardpoints();
 public:
 	ShipChassisData(DataTableRow *row, Vector<String>& columnNames);
 
 	~ShipChassisData();
+
+	void loadComponentHardpoints(const DataTableIff& dtiff);
 
 	const String& getName() const {
 		return name;
 	}
 	float getWingOpenSpeed() const {
 		return wingOpenSpeed;
+	}
+
+	bool hasComponentSlots() const {
+		return componentMap.size() > 0;
 	}
 
 	const ComponentSlotData* getComponentSlotData(int slotIndex) const {

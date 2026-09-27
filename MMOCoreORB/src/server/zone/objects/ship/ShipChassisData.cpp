@@ -5,7 +5,6 @@
 #include "ShipChassisData.h"
 #include "templates/datatables/DataTableIff.h"
 #include "templates/datatables/DataTableRow.h"
-#include "templates/manager/DataArchiveStore.h"
 
 ShipChassisData::ShipChassisData(DataTableRow* row, Vector<String>& columnNames) : Object() {
 	row->getCell(0)->getValue(name);
@@ -26,32 +25,20 @@ ShipChassisData::ShipChassisData(DataTableRow* row, Vector<String>& columnNames)
 		row->getCell(i+2)->getValue(targetable);
 		componentMap.put(componentName, new ComponentSlotData(componentName, compatability, hitweight, targetable));
 	}
-
-	loadComponentHardpoints();
 }
 
 ShipChassisData::~ShipChassisData() {
 	componentMap.removeAll();
 }
 
-void ShipChassisData::loadComponentHardpoints() {
-	String filename = "datatables/space/ship_chassis_" + name + ".iff";
-	IffStream* iffStream = DataArchiveStore::instance()->openIffFile(filename);
-
-	if (iffStream == nullptr) {
-		return;
-	}
-
-	DataTableIff dtiff;
-	dtiff.readObject(iffStream);
-
+void ShipChassisData::loadComponentHardpoints(const DataTableIff& dtiff) {
 	Vector<String> columns(dtiff.getTotalColumns(), 3);
 	for (int i = 0; i < dtiff.getTotalColumns(); i++) {
 		columns.add(dtiff.getColumnNameByIndex(i));
 	}
 
 	for (int i = 0; i < dtiff.getTotalRows(); ++i) {
-		DataTableRow* row = dtiff.getRow(i);
+		const DataTableRow* row = dtiff.getRow(i);
 		String name;
 		row->getCell(0)->getValue(name);
 
@@ -106,5 +93,4 @@ void ShipChassisData::loadComponentHardpoints() {
 			slotData->addHardpointData(name, hardpoints);
 		}
 	}
-	delete iffStream;
 }

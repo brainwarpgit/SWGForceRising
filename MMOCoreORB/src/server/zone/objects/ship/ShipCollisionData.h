@@ -30,11 +30,11 @@ protected:
 	int volumeType;
 
 public:
-	ShipCollisionData(SharedShipObjectTemplate* templateData, const ShipChassisData* chassisData);
+	ShipCollisionData(SharedShipObjectTemplate* templateData, const ShipChassisData* chassisData, Vector<String>& unavailableClientDataFiles);
 
 	void setCollisionData(SharedShipObjectTemplate* templateData);
 
-	void setClientData(SharedShipObjectTemplate* shipTemplate);
+	void setClientData(SharedShipObjectTemplate* shipTemplate, Vector<String>& unavailableClientDataFiles);
 
 	void setComponentData(SharedShipObjectTemplate* templateData, const ShipChassisData* chassisData);
 

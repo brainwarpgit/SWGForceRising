@@ -1,0 +1,3 @@
+-- Shared engine configuration entry point.
+-- Leave settings unset to retain the engine's built-in defaults.
+-- Core3-specific overrides belong in conf/core3engine.lua.

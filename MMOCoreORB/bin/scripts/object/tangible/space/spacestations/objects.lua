@@ -100,7 +100,7 @@ object_tangible_space_spacestations_shared_spacestation_imperial_01 = SharedShip
 
 ObjectTemplates:addClientTemplate(object_tangible_space_spacestations_shared_spacestation_imperial_01, "object/tangible/space/spacestations/shared_spacestation_imperial_01.iff")
 
-object_tangible_space_spacestations_shared_spacestation_imperial_battlefield_control = SharedTangibleObjectTemplate:new {
+object_tangible_space_spacestations_shared_spacestation_imperial_battlefield_control = SharedShipObjectTemplate:new {
 	clientTemplateFileName = "object/tangible/space/spacestations/shared_spacestation_imperial_battlefield_control.iff"
 	--Data below here is deprecated and loaded from the tres, keeping for easy lookups
 --[[
@@ -159,7 +159,7 @@ object_tangible_space_spacestations_shared_spacestation_imperial_battlefield_con
 
 ObjectTemplates:addClientTemplate(object_tangible_space_spacestations_shared_spacestation_imperial_battlefield_control, "object/tangible/space/spacestations/shared_spacestation_imperial_battlefield_control.iff")
 
-object_tangible_space_spacestations_shared_spacestation_imperial_battlefield_entry = SharedTangibleObjectTemplate:new {
+object_tangible_space_spacestations_shared_spacestation_imperial_battlefield_entry = SharedShipObjectTemplate:new {
 	clientTemplateFileName = "object/tangible/space/spacestations/shared_spacestation_imperial_battlefield_entry.iff"
 	--Data below here is deprecated and loaded from the tres, keeping for easy lookups
 --[[
@@ -336,7 +336,7 @@ object_tangible_space_spacestations_shared_spacestation_rebel_01 = SharedShipObj
 
 ObjectTemplates:addClientTemplate(object_tangible_space_spacestations_shared_spacestation_rebel_01, "object/tangible/space/spacestations/shared_spacestation_rebel_01.iff")
 
-object_tangible_space_spacestations_shared_spacestation_rebel_battlefield_control = SharedTangibleObjectTemplate:new {
+object_tangible_space_spacestations_shared_spacestation_rebel_battlefield_control = SharedShipObjectTemplate:new {
 	clientTemplateFileName = "object/tangible/space/spacestations/shared_spacestation_rebel_battlefield_control.iff"
 	--Data below here is deprecated and loaded from the tres, keeping for easy lookups
 --[[
@@ -395,7 +395,7 @@ object_tangible_space_spacestations_shared_spacestation_rebel_battlefield_contro
 
 ObjectTemplates:addClientTemplate(object_tangible_space_spacestations_shared_spacestation_rebel_battlefield_control, "object/tangible/space/spacestations/shared_spacestation_rebel_battlefield_control.iff")
 
-object_tangible_space_spacestations_shared_spacestation_rebel_battlefield_entry = SharedTangibleObjectTemplate:new {
+object_tangible_space_spacestations_shared_spacestation_rebel_battlefield_entry = SharedShipObjectTemplate:new {
 	clientTemplateFileName = "object/tangible/space/spacestations/shared_spacestation_rebel_battlefield_entry.iff"
 	--Data below here is deprecated and loaded from the tres, keeping for easy lookups
 --[[

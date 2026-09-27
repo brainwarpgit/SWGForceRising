@@ -52,7 +52,6 @@ int CityManagerImplementation::cityUpdateInterval = 0;
 int CityManagerImplementation::newCityGracePeriod = 0;
 int CityManagerImplementation::oldCityGracePeriod = 0;
 uint64 CityManagerImplementation::citySpecializationCooldown = 0;
-int CityManagerImplementation::cityVotingDuration = 0;
 uint64 CityManagerImplementation::treasuryWithdrawalCooldown = 0;
 byte CityManagerImplementation::cityVotingCycles = 0;
 byte CityManagerImplementation::cityVotingCyclesUntilLocked = 0;
@@ -115,7 +114,6 @@ void CityManagerImplementation::loadLuaConfig() {
 	newCityGracePeriod = lua->getGlobalInt("NewCityGracePeriod");
 	oldCityGracePeriod = lua->getGlobalInt("OldCityGracePeriod");
 	citySpecializationCooldown = lua->getGlobalLong("CitySpecializationCooldown");
-	cityVotingDuration = lua->getGlobalInt("CityVotingDuration");
 	treasuryWithdrawalCooldown = lua->getGlobalLong("TreasuryWithdrawalCooldown");
 	cityVotingCycles = lua->getGlobalByte("CityVotingCycles");
 	cityVotingCyclesUntilLocked = lua->getGlobalByte("CityVotingCyclesUntilLocked");

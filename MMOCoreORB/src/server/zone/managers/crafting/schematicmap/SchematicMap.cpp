@@ -34,7 +34,14 @@ void SchematicMap::initialize(ZoneServer* server) {
 
 	loadDraftSchematicDatabase();
 	loadDraftSchematicFile("scripts/managers/crafting/schematics.lua");
-	loadDraftSchematicFile("scripts/custom_scripts/managers/crafting/schematics.lua");
+
+	const String customFile = "scripts/custom_scripts/managers/crafting/schematics.lua";
+	File customSchematics(customFile);
+
+	if (customSchematics.exists()) {
+		loadDraftSchematicFile(customFile);
+	}
+
 	loadSchematicGroups();
 }
 
@@ -98,12 +105,20 @@ void SchematicMap::loadDraftSchematicDatabase() {
 }
 
 void SchematicMap::loadDraftSchematicFile(String file) {
-	runFile(file);
+	if (!runFile(file)) {
+		return;
+	}
 
 	// Read and create all the items in the config unless they
 	// were already loaded from database.
 
 	LuaObject serverScriptCRCList = getGlobalObject("schematics");
+
+	if (!serverScriptCRCList.isValidTable()) {
+		error("Expected schematics table in " + file);
+		serverScriptCRCList.pop();
+		return;
+	}
 
 	int size = serverScriptCRCList.getTableSize();
 	int count = 0;

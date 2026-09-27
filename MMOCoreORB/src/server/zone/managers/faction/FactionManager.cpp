@@ -19,7 +19,14 @@ FactionManager::FactionManager() {
 
 void FactionManager::loadData() {
 	loadLuaConfig("scripts/managers/faction_manager.lua");
-	loadLuaConfig("scripts/custom_scripts/managers/faction_manager.lua");
+
+	const String customFile = "scripts/custom_scripts/managers/faction_manager.lua";
+	File customFactions(customFile);
+
+	if (customFactions.exists()) {
+		loadLuaConfig(customFile);
+	}
+
 	loadFactionRanks();
 }
 
@@ -50,7 +57,10 @@ void FactionManager::loadLuaConfig(String file) {
 	lua->init();
 
 	//Load the faction manager lua file.
-	lua->runFile(file);
+	if (!lua->runFile(file)) {
+		delete lua;
+		return;
+	}
 
 	LuaObject luaObject = lua->getGlobalObject("factionList");
 
@@ -76,6 +86,8 @@ void FactionManager::loadLuaConfig(String file) {
 
 			factionData.pop();
 		}
+	} else {
+		error("Expected factionList table in " + file);
 	}
 
 	luaObject.pop();

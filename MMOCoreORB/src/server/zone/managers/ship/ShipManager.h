@@ -62,7 +62,6 @@ private:
 	void loadShipWeaponData();
 	void loadShipChassisData();
 	void loadHyperspaceLocations();
-	void loadShipAppearanceData();
 	void loadShipMissileData();
 	void loadShipCountermeasureData();
 	void loadShipCollisionData();

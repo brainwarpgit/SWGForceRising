@@ -2,8 +2,8 @@
 #define SHIPAPPEARANCEDATA_H_
 
 #include "engine/engine.h"
-#include "templates/manager/DataArchiveStore.h"
 #include "templates/datatables/DataTableIff.h"
+#include "templates/datatables/DataTableRow.h"
 #include "server/zone/objects/ship/ComponentSlots.h"
 
 class DataTableRow;
@@ -19,21 +19,29 @@ protected:
 public:
 	ShipAppearanceData(const String& chassisName) {
 		dataName = chassisName;
-
-		readChassisIff();
 	}
 
-	void readChassisIff() {
-		IffStream* iffStream = DataArchiveStore::instance()->openIffFile("datatables/space/ship_chassis_" + dataName + ".iff");
-		if (iffStream == nullptr) {
-			return;
+	void readChassisData(const DataTableIff& dataTable) {
+		// Some client tables omit unused slots. Column positions therefore do
+		// not necessarily match the component-slot enumeration.
+		Vector<int> columnSlots;
+
+		for (int column = 0; column < dataTable.getTotalColumns(); ++column) {
+			int slot = -1;
+			const auto& columnName = dataTable.getColumnNameByIndex(column);
+
+			for (int candidate = 0; candidate <= Components::CAPITALSLOTMAX; ++candidate) {
+				if (columnName == Components::shipComponentSlotToString(candidate)) {
+					slot = candidate;
+					break;
+				}
+			}
+
+			columnSlots.add(slot);
 		}
 
-		DataTableIff dataTable;
-		dataTable.readObject(iffStream);
-
 		for (int i = 0; i < dataTable.getTotalRows(); ++i) {
-			DataTableRow* row = dataTable.getRow(i);
+			const DataTableRow* row = dataTable.getRow(i);
 			if (row == nullptr || row->getCellsSize() == 0) {
 				break;
 			}
@@ -51,7 +59,12 @@ public:
 				if (i == 0) {
 					key = cell->toString();
 				} else {
-					slot = i - 1;
+					slot = columnSlots.get(i);
+
+					if (slot == -1) {
+						continue;
+					}
+
 					value = cell->toString();
 					break;
 				}
@@ -69,8 +82,6 @@ public:
 				appearanceMap.put(key, value);
 			}
 		}
-
-		delete iffStream;
 	}
 
 	const String& getDefaultAppearance(uint32 slot) const {

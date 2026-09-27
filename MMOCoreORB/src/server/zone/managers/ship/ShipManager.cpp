@@ -56,7 +56,6 @@ void ShipManager::initialize() {
 	loadShipComponentData();
 	loadShipWeaponData();
 	loadHyperspaceLocations();
-	loadShipAppearanceData();
 	loadShipMissileData();
 	loadShipCountermeasureData();
 	loadShipCollisionData();
@@ -144,7 +143,7 @@ void ShipManager::loadShipComponentData() {
 }
 
 void ShipManager::loadShipChassisData() {
-	info(true) << "Loading Ship Chassis Data";
+	info(true) << "Loading Ship Chassis and Appearance Data";
 
 	IffStream* iffStream = DataArchiveStore::instance()->openIffFile("datatables/space/ship_chassis.iff");
 
@@ -166,9 +165,35 @@ void ShipManager::loadShipChassisData() {
 	for (int i = 0; i < dtiff.getTotalRows(); ++i) {
 		ShipChassisData* data = new ShipChassisData(dtiff.getRow(i), columns);
 		chassisData.put(data->getName(), data);
+
+		Reference<ShipAppearanceData*> appearanceData = new ShipAppearanceData(data->getName());
+		shipAppearanceData.put(data->getName(), appearanceData);
+
+		// Mining asteroid metadata has no compatible components, so it does
+		// not require a component hardpoint or appearance table.
+		if (!data->hasComponentSlots()) {
+			continue;
+		}
+
+		// Both readers use the same component table. Read it once so missing
+		// dependencies are also reported only once for each chassis.
+		String filename = "datatables/space/ship_chassis_" + data->getName() + ".iff";
+		IffStream* componentStream = DataArchiveStore::instance()->openIffFile(filename);
+
+		if (componentStream == nullptr) {
+			continue;
+		}
+
+		DataTableIff componentTable;
+		componentTable.readObject(componentStream);
+		delete componentStream;
+
+		data->loadComponentHardpoints(componentTable);
+		appearanceData->readChassisData(componentTable);
 	}
 
 	info(true) << "Ship Chassis Data Loading Complete - Total: " << chassisData.size();
+	info(true) << "Ship Appearance Data Loading Complete - Total: " << shipAppearanceData.size();
 
 	delete iffStream;
 }
@@ -199,44 +224,6 @@ void ShipManager::loadShipWeaponData() {
 	delete iffStream;
 
 	info(true) << "Ship Weapon Data Loading Complete - Total: " << shipProjectiletTemplateNames.size();
-}
-
-void ShipManager::loadShipAppearanceData() {
-	info(true) << "Loading Ship Appearance Data";
-
-	IffStream* iffStream = DataArchiveStore::instance()->openIffFile("datatables/space/ship_chassis.iff");
-
-	if (iffStream == nullptr) {
-		fatal("datatables/space/ship_chassis.iff could not be found.");
-		return;
-	}
-
-	DataTableIff dtiff;
-	dtiff.readObject(iffStream);
-
-	for (int i = 0; i < dtiff.getTotalRows(); ++i) {
-		DataTableRow* row = dtiff.getRow(i);
-		if (row == nullptr || row->getCellsSize() == 0) {
-			continue;
-		}
-
-		DataTableCell* cell = row->getCell(0);
-		if (cell == nullptr) {
-			continue;
-		}
-
-		String key = cell->toString();
-		if (key == "") {
-			continue;
-		}
-
-		Reference<ShipAppearanceData*> data = new ShipAppearanceData(key);
-		shipAppearanceData.put(key, data);
-	}
-
-	delete iffStream;
-
-	info(true) << "Ship Appearance Data Loading Complete - Total: " << shipAppearanceData.size();
 }
 
 void ShipManager::loadShipMissileData() {
@@ -438,6 +425,10 @@ void ShipManager::loadDroidCommands() {
 void ShipManager::loadShipCollisionData() {
 	info(true) << "Loading Ship Collision Data";
 
+	// Retry unavailable files on the next initialization, rather than retaining
+	// a process-wide negative cache after the archive set changes.
+	Vector<String> unavailableClientDataFiles;
+
 	Lua* lua = new Lua();
 	lua->init();
 
@@ -482,7 +473,7 @@ void ShipManager::loadShipCollisionData() {
 					continue;
 				}
 
-				Reference<ShipCollisionData*> data = new ShipCollisionData(chassisTemplate, chassisData);
+				Reference<ShipCollisionData*> data = new ShipCollisionData(chassisTemplate, chassisData, unavailableClientDataFiles);
 				shipCollisionData.put(templateCRC, data);
 			}
 		}

@@ -1,7 +1,7 @@
 #include "server/zone/objects/ship/ShipCollisionData.h"
 #include "templates/manager/DataArchiveStore.h"
 
-ShipCollisionData::ShipCollisionData(SharedShipObjectTemplate* shipTemplate, const ShipChassisData* chassisData) : Object() {
+ShipCollisionData::ShipCollisionData(SharedShipObjectTemplate* shipTemplate, const ShipChassisData* chassisData, Vector<String>& unavailableClientDataFiles) : Object() {
 	setLoggingName("ShipCollisionData " + chassisData->getName());
 
 	hardpointMap.setNoDuplicateInsertPlan();
@@ -10,7 +10,7 @@ ShipCollisionData::ShipCollisionData(SharedShipObjectTemplate* shipTemplate, con
 	volumeType = INVALID;
 
 	setCollisionData(shipTemplate);
-	setClientData(shipTemplate);
+	setClientData(shipTemplate, unavailableClientDataFiles);
 	setComponentData(shipTemplate, chassisData);
 	setSlotWeights(shipTemplate, chassisData);
 
@@ -52,16 +52,24 @@ void ShipCollisionData::setCollisionData(SharedShipObjectTemplate* templateData)
 	volumeType = getBoundingVolumeType(collisionVolume);
 }
 
-void ShipCollisionData::setClientData(SharedShipObjectTemplate* shipTemplate) {
-	auto clientDataPath = shipTemplate->getClientDataFile();
+void ShipCollisionData::setClientData(SharedShipObjectTemplate* shipTemplate, Vector<String>& unavailableClientDataFiles) {
+	auto clientDataPath = shipTemplate->getClientDataFile().toLowerCase();
 
-	if (clientDataPath == "") {
+	if (clientDataPath == "" || unavailableClientDataFiles.contains(clientDataPath)) {
 		return;
 	}
 
-	IffStream* iffStream = DataArchiveStore::instance()->openIffFile(clientDataPath.toLowerCase());
+	IffStream* iffStream = DataArchiveStore::instance()->openIffFile(clientDataPath);
 
-	if (iffStream == nullptr || iffStream->getNextFormType() != 'CLDF') {
+	if (iffStream == nullptr) {
+		// Ship tiers often share this file. Keep the first archive diagnostic,
+		// but do not retry an unavailable file during this initialization.
+		unavailableClientDataFiles.add(clientDataPath);
+		return;
+	}
+
+	if (iffStream->getNextFormType() != 'CLDF') {
+		delete iffStream;
 		return;
 	}
 

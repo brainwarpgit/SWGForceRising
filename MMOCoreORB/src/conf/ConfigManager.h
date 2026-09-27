@@ -387,7 +387,7 @@ namespace conf {
 		}
 
 		inline const String& getLatestTre() {
-			return getString("Core3.TreManager.LatestTre", "default_patch.tre");
+			return getString("Core3.TreManager.LatestTre", "SWGFR_update_01.tre");
 		}
 
 		inline const Vector<String>& getTreFiles() {

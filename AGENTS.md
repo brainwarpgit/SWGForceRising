@@ -65,6 +65,12 @@ The following are absolute paths within the development workspace.
 
 - Do not access other locations unless the user explicitly asks.
 
+## Client asset staging
+
+- Create or update client asset files only in `SWGFR_update_01`, preserving archive-relative paths. Do not create loose copies of client assets under `MMOCoreORB/bin` unless the user explicitly requests them.
+- Server Lua scripts and source changes still belong in the authorized `MMOCoreORB/bin/scripts` and `MMOCoreORB/src` locations.
+- The user builds `SWGFR_update_01.tre` and places it in the configured TRE folder. Keep its entry first in both `config.lua` and `config-local.lua` TRE lists and keep ConfigManager's latest-TRE default aligned with it.
+
 ## Protected dependencies
 
 - Treat the contents of the `MMOCoreORB/utils/engine3` submodule as immutable. Never edit, patch, format, replace, or generate files within it as part of a project fix or change.

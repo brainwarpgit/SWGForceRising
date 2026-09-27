@@ -85,7 +85,8 @@ public:
 			AppearanceTemplate* templ = TemplateManager::instance()->getAppearanceTemplate(meshFile);
 
 			if (templ == nullptr) {
-				Logger::console.warning() << "ComponentAppearanceTemplate - AppearanceTemplate not found:" << meshFile;
+				// Particle, sprite and light appearances intentionally have no server
+				// collision template. Actual load/parse failures are reported by the loader.
 
 				iffStream->closeChunk('PART');
 
