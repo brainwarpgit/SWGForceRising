@@ -2,6 +2,13 @@
 
 ## 2026-09-28
 
+### Committed SWGFR staff tags
+
+- Updated the display `tag` in all 12 loaded elevated-player definitions under `scripts/staff/levels` to use the `SWGFR-` prefix. Role suffixes remain Admin, Dev, QA, CSR, EC, Intern, ECI, CSI, CC, and CT, including both existing Dev/QA definition variants. Permission levels, internal role names, flags, skill grants, the ordinary player's empty tag, and the inactive local tester definition are unchanged.
+- `PermissionLevelList` loads these strings during PlayerManager initialization. Character name baselines and permission-name updates, staff chat names, and launched ship names already use the same values; no C++ or client asset change is needed. Existing tag visibility conditions remain in place.
+- The user explicitly confirmed retaining the role suffixes. Static verification passed by executing the complete staff include chain in a standalone Lua state with a mock `addLevel`: all 13 role definitions load, all 12 staff tags use `SWGFR-`, and the ordinary-player tag remains empty. Byte-for-byte comparisons against the pre-change commit confirm each edited definition differs only by its tag prefix, including preservation of line endings. Independent source/load-path review and whitespace checks passed. No standalone test file was added for these display-only edits; user runtime verification is recorded below.
+- Final user verification before commit: after receiving the restart/login and character/chat display checklist, the user stated "verified working" and requested the commit. This is recorded as overall verification of the staff-tag change rather than separately itemized results for every role and display. It supersedes the pending runtime checks. The definitions remain unchanged since static validation; final scope and whitespace review passed, and no necessary verification remains. Core3 loads the definitions at startup; relogging without a server restart does not reload them. No compilation or TRE rebuild is required, and the assistant has not built or run Core3.
+
 ### Committed faction rank limits from TRE data
 
 - Removed the independent rank-15 ceiling from `FactionManager::isHighestRank` and the admin `/setFaction` command. Both use a shared highest-rank accessor derived from the number of rows already loaded by `FactionManager` from `datatables/faction/rank.iff`. Empty tables retain rank zero as the admin clamp fallback and offer no promotion. No configuration option or duplicate rank list was added.

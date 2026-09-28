@@ -2,6 +2,12 @@
 
 ## 2026-09-28
 
+### Committed SWGFR staff tags
+
+- Changed all 12 active elevated-player tag definitions from `SWGEmu-` to `SWGFR-`, retaining their role suffixes, such as `SWGFR-Admin`, `SWGFR-Dev`, and `SWGFR-CSR`. Character, chat, and ship displays use these shared definitions.
+- Static verification passed: the complete staff Lua include chain loads all 13 roles, with 12 SWGFR staff tags and an empty ordinary-player tag. Byte comparisons confirm only the requested prefixes changed; source and whitespace review passed.
+- The user confirmed the staff tags are working and requested the commit after receiving the restart/login and character/chat display checklist. This overall runtime confirmation supersedes the pending verification; no necessary checks remain. No Core3 rebuild or TRE update is required. The assistant has not built or run Core3.
+
 ### Committed faction rank limits from TRE data
 
 - Recruiter promotions and the admin `/setFaction` rank limit now follow the loaded `datatables/faction/rank.iff` instead of stopping at rank 15, Colonel. The active TRE table has 22 ranks, ending at rank 21, Surface Marshal, making six additional ranks attainable with their existing faction-point costs.
