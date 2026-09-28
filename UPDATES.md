@@ -2,6 +2,13 @@
 
 ## 2026-09-28
 
+### Committed Medium Corellia House Style 2 schematic
+
+- Added the Medium Corellia House (Style 2) draft schematic to Architect Buildings III. Completed its server recipe using the existing medium Corellian house's materials and 8,000 XP, registered it for crafting, and staged its skill-group assignment in `SWGFR_update_01/datatables/crafting/schematic_group.iff`.
+- Added the missing client name and description for the style-2 deed, fixing its unresolved skill-window string references. The name is "Deed for: Medium Corellia House (Style 2)"; the server deed uses the same name. Preserved the user's subsequent `deed_detail.stf` edit and verified that all existing description keys/text remain intact. The supplied description says Corellia only; the unchanged house allows Corellia and Talus.
+- Diagnosed an unnamed admin-generated deed as a deployment issue: the installed server update TRE lacked both new deed string tables, so `/object createitem` saved only " (System Generated)". The user acknowledged the missing archive deployment and subsequently confirmed the new deed and draft schematic work perfectly. No additional source or asset change was needed.
+- Lua, recipe/deed/house dependency, binary-table/string preservation, and whitespace checks passed. The user's final overall runtime confirmation supersedes the pending deployment and in-game checklist; no necessary verification remains for this commit. Existing Architects receive the schematic when their character loads after restart. No Core3 compilation is needed; the assistant has not built or run Core3.
+
 ### Committed SWGFR staff tags
 
 - Changed all 12 active elevated-player tag definitions from `SWGEmu-` to `SWGFR-`, retaining their role suffixes, such as `SWGFR-Admin`, `SWGFR-Dev`, and `SWGFR-CSR`. Character, chat, and ship displays use these shared definitions.

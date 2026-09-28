@@ -1117,6 +1117,7 @@ schematics = {
 	{path="object/draft_schematic/structure/generic_house_player_small_floorplan_02.iff"},
 	{path="object/draft_schematic/structure/generic_house_player_small.iff"},
 	{path="object/draft_schematic/structure/corellia_house_player_medium.iff"},
+	{path="object/draft_schematic/structure/corellia_house_player_medium_style_02.iff"},
 	{path="object/draft_schematic/structure/naboo_house_player_medium.iff"},
 	{path="object/draft_schematic/structure/house_player_medium.iff"},
 	{path="object/draft_schematic/structure/generic_house_player_small_style_02.iff"},

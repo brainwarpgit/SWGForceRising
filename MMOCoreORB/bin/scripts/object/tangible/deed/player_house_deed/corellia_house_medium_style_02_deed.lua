@@ -45,7 +45,7 @@ object_tangible_deed_player_house_deed_corellia_house_medium_style_02_deed = obj
 	templateType = STRUCTUREDEED,
 	placeStructureComponent = "PlaceStructureComponent",
 	generatedObjectTemplate = "object/building/player/player_house_corellia_medium_style_02.iff",
-	objectName = "@deed:corellia_house_medium_deed",
+	objectName = "@deed:corellia_house_medium_style_2_deed",
 }
 
 ObjectTemplates:addTemplate(object_tangible_deed_player_house_deed_corellia_house_medium_style_02_deed, "object/tangible/deed/player_house_deed/corellia_house_medium_style_02_deed.iff")
