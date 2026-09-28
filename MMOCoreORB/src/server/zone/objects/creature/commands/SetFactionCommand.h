@@ -5,6 +5,7 @@
 #ifndef SETFACTIONCOMMAND_H_
 #define SETFACTIONCOMMAND_H_
 
+#include "server/zone/managers/faction/FactionManager.h"
 #include "server/zone/objects/scene/SceneObject.h"
 #include "server/zone/objects/tangible/TangibleObject.h"
 #include "server/zone/objects/player/PlayerObject.h"
@@ -120,8 +121,8 @@ public:
 
 			if (rank < 0)
 				rank = 0;
-			else if (rank > 15)
-				rank = 15;
+			else if (rank > FactionManager::instance()->getHighestRank())
+				rank = FactionManager::instance()->getHighestRank();
 
 			targetRank = rank;
 		}

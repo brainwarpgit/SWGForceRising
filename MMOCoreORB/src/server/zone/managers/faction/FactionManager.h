@@ -62,8 +62,12 @@ public:
 	int getRankDelegateRatioTo(int rank);
 	int getFactionPointsCap(int rank);
 
+	int getHighestRank() {
+		return Math::max(0, factionRanks.getCount() - 1);
+	}
+
 	bool isHighestRank(int rank) {
-		return rank >= factionRanks.getCount() - 1 || rank >= 15;
+		return rank >= getHighestRank();
 	}
 
 	bool isFaction(const String& faction);

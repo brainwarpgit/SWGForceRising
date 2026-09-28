@@ -1,5 +1,14 @@
 # Project Updates
 
+## 2026-09-28
+
+### Committed faction rank limits from TRE data
+
+- Recruiter promotions and the admin `/setFaction` rank limit now follow the loaded `datatables/faction/rank.iff` instead of stopping at rank 15, Colonel. The active TRE table has 22 ranks, ending at rank 21, Surface Marshal, making six additional ranks attainable with their existing faction-point costs.
+- Recruiter confirmation and acceptance recheck the limit and reject invalid next-rank costs, preventing an outdated promotion conversation from assigning a rank beyond the table or charging points for it. Existing faction-point minimums and rank benefits remain unchanged.
+- Static verification passed: all 143 standalone rank-limit/admin/recruiter checks, recruiter Lua syntax, active-TRE rank/name/cost validation, and source/whitespace review. The test reproduces the original rank-15 restriction against the pre-fix commit.
+- The user confirmed everything is working and requested the commit after receiving the rebuild/restart, recruiter promotion, final-rank, point-deduction, relog, and `/setFaction` checklist. This overall runtime confirmation supersedes the pending verification; no necessary checks remain. The implementation and 143 passing standalone checks remain applicable. No TRE update is required, and the assistant has not built or run Core3.
+
 ## 2026-09-27
 
 ### Committed character tutorial room and item-box fix

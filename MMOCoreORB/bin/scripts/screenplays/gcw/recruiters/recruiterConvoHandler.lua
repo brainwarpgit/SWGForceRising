@@ -15,6 +15,18 @@ function RecruiterConvoHandler:runScreenHandlers(pConvTemplate, pPlayer, pNpc, s
 	local pConvScreen = screen:cloneScreen()
 	local clonedConversation = LuaConversationScreen(pConvScreen)
 
+	-- Recheck the table limit when a previously offered promotion is selected.
+	if (screenID == "confirm_promotion" or screenID == "accepted_promotion") then
+		local rank = CreatureObject(pPlayer):getFactionRank()
+
+		if (rank < 0 or isHighestRank(rank) or getRankCost(rank + 1) < 0) then
+			clonedConversation:setDialogTextStringId("@faction_recruiter:promotion_max_rank")
+			clonedConversation:removeAllOptions()
+			clonedConversation:setStopConversation(true)
+			return pConvScreen
+		end
+	end
+
 	if (screenID == "greet_member_start_covert" or screenID == "stay_covert" or screenID == "dont_resign_covert") then
 		self:updateScreenWithPromotions(pPlayer, pConvTemplate, pConvScreen, recruiterScreenplay:getRecruiterFaction(pNpc))
 
@@ -358,7 +370,7 @@ function RecruiterConvoHandler:updateScreenWithPromotions(pPlayer, pConvTemplate
 	local requiredPoints = getRankCost(rank + 1)
 	local currentPoints = PlayerObject(pGhost):getFactionStanding(faction)
 
-	if (currentPoints < requiredPoints + recruiterScreenplay:getMinimumFactionStanding()) then
+	if (requiredPoints < 0 or currentPoints < requiredPoints + recruiterScreenplay:getMinimumFactionStanding()) then
 		return
 	end
 
