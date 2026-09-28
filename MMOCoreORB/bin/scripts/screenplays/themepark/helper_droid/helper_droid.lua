@@ -22,6 +22,10 @@ HelperDroid = ScreenPlay:new {
 registerScreenPlay("HelperDroid", false)
 
 function HelperDroid:spaceInformation(pDroid, pPlayer, selection)
+	if (not isHelperDroidEnabled()) then
+		return
+	end
+
 	if (pDroid == nil or pPlayer == nil) then
 		return
 	end
@@ -48,6 +52,10 @@ function HelperDroid:spaceInformation(pDroid, pPlayer, selection)
 end
 
 function HelperDroid:helperInformation(pDroid, pPlayer, selection)
+	if (not isHelperDroidEnabled()) then
+		return
+	end
+
 	if (pDroid == nil or pPlayer == nil) then
 		return
 	end
@@ -69,6 +77,10 @@ function HelperDroid:noCallback(pPlayer, pSui, eventIndex, ...)
 end
 
 function HelperDroid:professionQuest(pDroid, pPlayer, profession)
+	if (not isHelperDroidEnabled()) then
+		return
+	end
+
 	if (pDroid == nil or pPlayer == nil) then
 		return
 	end
@@ -86,6 +98,10 @@ function HelperDroid:professionQuest(pDroid, pPlayer, profession)
 end
 
 function HelperDroid:greetPlayer(pPlayer, pDroid)
+	if (not isHelperDroidEnabled()) then
+		return
+	end
+
 	if (pPlayer == nil or pDroid == nil) then
 		return
 	end
@@ -145,6 +161,10 @@ function HelperDroid:greetPlayer(pPlayer, pDroid)
 end
 
 function HelperDroid:greetingCallback(pPlayer, pSui, eventIndex, args)
+	if (not isHelperDroidEnabled()) then
+		return
+	end
+
 	if (pPlayer == nil) then
 		return
 	end
@@ -184,6 +204,10 @@ function HelperDroid:greetingCallback(pPlayer, pSui, eventIndex, args)
 end
 
 function HelperDroid:skillTrained(pDroid, pPlayer, skill)
+	if (not isHelperDroidEnabled()) then
+		return
+	end
+
 	if (pDroid == nil or pPlayer == nil or skill == "") then
 		return
 	end
@@ -208,6 +232,10 @@ function HelperDroid:skillTrained(pDroid, pPlayer, skill)
 end
 
 function HelperDroid:playDroidSound(pPlayer)
+	if (not isHelperDroidEnabled()) then
+		return
+	end
+
 	if (pPlayer == nil) then
 		return
 	end

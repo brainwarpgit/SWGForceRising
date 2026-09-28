@@ -505,6 +505,9 @@ void PlayerObjectImplementation::sendBaselinesTo(SceneObject* player) {
 void PlayerObjectImplementation::notifySceneReady() {
 	// info(true) << cast<CreatureObject*>(parent.get().get())->getDisplayedName() << " --- notifySceneReady called";
 
+	const bool helperProvisionedOnLogin = getScreenPlayData("HelperDroid", "loginProvisioned") == "1";
+	deleteScreenPlayData("HelperDroid", "loginProvisioned");
+
 	teleporting = false;
 	onLoadScreen = false;
 	forcedTransform = false;
@@ -620,7 +623,8 @@ void PlayerObjectImplementation::notifySceneReady() {
 		}
 
 		// Create or spawn the helper droid
-		createHelperDroid();
+		if (!helperProvisionedOnLogin)
+			createHelperDroid();
 	}
 
 	// info(true) << creature->getDisplayedName() << " --- notifySceneReady COMPLETE with Zone Name: " << zone->getZoneName() << " World Pos: " << creature->getWorldPosition().toString();
@@ -3846,7 +3850,10 @@ String PlayerObjectImplementation::getPlayedTimeString(bool verbose) const {
 }
 
 void PlayerObjectImplementation::createHelperDroid() {
-	// Only spawn droid if character is less than 1 days old
+	if (!ConfigManager::instance()->isHelperDroidEnabled() || getScreenPlayData("HelperDroid", "manuallyDeleted") == "1")
+		return;
+
+	// Only provision or automatically call helpers for non-staff characters under one day old.
 	if (getCharacterAgeInDays() >= 1 || isPrivileged())
 		return;
 
@@ -3860,6 +3867,6 @@ void PlayerObjectImplementation::createHelperDroid() {
 	if (zone == nullptr || zone->getZoneName() == "tutorial")
 		return;
 
-	Reference<Task*> createDroid = new SpawnHelperDroidTask(player);
+	Reference<Task*> createDroid = new SpawnHelperDroidTask(player, true);
 	createDroid->schedule(5000);
 }

@@ -31,6 +31,15 @@ void StorePetTask::run() {
 	Locker locker(player);
 	Locker clocker(pet, player);
 
+	// Login cleanup or a confirmed deletion may have removed this helper
+	// while an older store task was waiting for the player/pet locks.
+	if (pet->isHelperDroidObject()) {
+		auto helperDevice = pet->getControlDevice().get();
+
+		if (helperDevice == nullptr || !helperDevice->isASubChildOf(player))
+			return;
+	}
+
 	if (pet->containsPendingTask("droid_power"))
 		pet->removePendingTask("droid_power");
 

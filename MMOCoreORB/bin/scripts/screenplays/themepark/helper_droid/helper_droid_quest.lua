@@ -47,6 +47,10 @@ registerScreenPlay("HelperDroidQuest", false)
 -- ========= Sui Functions ==========
 
 function HelperDroidQuest:startSui(pDroid, pPlayer, profession)
+	if (not isHelperDroidEnabled()) then
+		return
+	end
+
 	if (pDroid == nil or pPlayer == nil) then
 		return
 	end
@@ -86,6 +90,10 @@ function HelperDroidQuest:startSui(pDroid, pPlayer, profession)
 end
 
 function HelperDroidQuest:startCallback(pPlayer, pSui, eventIndex, ...)
+	if (not isHelperDroidEnabled()) then
+		return
+	end
+
 	if (pPlayer == nil) then
 		return
 	end
@@ -115,6 +123,10 @@ function HelperDroidQuest:startCallback(pPlayer, pSui, eventIndex, ...)
 end
 
 function HelperDroidQuest:professionQuestSui(pDroid, pPlayer, profession)
+	if (not isHelperDroidEnabled()) then
+		return
+	end
+
 	if (pDroid == nil or pPlayer == nil) then
 		return
 	end
@@ -205,6 +217,10 @@ function HelperDroidQuest:professionQuestSui(pDroid, pPlayer, profession)
 end
 
 function HelperDroidQuest:professionCallback(pPlayer, pSui, eventIndex, ...)
+	if (not isHelperDroidEnabled()) then
+		return
+	end
+
 	if (pPlayer == nil) then
 		return
 	end
@@ -254,6 +270,10 @@ function HelperDroidQuest:professionCallback(pPlayer, pSui, eventIndex, ...)
 end
 
 function HelperDroidQuest:onQuestSui(pDroid, pPlayer, profession)
+	if (not isHelperDroidEnabled()) then
+		return
+	end
+
 	if (pDroid == nil or pPlayer == nil) then
 		return
 	end
@@ -323,6 +343,10 @@ function HelperDroidQuest:onQuestSui(pDroid, pPlayer, profession)
 end
 
 function HelperDroidQuest:onQuestCallback(pPlayer, pSui, eventIndex, ...)
+	if (not isHelperDroidEnabled()) then
+		return
+	end
+
 	if (pPlayer == nil) then
 		return
 	end
@@ -384,6 +408,10 @@ function HelperDroidQuest:onQuestCallback(pPlayer, pSui, eventIndex, ...)
 end
 
 function HelperDroidQuest:finalQuestSui(pDroid, pPlayer, profession)
+	if (not isHelperDroidEnabled()) then
+		return
+	end
+
 	if (pDroid == nil or pPlayer == nil) then
 		return
 	end
@@ -430,6 +458,10 @@ end
 -- ========= Quest Task Handler ==========
 
 function HelperDroidQuest:giveQuest(pPlayer, profession)
+	if (not isHelperDroidEnabled()) then
+		return
+	end
+
 	if (pPlayer == nil) then
 		return
 	end
@@ -514,6 +546,10 @@ end
 -- ========= New Player Item Choice and Creation ==========
 
 function HelperDroidQuest:giveProfessionItem(pPlayer, profession)
+	if (not isHelperDroidEnabled()) then
+		return
+	end
+
 	if (pPlayer == nil) then
 		return
 	end
@@ -573,6 +609,10 @@ function HelperDroidQuest:giveProfessionItem(pPlayer, profession)
 end
 
 function HelperDroidQuest:chooseWeapon(pPlayer)
+	if (not isHelperDroidEnabled()) then
+		return
+	end
+
 	if (pPlayer == nil) then
 		return
 	end
@@ -620,6 +660,10 @@ function HelperDroidQuest:chooseWeapon(pPlayer)
 end
 
 function HelperDroidQuest:weaponCallback(pPlayer, pSui, eventIndex, ...)
+	if (not isHelperDroidEnabled()) then
+		return
+	end
+
 	if (pPlayer == nil) then
 		return
 	end
@@ -640,6 +684,10 @@ function HelperDroidQuest:weaponCallback(pPlayer, pSui, eventIndex, ...)
 end
 
 function HelperDroidQuest:givePlayerWeapon(pPlayer, weapon)
+	if (not isHelperDroidEnabled()) then
+		return
+	end
+
 	if (pPlayer == nil) then
 		return
 	end
@@ -680,6 +728,10 @@ function HelperDroidQuest:givePlayerWeapon(pPlayer, weapon)
 end
 
 function HelperDroidQuest:grantMedicResources(pPlayer)
+	if (not isHelperDroidEnabled()) then
+		return
+	end
+
 	if (pPlayer == nil or not SceneObject(pPlayer):isCreatureObject()) then
 		return
 	end
@@ -692,7 +744,14 @@ end
 
 -- ========= Observer Handlers ==========
 
+-- A disabled helper pauses these observers without discarding quest progress.
+-- Returning zero keeps the observer available when the helper is enabled again.
+
 function HelperDroidQuest:notifyKilledCreature(pPlayer, pVictim)
+	if (not isHelperDroidEnabled()) then
+		return 0
+	end
+
 	if (pPlayer == nil) then
 		return 1
 	end
@@ -754,6 +813,10 @@ function HelperDroidQuest:notifyKilledCreature(pPlayer, pVictim)
 end
 
 function HelperDroidQuest:notifyAbilityUsed(pPlayer, pTarget, abilityHash)
+	if (not isHelperDroidEnabled()) then
+		return 0
+	end
+
 	if (pPlayer == nil) then
 		return 1
 	end
@@ -852,6 +915,10 @@ function HelperDroidQuest:notifyAbilityUsed(pPlayer, pTarget, abilityHash)
 end
 
 function HelperDroidQuest:notifyCreatureHarvested(pPlayer, pResourceSpawn, totalResources)
+	if (not isHelperDroidEnabled()) then
+		return 0
+	end
+
 	if (pPlayer == nil or pResourceSpawn == nil) then
 		return 1
 	end
@@ -921,6 +988,10 @@ function HelperDroidQuest:notifyCreatureHarvested(pPlayer, pResourceSpawn, total
 end
 
 function HelperDroidQuest:notifyObjectCrafted(pPlayer, pItem, practice)
+	if (not isHelperDroidEnabled()) then
+		return 0
+	end
+
 	if (pPlayer == nil or pItem == nil) then
 		return 0
 	end
@@ -980,6 +1051,10 @@ function HelperDroidQuest:notifyObjectCrafted(pPlayer, pItem, practice)
 end
 
 function HelperDroidQuest:notifyCampDeployed(pPlayer, pCampArea)
+	if (not isHelperDroidEnabled()) then
+		return 0
+	end
+
 	if (pPlayer == nil or pCampArea == nil) then
 		return 0
 	end
@@ -999,6 +1074,10 @@ function HelperDroidQuest:notifyCampDeployed(pPlayer, pCampArea)
 end
 
 function HelperDroidQuest:notifySurvey(pPlayer, pResourceSpawn, density)
+	if (not isHelperDroidEnabled()) then
+		return 0
+	end
+
 	if (pPlayer == nil or pResourceSpawn == nil) then
 		return 1
 	end
@@ -1022,6 +1101,10 @@ function HelperDroidQuest:notifySurvey(pPlayer, pResourceSpawn, density)
 end
 
 function HelperDroidQuest:notifySampleTaken(pPlayer, pResourceSpawn, unitsSampled)
+	if (not isHelperDroidEnabled()) then
+		return 0
+	end
+
 	if (pPlayer == nil or pResourceSpawn == nil) then
 		return 1
 	end
@@ -1071,6 +1154,10 @@ function HelperDroidQuest:notifySampleTaken(pPlayer, pResourceSpawn, unitsSample
 end
 
 function HelperDroidQuest:notifyEntertaining(pPlayer, pPlayer2)
+	if (not isHelperDroidEnabled()) then
+		return 0
+	end
+
 	if (pPlayer == nil) then
 		return 0
 	end
@@ -1097,6 +1184,10 @@ function HelperDroidQuest:notifyEntertaining(pPlayer, pPlayer2)
 end
 
 function HelperDroidQuest:notifyFlourishing(pPlayer, flourishID)
+	if (not isHelperDroidEnabled()) then
+		return 0
+	end
+
 	if (pPlayer == nil) then
 		return 0
 	end
@@ -1116,6 +1207,10 @@ function HelperDroidQuest:notifyFlourishing(pPlayer, flourishID)
 end
 
 function HelperDroidQuest:notifyParentChanged(pPlayer, pParent)
+	if (not isHelperDroidEnabled()) then
+		return 0
+	end
+
 	if (pPlayer == nil or pParent == nil) then
 		return 0
 	end
@@ -1151,6 +1246,10 @@ function HelperDroidQuest:notifyParentChanged(pPlayer, pParent)
 end
 
 function HelperDroidQuest:notifyNewPatron(pPlayer, pPatron)
+	if (not isHelperDroidEnabled()) then
+		return 0
+	end
+
 	if (pPlayer == nil or pPatron == nil) then
 		return 0
 	end
@@ -1192,6 +1291,10 @@ function HelperDroidQuest:notifyNewPatron(pPlayer, pPatron)
 end
 
 function HelperDroidQuest:notifyImageDesign(pPlayer)
+	if (not isHelperDroidEnabled()) then
+		return 0
+	end
+
 	if (pPlayer == nil) then
 		return 0
 	end
@@ -1214,6 +1317,10 @@ end
 -- ========= Reward Generation, Experience and Credits ==========
 
 function HelperDroidQuest:giveReward(pPlayer, profession)
+	if (not isHelperDroidEnabled()) then
+		return
+	end
+
 	if (pPlayer == nil) then
 		return
 	end
@@ -1371,6 +1478,10 @@ function HelperDroidQuest:giveReward(pPlayer, profession)
 end
 
 function HelperDroidQuest:grantFireWorksReward(pDroid, pPlayer)
+	if (not isHelperDroidEnabled()) then
+		return
+	end
+
 	if (pDroid == nil or pPlayer == nil) then
 		return
 	end
@@ -1397,6 +1508,10 @@ function HelperDroidQuest:grantFireWorksReward(pDroid, pPlayer)
 end
 
 function HelperDroidQuest:grantCouponReward(pDroid, pPlayer, couponString)
+	if (not isHelperDroidEnabled()) then
+		return
+	end
+
 	if (pDroid == nil or pPlayer == nil) then
 		return
 	end

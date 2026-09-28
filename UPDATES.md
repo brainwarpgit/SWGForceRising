@@ -2,6 +2,12 @@
 
 ## 2026-09-27
 
+### Committed helper droid configuration and login lifecycle
+
+- Added `Core3.HelperDroid.Enabled` and `Core3.HelperDroid.AutoCallOnZone` together in both configuration files, with shared defaults enabled and the user's local settings preserved. With zone auto-calls off, the initial planet arrival and six novice-profession triggers still call the helper; later login/travel/zoning does not recall it. Existing age limits apply to those automatic summons.
+- When disabled, login now removes the helper and its datapad device, clears its ship assignments, and preserves quest progress. When enabled, a missing helper is restored on login as a stored device, including for older characters, unless that player manually deleted it. Confirmed manual deletion is remembered across logins and prevents automatic replacement. The user chose to give a stored helper to older characters whose previous deletion history is unknown.
+- The user verified the earlier behavior: first-planet spawning, no recall after travel or logout/login with auto-calls off, calling after a new novice box, and no calls when disabled. The user subsequently confirmed everything is verified, including the final login deletion/restoration and manual opt-out changes, and requested this commit. This overall confirmation supersedes the pending runtime checklist; no necessary verification remains. All 218 standalone lifecycle, cleanup, ship, and Lua checks pass, along with configuration syntax and source/whitespace review; the assistant has not built or run Core3.
+
 ### Committed Empty Mail Target command-browser assets
 
 - Added the missing English `cmd_n:emptymailtarget` name, **Empty Mail Target**, and `cmd_d:emptymailtarget` description explaining mailbox deletion for a selected player or specified first name, with `/emptyMail` for the admin's own mailbox.

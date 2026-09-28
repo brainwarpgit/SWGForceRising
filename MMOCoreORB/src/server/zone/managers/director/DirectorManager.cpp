@@ -296,6 +296,35 @@ uint64 DirectorManager::readSharedMemory(const String& key) {
 	return data;
 }
 
+void DirectorManager::setSharedMemoryValue(const String& key, uint64 value) {
+#ifndef WITH_STM
+	DirectorManager::instance()->wlock();
+#endif
+
+	DirectorManager::instance()->sharedMemory->put(key, value);
+
+#ifndef WITH_STM
+	DirectorManager::instance()->unlock();
+#endif
+}
+
+bool DirectorManager::removeSharedMemoryValueIfEqual(const String& key, uint64 expectedValue) {
+#ifndef WITH_STM
+	DirectorManager::instance()->wlock();
+#endif
+
+	const bool matches = DirectorManager::instance()->sharedMemory->get(key) == expectedValue;
+
+	if (matches)
+		DirectorManager::instance()->sharedMemory->remove(key);
+
+#ifndef WITH_STM
+	DirectorManager::instance()->unlock();
+#endif
+
+	return matches;
+}
+
 Vector<String> DirectorManager::readStringVectorSharedMemory(const String& key) {
 #ifndef WITH_STM
 	DirectorManager::instance()->rlock();
@@ -547,6 +576,7 @@ void DirectorManager::initializeLuaEngine(Lua* luaEngine) {
 	luaEngine->registerFunction("getWorldFloor", getWorldFloor);
 	luaEngine->registerFunction("useCovertOvert", useCovertOvert);
 	luaEngine->registerFunction("drawClientPath", drawClientPath);
+	luaEngine->registerFunction("isHelperDroidEnabled", isHelperDroidEnabled);
 
 	// JTL
 	luaEngine->registerFunction("generateShipDeed", generateShipDeed);
@@ -5102,6 +5132,12 @@ int DirectorManager::sellSpaceLoot(lua_State* L) {
 	trx.commit();
 
 	return 0;
+}
+
+int DirectorManager::isHelperDroidEnabled(lua_State* L) {
+	lua_pushboolean(L, ConfigManager::instance()->isHelperDroidEnabled());
+
+	return 1;
 }
 
 int DirectorManager::isJtlEnabled(lua_State* L) {

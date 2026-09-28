@@ -95,6 +95,8 @@ namespace server {
 
 		String readStringSharedMemory(const String& key);
 		uint64 readSharedMemory(const String& key);
+		void setSharedMemoryValue(const String& key, uint64 value);
+		bool removeSharedMemoryValueIfEqual(const String& key, uint64 expectedValue);
 		Vector3 readVector3SharedMemory(const String& key);
 		Vector<String> readStringVectorSharedMemory(const String& key);
 
@@ -227,6 +229,7 @@ namespace server {
 		static int getWorldFloor(lua_State* L);
 		static int useCovertOvert(lua_State* L);
 		static int drawClientPath(lua_State* L);
+		static int isHelperDroidEnabled(lua_State* L);
 
 		// JTL
 		static int generateShipDeed(lua_State* L);

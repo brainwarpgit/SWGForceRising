@@ -8,6 +8,7 @@
 #include "server/zone/objects/scene/SceneObject.h"
 #include "server/zone/objects/creature/CreatureObject.h"
 #include "server/zone/objects/player/PlayerObject.h"
+#include "server/zone/objects/player/HelperDroidCleanup.h"
 #include "server/zone/objects/tangible/tool/antidecay/AntiDecayKit.h"
 #include "server/zone/managers/auction/AuctionsMap.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
@@ -149,13 +150,30 @@ public:
 				trx.exportRelated();
 			}
 
-			destroyObject(object, creature);
+			if (!destroyObject(object, creature))
+				return GENERALERROR;
 		}
 
 		return SUCCESS;
 	}
 
-	void destroyObject(SceneObject* object, CreatureObject* creature) const {
+	bool destroyObject(SceneObject* object, CreatureObject* creature) const {
+		if (HelperDroidCleanup::isHelperDevice(object)) {
+			auto ghost = creature != nullptr ? creature->getPlayerObject() : nullptr;
+			auto device = dynamic_cast<PetControlDevice*>(object);
+
+			if (ghost == nullptr || !HelperDroidCleanup::remove(creature, device))
+				return false;
+
+			// Only the successful player deletion command records this opt-out.
+			// Disabled-feature cleanup must leave the helper eligible for restoration.
+			ghost->setScreenPlayData("HelperDroid", "manuallyDeleted", "1");
+			ghost->updateToDatabase();
+		} else {
+			object->destroyObjectFromWorld(true);
+			object->destroyObjectFromDatabase(true);
+		}
+
 		if (creature != nullptr) {
 			StringIdChatParameter message("shared", "rsp_object_deleted_prose"); // You have destroyed %TT (%TO).
 
@@ -164,8 +182,7 @@ public:
 			creature->sendSystemMessage(message);
 		}
 
-		object->destroyObjectFromWorld(true);
-		object->destroyObjectFromDatabase(true);
+		return true;
 	}
 };
 

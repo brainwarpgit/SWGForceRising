@@ -3,6 +3,7 @@
 		See file COPYING for copying conditions. */
 
 #include "server/zone/objects/creature/ai/HelperDroidObject.h"
+#include "conf/ConfigManager.h"
 #include "server/zone/packets/object/ObjectMenuResponse.h"
 #include "server/zone/ZoneServer.h"
 #include "server/chat/ChatManager.h"
@@ -23,6 +24,11 @@ int HelperDroidObjectImplementation::handleObjectMenuSelect(CreatureObject* play
 	if (selectedID != 59) {
 		if (player == nullptr)
 			return 0;
+
+		if (!ConfigManager::instance()->isHelperDroidEnabled()) {
+			player->sendSystemMessage("Helper droids are disabled on this server.");
+			return 0;
+		}
 
 		Lua* lua = DirectorManager::instance()->getLuaInstance();
 
@@ -133,6 +139,10 @@ void HelperDroidObjectImplementation::fillObjectMenuResponse(ObjectMenuResponse*
 		menuResponse->addRadialMenuItem(132, 3, "@pet/pet_menu:droid_options");
 		menuResponse->addRadialMenuItemToRadialID(132, 59, 3, "@pet/pet_menu:menu_store"); // Store
 
+		if (!ConfigManager::instance()->isHelperDroidEnabled()) {
+			return;
+		}
+
 		// Starship Pilot Help
 		menuResponse->addRadialMenuItem(181, 3, "@new_player:menu_space");
 		menuResponse->addRadialMenuItemToRadialID(181, 182, 3, "@new_player:space_option_how_to_find_ship");
@@ -166,6 +176,10 @@ void HelperDroidObjectImplementation::fillObjectMenuResponse(ObjectMenuResponse*
 }
 
 void HelperDroidObjectImplementation::onCall() {
+	if (!ConfigManager::instance()->isHelperDroidEnabled()) {
+		return;
+	}
+
 	Lua* lua = DirectorManager::instance()->getLuaInstance();
 
 	if (lua == nullptr)
@@ -185,7 +199,7 @@ void HelperDroidObjectImplementation::onCall() {
 }
 
 void HelperDroidObjectImplementation::notifyHelperDroidSkillTrained(CreatureObject* player, const String& skillString) {
-	if (player == nullptr)
+	if (player == nullptr || !ConfigManager::instance()->isHelperDroidEnabled())
 		return;
 
 	Lua* lua = DirectorManager::instance()->getLuaInstance();

@@ -1,3 +1,6 @@
+#ifndef STOREPETTASK_H_
+#define STOREPETTASK_H_
+
 /*
  * StorePetTask.h
  *
@@ -34,3 +37,5 @@ public:
 
 	void run();
 };
+
+#endif // STOREPETTASK_H_

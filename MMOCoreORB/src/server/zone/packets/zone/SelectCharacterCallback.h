@@ -17,6 +17,8 @@
 #include "server/zone/packets/creature/CreatureObjectDeltaMessage6.h"
 #include "server/zone/objects/creature/CreatureObject.h"
 #include "server/zone/objects/player/PlayerObject.h"
+#include "server/zone/objects/player/HelperDroidCleanup.h"
+#include "server/zone/objects/player/events/SpawnHelperDroidTask.h"
 #include "server/chat/ChatManager.h"
 #include "server/zone/objects/player/events/DisconnectClientEvent.h"
 #include "server/zone/managers/collision/CollisionManager.h"
@@ -406,6 +408,31 @@ public:
 		}
 
 		SkillModManager::instance()->verifyWearableSkillMods(player);
+
+		// Reconcile helpers synchronously before taking the pet-storage snapshot.
+		// Cleanup must not leave a queued storage task referring to a deleted helper.
+		ghost->deleteScreenPlayData("HelperDroid", "loginProvisioned");
+
+		if (!ConfigManager::instance()->isHelperDroidEnabled()) {
+			auto datapad = player->getSlottedObject("datapad");
+			Vector<ManagedReference<PetControlDevice*>> helpers;
+
+			if (datapad != nullptr) {
+				for (int i = 0; i < datapad->getContainerObjectsSize(); ++i) {
+					auto device = datapad->getContainerObject(i);
+
+					if (HelperDroidCleanup::isHelperDevice(device))
+						helpers.add(device.castTo<PetControlDevice*>());
+				}
+			}
+
+			for (int i = 0; i < helpers.size(); ++i)
+				HelperDroidCleanup::remove(player, helpers.get(i));
+		} else {
+			// A login replacement is stored, including for older characters.
+			Reference<SpawnHelperDroidTask*> helperTask = new SpawnHelperDroidTask(player, false, true);
+			helperTask->run();
+		}
 
 		// Store all of the players spawned children: Pets & vehicles, except ships (bool)
 		ghost->unloadSpawnedChildren(true);

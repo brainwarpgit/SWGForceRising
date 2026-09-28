@@ -6,6 +6,9 @@
 #ifndef DROID_H_
 #define DROID_H_
 
+#include "conf/ConfigManager.h"
+#include "server/zone/managers/creature/PetManager.h"
+#include "server/zone/objects/intangible/PetControlDevice.h"
 #include "server/zone/managers/ship/ShipManager.h"
 #include "server/zone/managers/ship/DroidCommandData.h"
 #include "server/zone/managers/stringid/StringIdManager.h"
@@ -78,6 +81,15 @@ public:
 		// no droid
 		if (droidControlDevice == nullptr) {
 			creature->sendSystemMessage("@space/space_interaction:droid_command_fail_no_droid");
+			return GENERALERROR;
+		}
+
+		auto petControl = dynamic_cast<PetControlDevice*>(droidControlDevice);
+		auto controlledDroid = petControl != nullptr ? petControl->getControlledObject() : nullptr;
+		if (!ConfigManager::instance()->isHelperDroidEnabled() && petControl != nullptr &&
+			(petControl->getPetType() == PetManager::HELPERDROIDPET ||
+			 (controlledDroid != nullptr && controlledDroid->isHelperDroidObject()))) {
+			creature->sendSystemMessage("Helper droids are disabled on this server.");
 			return GENERALERROR;
 		}
 

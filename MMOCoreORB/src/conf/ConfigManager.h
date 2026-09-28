@@ -574,6 +574,14 @@ namespace conf {
 			return getBool("Core3.CharacterBuilderEnabled", false);
 		}
 
+		inline bool isHelperDroidEnabled() {
+			return getBool("Core3.HelperDroid.Enabled", true);
+		}
+
+		inline bool isHelperDroidAutoCallOnZoneEnabled() {
+			return getBool("Core3.HelperDroid.AutoCallOnZone", true);
+		}
+
 		inline int getPlayerLogLevel() {
 			return getInt("Core3.PlayerLogLevel", Logger::INFO);
 		}

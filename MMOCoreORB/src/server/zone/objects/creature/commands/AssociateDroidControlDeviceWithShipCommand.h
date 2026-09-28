@@ -5,6 +5,8 @@
 #ifndef ASSOCIATEDROIDCONTROLDEVICEWITHSHIPCOMMAND_H_
 #define ASSOCIATEDROIDCONTROLDEVICEWITHSHIPCOMMAND_H_
 
+#include "conf/ConfigManager.h"
+#include "server/zone/managers/creature/PetManager.h"
 #include "server/zone/objects/ship/ShipDroidData.h"
 #include "server/zone/objects/intangible/PetControlDevice.h"
 #include "server/zone/objects/creature/ai/DroidObject.h"
@@ -74,6 +76,14 @@ public:
 		auto droidControl = dynamic_cast<PetControlDevice*>(control.get());
 
 		if (droidControl == nullptr || !droidControl->isASubChildOf(creature)) {
+			return GENERALERROR;
+		}
+
+		auto controlledDroid = droidControl->getControlledObject();
+		if (!ConfigManager::instance()->isHelperDroidEnabled() &&
+			(droidControl->getPetType() == PetManager::HELPERDROIDPET ||
+			 (controlledDroid != nullptr && controlledDroid->isHelperDroidObject()))) {
+			creature->sendSystemMessage("Helper droids are disabled on this server.");
 			return GENERALERROR;
 		}
 

@@ -1,4 +1,5 @@
 #include "server/zone/objects/intangible/PetControlDevice.h"
+#include "conf/ConfigManager.h"
 #include "server/zone/objects/intangible/PetControlObserver.h"
 #include "server/zone/objects/intangible/tasks/EnqueuePetCommand.h"
 #include "server/zone/managers/creature/PetManager.h"
@@ -78,6 +79,11 @@ void PetControlDeviceImplementation::callObject(CreatureObject* player, bool ini
 	ManagedReference<TangibleObject*> controlledObject = this->controlledObject.get();
 
 	if (controlledObject == nullptr || !controlledObject->isAiAgent()) {
+		return;
+	}
+
+	if ((petType == PetManager::HELPERDROIDPET || controlledObject->isHelperDroidObject()) && !ConfigManager::instance()->isHelperDroidEnabled()) {
+		player->sendSystemMessage("Helper droids are disabled on this server.");
 		return;
 	}
 
@@ -400,6 +406,11 @@ void PetControlDeviceImplementation::spawnObject(CreatureObject* player) {
 
 	if (controlledObject == nullptr)
 		return;
+
+	// Recheck when a delayed pet call completes as well as on the initial call.
+	if ((petType == PetManager::HELPERDROIDPET || controlledObject->isHelperDroidObject()) && !ConfigManager::instance()->isHelperDroidEnabled()) {
+		return;
+	}
 
 	assert(controlledObject->isLockedByCurrentThread());
 

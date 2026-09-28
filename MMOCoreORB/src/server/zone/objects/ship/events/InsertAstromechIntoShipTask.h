@@ -5,6 +5,8 @@
 #ifndef INSERTASTROMECHINTOSHIPTASK_H_
 #define INSERTASTROMECHINTOSHIPTASK_H_
 
+#include "conf/ConfigManager.h"
+#include "server/zone/managers/creature/PetManager.h"
 #include "server/zone/objects/intangible/PetControlDevice.h"
 #include "server/zone/objects/intangible/tasks/PetControlDeviceStoreTask.h"
 #include "server/zone/objects/creature/ai/DroidObject.h"
@@ -64,6 +66,20 @@ public:
 
 		Locker sLock(ship);
 		Locker cLock(droidObject, ship);
+
+		// An assignment or its device can be removed while this task waits
+		// for the ship/droid locks. Do not reinsert a deleted or replaced droid.
+		if (ship->getShipDroidID() != droidControlDevice->getObjectID() ||
+			!droidControlDevice->isASubChildOf(player) ||
+			droidControlDevice->getControlledObject() != droidObject) {
+			return;
+		}
+
+		// Saved and already queued assignments must also respect the master switch.
+		if (!ConfigManager::instance()->isHelperDroidEnabled() &&
+			(droidControlDevice->getPetType() == PetManager::HELPERDROIDPET || droidObject->isHelperDroidObject())) {
+			return;
+		}
 
 		droidObject->setMovementCounter(0);
 		droidObject->setDirection(1,0,0,0);

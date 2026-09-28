@@ -278,6 +278,19 @@ Core3 = {
 		LinkDeadDelay = 180,
 	},
 
+	HelperDroid = {
+		-- Master switch for player helpers, including manual calls, help, and quests.
+		-- Disabling deletes helpers and their datapad devices on login; quests remain.
+		-- Enabling restores missing helpers on login, stored, unless manually deleted.
+		Enabled = true,
+		-- Recall an existing helper after ground login/travel/zoning.
+		-- When false, still call a new helper on the first planet arrival and
+		-- when learning Novice Artisan/Brawler/Entertainer/Marksman/Scout/Medic.
+		-- These automatic calls keep the existing new-player eligibility rules.
+		-- Login replacements stay stored regardless of this setting.
+		AutoCallOnZone = true,
+	},
+
 	-- Combat, missions, factions, and items
 	PvpMode = false,
 	JTL = {

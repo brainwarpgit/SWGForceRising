@@ -2,6 +2,7 @@
  				Copyright <SWGEmu>
 		See file COPYING for copying conditions. */
 
+#include "conf/ConfigManager.h"
 #include "server/zone/objects/creature/CreatureObject.h"
 #include "server/zone/objects/creature/ai/AiAgent.h"
 #include "server/zone/objects/creature/ai/HelperDroidObject.h"
@@ -1542,10 +1543,10 @@ void CreatureObjectImplementation::addSkill(Skill* skill, bool notifyClient) {
 			}
 		}
 
-		if (shouldSpawnHelper) {
+		if (shouldSpawnHelper && ConfigManager::instance()->isHelperDroidEnabled()) {
 			PlayerObject* ghost = getPlayerObject();
 
-			if (ghost != nullptr && ghost->getCharacterAgeInDays() < 1) {
+			if (ghost != nullptr && ghost->getCharacterAgeInDays() < 1 && ghost->getScreenPlayData("HelperDroid", "manuallyDeleted") != "1") {
 				bool helperDroidSpawned = false;
 
 				Locker lock(ghost);
