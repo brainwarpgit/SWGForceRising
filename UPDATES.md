@@ -2,6 +2,12 @@
 
 ## 2026-09-27
 
+### Committed character tutorial room and item-box fix
+
+- Corrected two misspelled room-name checks that made the tutorial ignore the player's current room and completed rooms. This restores the introductory sequence and the officer-conversation step that grants access to the starting-item box.
+- Static verification passed: all 34 standalone tutorial checks, syntax checks for all 12 tutorial screenplay files, source/permission-path review, and whitespace checks. The standalone test reproduces the original room-detection failure against the pre-fix commit.
+- The user confirmed the tutorial is verified and requested the commit after receiving the introductory-prompt, officer/box, and inventory-progression checklist. This overall runtime confirmation supersedes the pending checks; no necessary verification remains. This Lua-only fix requires no Core3 compilation or client TRE update. The assistant has not built or run Core3.
+
 ### Committed helper droid configuration and login lifecycle
 
 - Added `Core3.HelperDroid.Enabled` and `Core3.HelperDroid.AutoCallOnZone` together in both configuration files, with shared defaults enabled and the user's local settings preserved. With zone auto-calls off, the initial planet arrival and six novice-profession triggers still call the helper; later login/travel/zoning does not recall it. Existing age limits apply to those automatic summons.
