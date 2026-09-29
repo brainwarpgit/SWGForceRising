@@ -52,7 +52,8 @@ public:
 		if (ownerGhost == nullptr || guildObject == nullptr)
 			return;
 
-		if (player->getPlayerObject()->getLotsRemaining() < 5) {
+		if (ownerGhost->getAccountID() != player->getPlayerObject()->getAccountID() &&
+				!player->getPlayerObject()->hasLotsRemaining(buildingObject->getLotSize())) {
 			player->sendSystemMessage("@guild:no_lots"); // You don't have enough lots free to take over the PA hall. You need to have 5 free lots.
 			return;
 		}

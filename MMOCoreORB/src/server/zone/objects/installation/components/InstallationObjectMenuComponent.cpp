@@ -28,6 +28,10 @@ void InstallationObjectMenuComponent::fillObjectMenuResponse(SceneObject* sceneO
 	menuResponse->addRadialMenuItemToRadialID(118, 128, 3, "@player_structure:permission_destroy"); //Destroy Structure
 	menuResponse->addRadialMenuItemToRadialID(118, 124, 3, "@player_structure:management_status"); //Status
 	menuResponse->addRadialMenuItemToRadialID(118, 129, 3, "@player_structure:management_pay"); //Pay Maintenance
+
+	if (StructureManager::instance()->canTakeOwnership(player, installation))
+		menuResponse->addRadialMenuItemToRadialID(118, 240, 3, "Take Ownership");
+
 	ManagedReference<SceneObject*> datapad = player->getSlottedObject("datapad");
 	if(datapad != nullptr) {
 		for (int i = 0; i < datapad->getContainerObjectsSize(); ++i) {
@@ -65,6 +69,9 @@ int InstallationObjectMenuComponent::handleObjectMenuSelect(SceneObject* sceneOb
 
 	if (zone == nullptr)
 		return 1;
+
+	if (selectedID == 240)
+		return StructureManager::instance()->takeOwnership(player, installation);
 
 	if (!installation->isOnAdminList(player))
 		return 1;

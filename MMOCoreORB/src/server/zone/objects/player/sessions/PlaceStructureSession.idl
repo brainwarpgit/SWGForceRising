@@ -24,6 +24,7 @@ class PlaceStructureSession extends Facade {
 	protected float positionY;
 
 	protected int directionAngle;
+	protected transient unsigned long lotReservation;
 
 	@weakReference
 	protected SceneObject constructionBarricade;
@@ -47,11 +48,14 @@ class PlaceStructureSession extends Facade {
 		positionY = 0;
 
 		directionAngle = 0;
+		lotReservation = 0;
 
 		constructionBarricade = null;
 
 		temporaryNoBuildZone = null;
 	}
+
+	public native void initializeTransientMembers();
 
 	public int initializeSession() {
 		return 0;
@@ -65,16 +69,9 @@ class PlaceStructureSession extends Facade {
 
 	public native int completeSession();
 
-	public int cancelSession() {
-		CreatureObject creature = creatureObject;
-
-		if (creature)
-			creature.dropActiveSession(SessionFacadeType.PLACESTRUCTURE);
-
-		return 0;
-	}
+	public native int cancelSession();
 
 	public int clearSession() {
-		return 0;
+		return cancelSession();
 	}
 }

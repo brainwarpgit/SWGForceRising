@@ -9,6 +9,7 @@
 #include "server/zone/objects/region/CityRegion.h"
 #include "server/zone/managers/city/CityManager.h"
 #include "server/zone/managers/player/PlayerManager.h"
+#include "server/zone/managers/structure/StructureManager.h"
 #include "templates/tangible/SharedStructureObjectTemplate.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
 
@@ -122,7 +123,8 @@ public:
 
 	// pre: creature, targetCreature, and structure are not locked
 	// bForceTransfer = whether or not to force the transfer. This means do the transfer even if the target is offline or out of range, or if the old owner is nullptr
-	static int doTransferStructure(CreatureObject* creature, CreatureObject* targetCreature, StructureObject* structure, bool bForceTransfer = false){
+	// accountTakeover is the same-account radial: it never bypasses residence or transfer eligibility.
+	static int doTransferStructure(CreatureObject* creature, CreatureObject* targetCreature, StructureObject* structure, bool bForceTransfer = false, bool accountTakeover = false){
 		if (targetCreature == nullptr || structure == nullptr)
 			return GENERALERROR;
 
@@ -130,11 +132,21 @@ public:
 		if (targetGhost == nullptr)
 			return GENERALERROR;
 
-		ManagedReference<PlayerObject*> ghost = nullptr;
-
-		if (creature != nullptr) {
-			ghost = creature->getPlayerObject().get();
+		const uint64 previousOwnerID = structure->getOwnerObjectID();
+		if (previousOwnerID == targetCreature->getObjectID()) {
+			if (creature != nullptr)
+				creature->sendSystemMessage("@player_structure:already_owner");
+			return GENERALERROR;
 		}
+		ManagedReference<CreatureObject*> previousOwner = structure->getOwnerCreatureObject();
+		if (previousOwner != nullptr && previousOwner->getObjectID() != previousOwnerID)
+			return GENERALERROR;
+		ManagedReference<PlayerObject*> ghost = previousOwner == nullptr ? nullptr : previousOwner->getPlayerObject().get();
+		auto structureManager = StructureManager::instance();
+		if (accountTakeover && (creature != targetCreature || ghost == nullptr
+				|| !structureManager->canTakeOwnership(targetCreature, structure)
+				|| ghost->getDeclaredResidence() == structure->getObjectID()))
+			return GENERALERROR;
 
 		if (!bForceTransfer && (creature == nullptr || ghost == nullptr)) {
 			return GENERALERROR;
@@ -149,8 +161,10 @@ public:
 		}
 
 		int lotSize = structure->getLotSize();
+		uint64 lotReservation = structureManager->reserveAccountLots(targetGhost, lotSize, structure->getObjectID());
+		StructureManager::LotReservationGuard reservationGuard(structureManager, lotReservation);
 
-		if (!targetGhost->hasLotsRemaining(lotSize)) {
+		if (lotReservation == 0) {
 			if ( !bForceTransfer) {
 				StringIdChatParameter params("@player_structure:not_able_to_own"); //%NT is not able to own this structure.
 				params.setTT(targetCreature->getObjectID());
@@ -172,7 +186,7 @@ public:
 			Locker locker(region);
 
 			if (region->isBanned(targetCreature->getObjectID())) {
-				creature->sendSystemMessage("@city/city:cant_transfer_to_city_banned"); //You cannot transfer ownership of a structure to someone who is banned from the city in which the structure resides.
+				targetCreature->sendSystemMessage("@city/city:cant_transfer_to_city_banned"); //You cannot transfer ownership of a structure to someone who is banned from the city in which the structure resides.
 				return GENERALERROR;
 			}
 
@@ -182,16 +196,19 @@ public:
 				return GENERALERROR;
 			}
 
-			if (ghost->getDeclaredResidence() == structure->getObjectID()) {
-				CityManager* cityManager = creature->getZoneServer()->getCityManager();
-				cityManager->unregisterCitizen(region, creature);
-			}
-
 			locker.release();
 		}
 
 		Locker targetLock(targetCreature);
 		Locker clocker(structure, targetCreature);
+		if (structure->isPendingDestruction() || structure->getOwnerObjectID() != previousOwnerID || structure->getLotSize() != lotSize)
+			return GENERALERROR;
+		if (accountTakeover && (!structureManager->canTakeOwnership(targetCreature, structure)
+				|| ghost->getDeclaredResidence() == structure->getObjectID()))
+			return GENERALERROR;
+
+		// Ownership and the pending charge change together in the account ledger.
+		structure->setOwner(targetCreature->getObjectID(), lotReservation);
 
 		TransactionLog trx(creature, targetCreature, structure, TrxCode::TRANSFERSTRUCT);
 		trx.addState("surplusMaintenance", structure->getSurplusMaintenance());
@@ -199,12 +216,11 @@ public:
 		trx.addRelatedObject(structure->getObjectID(), true);
 		trx.setExportRelatedObjects(true);
 
+		bool wasDeclaredResidence = false;
 		if (ghost != nullptr) {
-			Locker lock(creature);
-
+			Locker ghostLock(ghost);
+			wasDeclaredResidence = ghost->getDeclaredResidence() == structure->getObjectID();
 			ghost->removeOwnedStructure(structure);
-
-			lock.release();
 		}
 
 		targetGhost->addOwnedStructure(structure);
@@ -213,10 +229,8 @@ public:
 		structure->revokeAllPermissions(targetCreature->getObjectID());
 		structure->grantPermission("ADMIN", targetCreature->getObjectID());
 
-		structure->setOwner(targetCreature->getObjectID());
-
-		if (creature != nullptr)
-			structure->revokePermission("ADMIN", creature->getObjectID());
+		if (previousOwnerID != targetCreature->getObjectID())
+			structure->revokePermission("ADMIN", previousOwnerID);
 
 		//Update the cell permissions if the structure is private and a building.
 		if (structure->isBuildingObject()) {
@@ -224,12 +238,18 @@ public:
 
 			buildingObject->setResidence(false);
 
-			if (!structure->isPublicStructure()) {
-				buildingObject->updateCellPermissionsTo(targetCreature);
+			if (!structure->isPublicStructure())
+				buildingObject->broadcastCellPermissions();
+		}
 
-				if (creature != nullptr)
-					buildingObject->updateCellPermissionsTo(creature);
-			}
+		clocker.release();
+		targetLock.release();
+
+		// A rejected or superseded transfer must not remove city citizenship.
+		if (region != nullptr && wasDeclaredResidence) {
+			Locker locker(region);
+			CityManager* cityManager = targetCreature->getZoneServer()->getCityManager();
+			cityManager->unregisterCitizen(region, previousOwner);
 		}
 
 		if (creature != nullptr && !bForceTransfer) {

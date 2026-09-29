@@ -35,11 +35,7 @@ class DestroyStructureSession extends Facade {
 	public native int sendDestroyCode();
 	public native int destroyStructure();
 	
-	public int cancelSession() {
-		creatureObject.dropActiveSession(SessionFacadeType.DESTROYSTRUCTURE);
-		
-		return 0;
-	}
+	public native int cancelSession();
 	
 	public int clearSession() {
 		return 0;

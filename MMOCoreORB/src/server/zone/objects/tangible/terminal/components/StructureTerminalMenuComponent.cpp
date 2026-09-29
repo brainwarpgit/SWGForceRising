@@ -67,6 +67,9 @@ void StructureTerminalMenuComponent::fillObjectMenuResponse(SceneObject* sceneOb
 		menuResponse->addRadialMenuItemToRadialID(118, 124, 3, "@player_structure:management_status"); //Status
 		menuResponse->addRadialMenuItemToRadialID(118, 129, 3, "@player_structure:management_pay"); //Pay Maintenance
 
+		if (StructureManager::instance()->canTakeOwnership(creature, structureObject.get()))
+			menuResponse->addRadialMenuItemToRadialID(118, 240, 3, "Take Ownership");
+
 		if (structureObject->isGuildHall()) {
 			menuResponse->addRadialMenuItemToRadialID(118, 70, 3, "@player_structure:take_maintenance"); // Withdraw Maintenance
 		}
@@ -179,6 +182,9 @@ int StructureTerminalMenuComponent::handleObjectMenuSelect(SceneObject* sceneObj
 
 		return 0;
 	}
+
+	if (selectedID == 240)
+		return StructureManager::instance()->takeOwnership(creature, structureObject.get());
 
 	if (structureObject->isOnAdminList(creature)) {
 

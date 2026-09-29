@@ -47,10 +47,13 @@ public:
 		if (ghost == nullptr)
 			return GENERALERROR;
 
-		if (!ghost->isOwnedStructure(structure) && !ghost->isStaff()) {
+		if (!structure->isOwnedByAccount(creature) && !ghost->isStaff()) {
 			creature->sendSystemMessage("@player_structure:destroy_must_be_owner"); //You must be the owner to destroy a structure.
 			return INVALIDTARGET;
 		}
+
+		if (structure->isPendingDestruction())
+			return INVALIDTARGET;
 
 		if (structure->isGCWBase() && !ghost->isStaff()) {
 			ManagedReference<Zone*> zone = creature->getZone();
@@ -68,7 +71,7 @@ public:
 			if (buildingObject == nullptr)
 				return GENERALERROR;
 
-			if (((structure->getPvpStatusBitmask() & ObjectFlag::OVERT) && gcwMan->isBaseVulnerable(buildingObject)) || (structure->getOwnerCreatureObject() != creature))
+			if ((structure->getPvpStatusBitmask() & ObjectFlag::OVERT) && gcwMan->isBaseVulnerable(buildingObject))
 				return INVALIDTARGET;
 		}
 

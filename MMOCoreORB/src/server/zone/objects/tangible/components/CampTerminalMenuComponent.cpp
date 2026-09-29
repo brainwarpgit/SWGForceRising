@@ -57,8 +57,6 @@ void CampTerminalMenuComponent::fillObjectMenuResponse(SceneObject* sceneObject,
 
 	menuResponse->addRadialMenuItem(RadialOptions::SERVER_MENU1, 3, "@camp:mnu_status");
 
-	uint64 campOwnerID = camp->getOwnerObjectID();
-
 	SortedVector<ManagedReference<ActiveArea*>>* areas = camp->getActiveAreas();
 	ManagedReference<CampSiteActiveArea*> campArea = nullptr;
 
@@ -79,7 +77,7 @@ void CampTerminalMenuComponent::fillObjectMenuResponse(SceneObject* sceneObject,
 	// Camp area is abandoned, add menu item to assume ownership if player is able
 	if (!campArea->isAbandoned()) {
 		// Add option for the owner to disband the camp
-		if (campOwnerID == player->getObjectID())
+		if (camp->isOwnedByAccount(player))
 			menuResponse->addRadialMenuItem(RadialOptions::SERVER_CAMP_DISBAND, 3, "@camp:mnu_disband");
 	} else {
 		bool hasCamp = false;
@@ -205,7 +203,7 @@ void CampTerminalMenuComponent::disbandCamp(SceneObject* sceneObject, CreatureOb
 		return;
 	}
 
-	if (!ghost->isOwnedStructure(camp)) {
+	if (!camp->isOwnedByAccount(player)) {
 		return;
 	}
 

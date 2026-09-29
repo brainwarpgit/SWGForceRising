@@ -1,5 +1,16 @@
 # Project Updates
 
+## 2026-09-29
+
+### Committed shared account lots and structure permissions
+
+- Replaced separate character lot allowances with a shared account pool in the current galaxy: `Core3.PlayerCreationManager.MaxCharactersPerGalaxy * 10`, plus an account-wide admin bonus. Updated the explanatory comment in both configuration files. `/adjustLotCount` now adjusts the whole account; existing character bonuses migrate once.
+- Offline owners count toward the pool. Construction reserves lots and returns them on cancellation/failure; placement, displays, transfers, redeeding, and destruction use the shared balance. Same-account transfers consume no additional lots, even when the pool is full. Corrected the ledger's reported build error for C++11 compatibility.
+- Characters on the owner's account receive owner-level structure management rights, including private-house access, administration, maintenance, installation controls, transferring, redeeding, and destruction. Residence remains with the named owner, as requested; existing no-trade, faction, and civic restrictions remain.
+- Added **Structure Management → Take Ownership** for an alt to claim an eligible non-residence house or installation while the named owner is offline. Shared lot usage stays unchanged, and the alt can then declare the house as its residence. Special civic/faction/guild/camp ownership remains separate.
+- Destruction confirmations recheck ownership and their original session; pending destruction prevents competing redeeds/transfers. Fixed the reported confirmation freeze by accepting the input window's normal two-field response, clearing invalid-code attempts, and removing stale destruction confirmations on login. Redeeding returns the deed to the acting character while cleanup uses the actual owner's records.
+- All 967 standalone checks and source/whitespace review passed. On September 29, the user confirmed everything is verified and requested the commit, including the final destruction fix. This overall runtime confirmation supersedes the pending verification checklist; no necessary checks remain. No TRE update is needed, and the assistant has not built or run Core3.
+
 ## 2026-09-28
 
 ### Committed structure storage limits and reporting

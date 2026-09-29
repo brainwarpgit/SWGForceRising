@@ -412,7 +412,7 @@ bool BuildingObjectImplementation::isAllowedEntry(CreatureObject* player) {
 		}
 	}
 
-	if (getOwnerObjectID() == player->getObjectID())
+	if (isOwnedByAccount(player))
 		return true;
 
 	if (isOnBanList(player))
@@ -824,6 +824,8 @@ void BuildingObjectImplementation::destroyObjectFromDatabase(
 
 void BuildingObjectImplementation::broadcastCellPermissions() {
 	CloseObjectsVector* closeObjectsVector = (CloseObjectsVector*) getCloseObjects();
+	if (closeObjectsVector == nullptr)
+		return;
 
 	SortedVector<TreeEntry*> closeObjects;
 	closeObjectsVector->safeCopyReceiversTo(closeObjects, CloseObjectsVector::CREOTYPE);
@@ -970,9 +972,7 @@ void BuildingObjectImplementation::onEnter(CreatureObject* player) {
 
 	if (isCondemned()) {
 		// Handle condemned message
-		uint64 ownerOid = getOwnerObjectID();
-
-		if (ownerOid == player->getObjectID()) {
+		if (isOwnedByAccount(player)) {
 			StructureManager::instance()->promptPayUncondemnMaintenance(player, asBuildingObject());
 		} else {
 			//Other player than the owner trying to enter the building.

@@ -8,6 +8,8 @@
 #include "templates/manager/TemplateManager.h"
 #include "templates/tangible/SharedStructureObjectTemplate.h"
 #include "server/zone/objects/scene/variables/CustomizationVariables.h"
+#include "AccountLotLedger.h"
+#include <map>
 
 namespace server {
 namespace zone {
@@ -18,6 +20,9 @@ namespace scene {
 }
 namespace creature {
 	class CreatureObject;
+}
+namespace player {
+	class PlayerObject;
 }
 namespace structure {
 	class StructureObject;
@@ -37,6 +42,7 @@ namespace structure {
 using namespace server::zone;
 using namespace server::zone::objects::scene;
 using namespace server::zone::objects::creature;
+using namespace server::zone::objects::player;
 using namespace server::zone::objects::structure;
 using namespace server::zone::objects::tangible;
 using namespace server::zone::objects::tangible::deed::structure;
@@ -44,6 +50,8 @@ using namespace server::zone::objects::tangible::deed::structure;
 class StructureManager : public Singleton<StructureManager>, public Logger, public Object {
 	ZoneServer* server;
 	TemplateManager* templateManager;
+	AccountLotLedger accountLots;
+	std::map<uint32, int> legacyLotBonuses;
 
 public:
 	StructureManager();
@@ -51,6 +59,35 @@ public:
 	void setZoneServer(ZoneServer* zoneServer) {
 		server = zoneServer;
 	}
+
+	void initializeAccountLots();
+	bool isAccountLotsReady() const {
+		return server != nullptr && accountLots.isReady();
+	}
+	bool isOwnerAccount(uint64 ownerID, uint32 accountID) const {
+		return accountLots.belongsToAccount(ownerID, accountID);
+	}
+	int getMaximumAccountLots(PlayerObject* player);
+	int getAccountLotsRemaining(PlayerObject* player);
+	uint64 reserveAccountLots(PlayerObject* player, int lots, uint64 existingStructureID = 0);
+	void releaseAccountLots(uint64 reservation) {
+		accountLots.release(reservation);
+	}
+	bool updateStructureLotOwner(StructureObject* structure, uint64 ownerID, uint64 reservation = 0);
+	void removeStructureLots(uint64 structureID) {
+		accountLots.removeStructure(structureID);
+	}
+
+	// Releases an uncommitted reservation on every return/exception path.
+	class LotReservationGuard {
+		StructureManager* manager;
+		uint64 reservation;
+	public:
+		LotReservationGuard(StructureManager* manager, uint64 reservation) : manager(manager), reservation(reservation) {}
+		~LotReservationGuard() { manager->releaseAccountLots(reservation); }
+		LotReservationGuard(const LotReservationGuard&) = delete;
+		LotReservationGuard& operator=(const LotReservationGuard&) = delete;
+	};
 
 	IndexDatabase* createSubIndex();
 
@@ -61,7 +98,7 @@ public:
 	/**
 	 * Simply creates and places a structure at the provided coordinates.
 	 */
-	StructureObject* placeStructure(CreatureObject* creature, const String& structureTemplatePath, float x, float y, int angle, int persistenceLevel = 1);
+	StructureObject* placeStructure(CreatureObject* creature, const String& structureTemplatePath, float x, float y, int angle, int persistenceLevel = 1, uint64 lotReservation = 0);
 
 	StructureObject* placeCamp(CreatureObject* creature, CustomizationVariables* customVars, const String& structureTemplatePath, float x, float y, int angle, int persistenceLevel = 1);
 
@@ -85,6 +122,9 @@ public:
 	int redeedStructure(CreatureObject* creature);
 
 	int declareResidence(CreatureObject* player, StructureObject* structureObject, bool isCityHall = false);
+
+	bool canTakeOwnership(CreatureObject* player, StructureObject* structure);
+	int takeOwnership(CreatureObject* player, StructureObject* structure);
 
 	/**
 	 * Converts seconds remaining into days, hours, minutes timestamp

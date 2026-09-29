@@ -12,16 +12,25 @@
 #include "server/zone/objects/player/sessions/DestroyStructureSession.h"
 
 class DestroyStructureRequestSuiCallback : public SuiCallback {
+	ManagedWeakReference<DestroyStructureSession*> destroySession;
+
 public:
-	DestroyStructureRequestSuiCallback(ZoneServer* serv) : SuiCallback(serv) {
+	DestroyStructureRequestSuiCallback(ZoneServer* serv, DestroyStructureSession* session) : SuiCallback(serv), destroySession(session) {
 	}
 
 	void run(CreatureObject* player, SuiBox* sui, uint32 eventIndex, Vector<UnicodeString>* args) {
+		if (player == nullptr || sui == nullptr)
+			return;
+
 		bool cancelPressed = (eventIndex == 1);
 
 		ManagedReference<DestroyStructureSession*> session = player->getActiveSession(SessionFacadeType::DESTROYSTRUCTURE).castTo<DestroyStructureSession*>();
 
-		if (session == nullptr)
+		if (session == nullptr || session != destroySession.get())
+			return;
+
+		ManagedReference<SceneObject*> usingObject = sui->getUsingObject().get();
+		if (usingObject == nullptr || usingObject != session->getStructureObject())
 			return;
 
 		if (cancelPressed) {

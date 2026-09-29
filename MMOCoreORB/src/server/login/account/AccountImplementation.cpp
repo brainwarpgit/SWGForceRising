@@ -6,6 +6,7 @@
 #include "../objects.h"
 #include "server/login/account/Account.h"
 #include "../objects/GalaxyBanEntry.h"
+#include <limits>
 #ifdef WITH_SWGREALMS_API
 #include "server/login/SWGRealmsAPI.h"
 #endif // WITH_SWGREALMS_API
@@ -42,6 +43,26 @@ Reference<GalaxyAccountInfo*> AccountImplementation::getGalaxyAccountInfo(const 
 	}
 
 	return info;
+}
+
+bool AccountImplementation::adjustStructureLotBonus(uint32 galaxyID, int delta) {
+	Locker locker(_this.getReferenceUnsafeStaticCast());
+
+	const int currentBonus = structureLotBonuses.contains(galaxyID) ? structureLotBonuses.get(galaxyID) : 0;
+	const int64 newBonus = static_cast<int64>(currentBonus) + delta;
+
+	if (newBonus < std::numeric_limits<int>::min() || newBonus > std::numeric_limits<int>::max())
+		return false;
+
+	structureLotBonuses.put(galaxyID, static_cast<int>(newBonus));
+	return true;
+}
+
+void AccountImplementation::initializeStructureLotBonus(uint32 galaxyID, int legacyBonus) {
+	Locker locker(_this.getReferenceUnsafeStaticCast());
+
+	if (!structureLotBonuses.contains(galaxyID))
+		structureLotBonuses.put(galaxyID, legacyBonus);
 }
 
 void AccountImplementation::addGalaxyBan(GalaxyBanEntry* ban, uint32 galaxy) {

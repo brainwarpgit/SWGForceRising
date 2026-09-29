@@ -261,6 +261,7 @@ Core3 = {
 	SameAccountTipsAreFree = false,
 	PlayerCreationManager = {
 		EnableTutorial = false,
+		-- Shared account base lots are this limit times 10, plus any admin bonus.
 		MaxCharactersPerGalaxy = 10,
 	},
 	PlayerManager = {

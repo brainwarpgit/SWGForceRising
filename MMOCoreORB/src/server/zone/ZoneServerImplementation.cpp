@@ -242,6 +242,7 @@ void ZoneServerImplementation::startGroundZones() {
 
 	StructureManager* structureManager = StructureManager::instance();
 	structureManager->setZoneServer(_this.getReferenceUnsafeStaticCast());
+	structureManager->initializeAccountLots();
 
 	int totalZones = enabledZones.size();
 

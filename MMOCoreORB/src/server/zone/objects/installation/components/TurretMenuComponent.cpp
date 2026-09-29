@@ -83,7 +83,7 @@ void TurretMenuComponent::fillObjectMenuResponse(SceneObject* sceneObject, Objec
 		}
 	}
 
-	if (baseBuilding->getOwnerObjectID() == player->getObjectID()) {
+	if (baseBuilding->isOwnedByAccount(player)) {
 		menuResponse->addRadialMenuItem(RadialOptions::SERVER_MENU2, 3, "@player_structure:management_mine_inv"); // "Mine Inventory"
 	}
 
@@ -168,7 +168,7 @@ int TurretMenuComponent::handleObjectMenuSelect(SceneObject* sceneObject, Creatu
 				return 1;
 			}
 
-			if (isPrivileged || (baseBuilding->getOwnerObjectID() == player->getObjectID())) {
+			if (isPrivileged || baseBuilding->isOwnedByAccount(player)) {
 				turret->sendWithoutParentTo(player);
 				turret->openContainerTo(player);
 				turret->notifyObservers(ObserverEventType::OPENCONTAINER, player);

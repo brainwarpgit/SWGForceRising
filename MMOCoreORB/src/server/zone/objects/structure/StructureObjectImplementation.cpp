@@ -40,6 +40,7 @@ void StructureObjectImplementation::loadTemplateData(SharedObjectTemplate* templ
 
 void StructureObjectImplementation::initializeTransientMembers() {
 	TangibleObjectImplementation::initializeTransientMembers();
+	pendingDestruction = false;
 
 	Logger::setLoggingName("StructureObject");
 }
@@ -493,6 +494,29 @@ void StructureObjectImplementation::destroyObjectFromDatabase(bool destroyContai
 		navArea->destroyObjectFromDatabase(true);
 
 	TangibleObjectImplementation::destroyObjectFromDatabase(destroyContainedObjects);
+	StructureManager::instance()->removeStructureLots(getObjectID());
+}
+
+void StructureObjectImplementation::setOwner(uint64 objectID, uint64 lotReservation) {
+	if (pendingDestruction && objectID != ownerObjectID)
+		throw Exception("Cannot transfer a structure pending destruction");
+
+	if (!StructureManager::instance()->updateStructureLotOwner(_this.getReferenceUnsafeStaticCast(), objectID, lotReservation)) {
+		throw Exception("Could not assign structure account lots");
+	}
+
+	ownerObjectID = objectID;
+	structurePermissionList.setOwner(objectID);
+}
+
+bool StructureObjectImplementation::isOwnedByAccount(CreatureObject* player) const {
+	if (player == nullptr || !player->isPlayerCreature() || ownerObjectID == 0)
+		return false;
+	if (player->getObjectID() == ownerObjectID)
+		return true;
+
+	auto ghost = player->getPlayerObject();
+	return ghost != nullptr && StructureManager::instance()->isOwnerAccount(ownerObjectID, ghost->getAccountID());
 }
 
 bool StructureObjectImplementation::isOwnerOf(SceneObject* obj) const {
@@ -505,24 +529,15 @@ bool StructureObjectImplementation::isOwnerOf(SceneObject* obj) const {
 	if (ghost != nullptr && ghost->isPrivileged())
 		return true;
 
-	return obj->getObjectID() == ownerObjectID;
+	return isOwnedByAccount(cast<CreatureObject*>(obj));
 }
 
 bool StructureObjectImplementation::isOwnerOf(uint64 objid) const {
-	ManagedReference<SceneObject*> obj = server->getZoneServer()->getObject(objid);
-
-	if (obj == nullptr || !obj->isPlayerCreature()) {
+	auto zoneServer = getZoneServer();
+	if (zoneServer == nullptr)
 		return false;
-	}
-
-	CreatureObject* player = cast<CreatureObject*>( obj.get());
-
-	PlayerObject* ghost = player->getPlayerObject();
-
-	if (ghost != nullptr && ghost->isPrivileged())
-		return true;
-
-	return objid == ownerObjectID;
+	ManagedReference<SceneObject*> obj = zoneServer->getObject(objid);
+	return isOwnerOf(obj.get());
 }
 
 void StructureObjectImplementation::updateStructureStatus() {
@@ -816,6 +831,10 @@ float StructureObjectImplementation::getDelayDestroyHours() const {
 }
 
 bool StructureObjectImplementation::isOnAdminList(CreatureObject* player) const {
+	if (player == nullptr)
+		return false;
+	if (isOwnedByAccount(player))
+		return true;
 	PlayerObject* ghost = player->getPlayerObject();
 
 	if (ghost != nullptr && ghost->isPrivileged())
@@ -833,6 +852,10 @@ bool StructureObjectImplementation::isOnAdminList(CreatureObject* player) const 
 }
 
 bool StructureObjectImplementation::isOnEntryList(CreatureObject* player) const {
+	if (player == nullptr)
+		return false;
+	if (isOwnedByAccount(player))
+		return true;
 	PlayerObject* ghost = player->getPlayerObject();
 
 	if (ghost != nullptr && ghost->hasGodMode())
@@ -854,6 +877,8 @@ bool StructureObjectImplementation::isOnEntryList(CreatureObject* player) const 
 }
 
 bool StructureObjectImplementation::isOnBanList(CreatureObject* player) const {
+	if (player == nullptr || isOwnedByAccount(player))
+		return false;
 	PlayerObject* ghost = player->getPlayerObject();
 
 	if (ghost != nullptr && ghost->hasGodMode())
@@ -871,6 +896,10 @@ bool StructureObjectImplementation::isOnBanList(CreatureObject* player) const {
 }
 
 bool StructureObjectImplementation::isOnHopperList(CreatureObject* player) const {
+	if (player == nullptr)
+		return false;
+	if (isOwnedByAccount(player))
+		return true;
 	PlayerObject* ghost = player->getPlayerObject();
 
 	if (ghost != nullptr && ghost->isPrivileged())
@@ -890,6 +919,10 @@ bool StructureObjectImplementation::isOnHopperList(CreatureObject* player) const
 }
 
 bool StructureObjectImplementation::isOnPermissionList(const String& listName, CreatureObject* player) const {
+	if (player == nullptr)
+		return false;
+	if (isOwnedByAccount(player))
+		return listName != "BAN";
 	PlayerObject* ghost = player->getPlayerObject();
 
 	if (ghost != nullptr && ghost->isPrivileged()) {
@@ -907,4 +940,14 @@ bool StructureObjectImplementation::isOnPermissionList(const String& listName, C
 	}
 
 	return false;
+}
+
+bool StructureObjectImplementation::isOnPermissionList(const String& listName, const uint64 objectID) const {
+	auto zoneServer = getZoneServer();
+	if (zoneServer != nullptr) {
+		ManagedReference<SceneObject*> object = zoneServer->getObject(objectID);
+		if (object != nullptr && object->isPlayerCreature() && isOwnedByAccount(cast<CreatureObject*>(object.get())))
+			return listName != "BAN";
+	}
+	return structurePermissionList.isOnPermissionList(listName, objectID);
 }

@@ -75,6 +75,8 @@
 #include "server/zone/managers/player/QuestInfo.h"
 #include "server/zone/objects/player/events/ForceMeditateTask.h"
 #include "server/zone/objects/player/sui/callbacks/FieldFactionChangeSuiCallback.h"
+#include "server/zone/objects/player/sui/callbacks/DestroyStructureCodeSuiCallback.h"
+#include "server/zone/objects/player/sui/callbacks/DestroyStructureRequestSuiCallback.h"
 #include "server/zone/packets/ui/DestroyClientPathMessage.h"
 #include "server/zone/objects/player/sui/messagebox/SuiMessageBox.h"
 #include "server/chat/PendingMessageList.h"
@@ -1697,6 +1699,20 @@ void PlayerObjectImplementation::notifyOnline() {
 		return;
 	}
 
+	// Destruction confirmations must be restarted after login, including an
+	// orphaned session whose input dialog was already consumed before disconnect.
+	playerCreature->dropActiveSession(SessionFacadeType::DESTROYSTRUCTURE);
+	for (int i = suiBoxes.size() - 1; i >= 0; --i) {
+		auto sui = suiBoxes.get(i);
+		if (sui == nullptr)
+			continue;
+
+		Reference<SuiCallback*> callback = sui->getCallback();
+		if (dynamic_cast<DestroyStructureCodeSuiCallback*>(callback.get()) != nullptr
+				|| dynamic_cast<DestroyStructureRequestSuiCallback*>(callback.get()) != nullptr)
+			removeSuiBox(sui->getBoxID(), true);
+	}
+
 	miliSecsSession = 0;
 
 	resetSessionStats(true);
@@ -3144,21 +3160,11 @@ void PlayerObjectImplementation::deleteAllWaypoints() {
 }
 
 int PlayerObjectImplementation::getLotsRemaining() {
-	Locker locker(asPlayerObject());
+	return StructureManager::instance()->getAccountLotsRemaining(asPlayerObject());
+}
 
-	int lotsRemaining = maximumLots;
-
-	for (int i = 0; i < ownedStructures.size(); ++i) {
-		auto oid = ownedStructures.get(i);
-
-		Reference<StructureObject*> structure = getZoneServer()->getObject(oid).castTo<StructureObject*>();
-
-		if (structure != nullptr) {
-			lotsRemaining = lotsRemaining - structure->getLotSize();
-		}
-	}
-
-	return lotsRemaining;
+int PlayerObjectImplementation::getMaximumLots() {
+	return StructureManager::instance()->getMaximumAccountLots(asPlayerObject());
 }
 
 int PlayerObjectImplementation::getOwnedChatRoomCount() {

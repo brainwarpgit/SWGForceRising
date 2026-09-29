@@ -2396,7 +2396,7 @@ void GCWManagerImplementation::sendBaseDefenseStatus(CreatureObject* creature, B
 	if (ghost->hasSuiBoxWindowType(SuiWindowType::HQ_TERMINAL))
 		ghost->closeSuiWindowType(SuiWindowType::HQ_TERMINAL);
 
-	if (building->getOwnerCreatureObject() != creature && !ghost->isPrivileged())
+	if (!building->isOwnedByAccount(creature) && !ghost->isPrivileged())
 		return;
 
 	if (baseData->getTotalTurretCount() == 0) {
@@ -2413,7 +2413,7 @@ void GCWManagerImplementation::sendBaseDefenseStatus(CreatureObject* creature, B
 	status->setUsingObject(building);
 	status->setCancelButton(true, "@cancel");
 
-	if (creature == building->getOwnerCreatureObject() && (building->getPvpStatusBitmask() & ObjectFlag::OVERT)) {
+	if (building->isOwnedByAccount(creature) && (building->getPvpStatusBitmask() & ObjectFlag::OVERT)) {
 		status->setOtherButton(true, "@ui:permission_remove");
 	}
 	status->setOkButton(true, "@ok");
@@ -2448,7 +2448,7 @@ void GCWManagerImplementation::sendRemoveDefenseConfirmation(BuildingObject* bui
 	if (ghost->hasSuiBoxWindowType(SuiWindowType::HQ_TERMINAL))
 		ghost->closeSuiWindowType(SuiWindowType::HQ_TERMINAL);
 
-	if (building->getOwnerCreatureObject() != creature)
+	if (!building->isOwnedByAccount(creature))
 		return;
 
 	if (!baseData->hasDefense(deedOID))
@@ -2481,7 +2481,7 @@ void GCWManagerImplementation::removeDefense(BuildingObject* building, CreatureO
 	if (zoneServer == nullptr)
 		return;
 
-	if (building->getOwnerCreatureObject() != creature)
+	if (!building->isOwnedByAccount(creature))
 		return;
 
 	if (!(building->getPvpStatusBitmask() & ObjectFlag::OVERT))

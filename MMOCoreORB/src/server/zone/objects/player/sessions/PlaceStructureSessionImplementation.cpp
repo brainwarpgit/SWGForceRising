@@ -22,14 +22,21 @@
 #include "server/zone/Zone.h"
 #include "server/zone/managers/gcw/GCWManager.h"
 
+void PlaceStructureSessionImplementation::initializeTransientMembers() {
+	FacadeImplementation::initializeTransientMembers();
+	// A restored session must never release a token from a new server process.
+	lotReservation = 0;
+}
 
 int PlaceStructureSessionImplementation::constructStructure(float x, float y, int angle) {
 	ManagedReference<StructureDeed*> deed = deedObject.get();
 	ManagedReference<Zone*> thisZone = zone.get();
 	ManagedReference<CreatureObject*> creature = creatureObject.get();
 
-	if (deed == nullptr || thisZone == nullptr || creature == nullptr)
-		return cancelSession();
+	if (deed == nullptr || thisZone == nullptr || creature == nullptr) {
+		cancelSession();
+		return 1;
+	}
 
 	positionX = x;
 	positionY = y;
@@ -40,48 +47,75 @@ int PlaceStructureSessionImplementation::constructStructure(float x, float y, in
 	String serverTemplatePath = deed->getGeneratedObjectTemplate();
 	Reference<const SharedStructureObjectTemplate*> serverTemplate = dynamic_cast<SharedStructureObjectTemplate*>(templateManager->getTemplate(serverTemplatePath.hashCode()));
 
-	if (serverTemplate == nullptr || temporaryNoBuildZone.get() != nullptr)
-		return cancelSession(); //Something happened, the server template is not a structure template or temporaryNoBuildZone already set.
-
-	placeTemporaryNoBuildZone(serverTemplate);
-
-	String barricadeServerTemplatePath = serverTemplate->getConstructionMarkerTemplate();
-	int constructionDuration = 100; //Set the duration for 100ms as a fall back if it doesn't have a barricade template.
-
-	if (!barricadeServerTemplatePath.isEmpty()) {
-		ManagedReference<SceneObject*> barricade = ObjectManager::instance()->createObject(barricadeServerTemplatePath.hashCode(), 0, "");
-
-		if (barricade != nullptr) {
-			barricade->initializePosition(x, 0, y); //The construction barricades are always at the terrain height.
-
-			const StructureFootprint* structureFootprint = serverTemplate->getStructureFootprint();
-
-			if (structureFootprint != nullptr && (structureFootprint->getRowSize() > structureFootprint->getColSize())) {
-				angle = angle + 180;
-			}
-
-			barricade->rotate(angle); //All construction barricades need to be rotated 180 degrees for some reason.
-
-			Locker tLocker(barricade);
-
-			thisZone->transferObject(barricade, -1, true);
-
-			constructionDuration = serverTemplate->getLotSize() * 3000; //3 seconds per lot.
-
-			if (serverTemplatePath.contains("faction_perk")) {
-				GCWManager* gcwMan = thisZone->getGCWManager();
-
-				if (gcwMan != nullptr) {
-					constructionDuration = gcwMan->getBasePlacementDelay() * 1000;
-				}
-			}
-
-			constructionBarricade = barricade;
-		}
+	if (serverTemplate == nullptr || temporaryNoBuildZone.get() != nullptr || lotReservation != 0) {
+		cancelSession();
+		return 1;
 	}
 
-	Reference<Task*> task = new StructureConstructionCompleteTask(creature);
-	task->schedule(constructionDuration);
+	auto ghost = creature->getPlayerObject();
+	int lots = serverTemplate->getLotSize();
+	lotReservation = StructureManager::instance()->reserveAccountLots(ghost, lots);
+
+	if (lotReservation == 0) {
+		StringIdChatParameter params("@player_structure:not_enough_lots");
+		params.setDI(lots);
+		creature->sendSystemMessage(params);
+		cancelSession();
+		return 1;
+	}
+
+	try {
+		placeTemporaryNoBuildZone(serverTemplate);
+
+		if (temporaryNoBuildZone.get() == nullptr) {
+			cancelSession();
+			return 1;
+		}
+
+		String barricadeServerTemplatePath = serverTemplate->getConstructionMarkerTemplate();
+		int constructionDuration = 100; //Set the duration for 100ms as a fall back if it doesn't have a barricade template.
+
+		if (!barricadeServerTemplatePath.isEmpty()) {
+			ManagedReference<SceneObject*> barricade = ObjectManager::instance()->createObject(barricadeServerTemplatePath.hashCode(), 0, "");
+
+			if (barricade != nullptr) {
+				constructionBarricade = barricade;
+				barricade->initializePosition(x, 0, y); //The construction barricades are always at the terrain height.
+
+				const StructureFootprint* structureFootprint = serverTemplate->getStructureFootprint();
+
+				if (structureFootprint != nullptr && (structureFootprint->getRowSize() > structureFootprint->getColSize())) {
+					angle = angle + 180;
+				}
+
+				barricade->rotate(angle); //All construction barricades need to be rotated 180 degrees for some reason.
+
+				Locker tLocker(barricade);
+
+				if (!thisZone->transferObject(barricade, -1, true)) {
+					tLocker.release();
+					cancelSession();
+					return 1;
+				}
+
+				constructionDuration = lots * 3000; //3 seconds per lot.
+
+				if (serverTemplatePath.contains("faction_perk")) {
+					GCWManager* gcwMan = thisZone->getGCWManager();
+
+					if (gcwMan != nullptr) {
+						constructionDuration = gcwMan->getBasePlacementDelay() * 1000;
+					}
+				}
+			}
+		}
+
+		Reference<Task*> task = new StructureConstructionCompleteTask(creature, _this.getReferenceUnsafeStaticCast());
+		task->schedule(constructionDuration);
+	} catch (...) {
+		cancelSession();
+		throw;
+	}
 
 	return 0;
 }
@@ -107,19 +141,25 @@ void PlaceStructureSessionImplementation::placeTemporaryNoBuildZone(const Shared
 
 	ManagedReference<ActiveArea*> noBuildZone = (thisZone->getZoneServer()->createObject(STRING_HASHCODE("object/active_area.iff"), 0)).castTo<ActiveArea*>();
 
+	if (noBuildZone == nullptr)
+		return;
+
 	Locker locker(noBuildZone);
+	temporaryNoBuildZone = noBuildZone;
 
 	noBuildZone->initializePosition(positionX, 0, positionY);
 	noBuildZone->setAreaShape(areaShape);
 	noBuildZone->addAreaFlag(ActiveArea::NOBUILDZONEAREA);
 
-	thisZone->transferObject(noBuildZone, -1, true);
-
-	temporaryNoBuildZone = noBuildZone;
+	if (!thisZone->transferObject(noBuildZone, -1, true)) {
+		temporaryNoBuildZone = nullptr;
+		noBuildZone->destroyObjectFromWorld(true);
+	}
 }
 
 void PlaceStructureSessionImplementation::removeTemporaryNoBuildZone() {
 	ManagedReference<ActiveArea*> noBuildZone = temporaryNoBuildZone.get();
+	temporaryNoBuildZone = nullptr;
 
 	if (noBuildZone != nullptr) {
 		Locker locker(noBuildZone);
@@ -129,44 +169,49 @@ void PlaceStructureSessionImplementation::removeTemporaryNoBuildZone() {
 }
 
 int PlaceStructureSessionImplementation::completeSession() {
-	ManagedReference<SceneObject*> barricade = constructionBarricade.get();
-
-	if (barricade != nullptr) {
-		Locker locker(barricade);
-
-		barricade->destroyObjectFromWorld(true);
-	}
-
 	ManagedReference<StructureDeed*> deed = deedObject.get();
 	ManagedReference<CreatureObject*> creature = creatureObject.get();
 	ManagedReference<Zone*> thisZone = zone.get();
 
-	if (deed == nullptr || creature == nullptr || thisZone == nullptr)
+	if (deed == nullptr || creature == nullptr || thisZone == nullptr || lotReservation == 0)
+		return cancelSession();
+
+	auto activeSession = creature->getActiveSession(SessionFacadeType::PLACESTRUCTURE).castTo<PlaceStructureSession*>();
+
+	if (activeSession != _this.getReferenceUnsafeStaticCast() || creature->getZone() != thisZone)
+		return cancelSession();
+
+	if (!deed->isPersistent() || deed->getParent() != nullptr || deed->getZone() != nullptr)
 		return cancelSession();
 
 	String serverTemplatePath = deed->getGeneratedObjectTemplate();
 
 	StructureManager* structureManager = StructureManager::instance();
-	ManagedReference<StructureObject*> structureObject = structureManager->placeStructure(creature, serverTemplatePath, positionX, positionY, directionAngle);
+	ManagedReference<StructureObject*> structureObject;
 
-	removeTemporaryNoBuildZone();
+	try {
+		structureObject = structureManager->placeStructure(creature, serverTemplatePath, positionX, positionY, directionAngle, 1, lotReservation);
+	} catch (...) {
+		cancelSession();
+		throw;
+	}
 
 	TransactionLog trx(deed, creature, structureObject, TrxCode::STRUCTUREDEED);
 	trx.addState("subjectTemplate", serverTemplatePath);
 
-	if (structureObject == nullptr) {
-		ManagedReference<SceneObject*> inventory = creature->getSlottedObject("inventory");
-
-		if (inventory != nullptr)
-			inventory->transferObject(deed, -1, true);
-
+	if (structureObject == nullptr)
 		return cancelSession();
+
+	{
+		Locker locker(structureObject, creature);
+		structureObject->setDeedObjectID(deed->getObjectID());
 	}
 
+	// The structure owns the deed now; cleanup must never return it to inventory.
+	deedObject = nullptr;
+	cancelSession();
+
 	Locker clocker(structureObject, creature);
-
-	structureObject->setDeedObjectID(deed->getObjectID());
-
 	deed->notifyStructurePlaced(creature, structureObject);
 
 	ManagedReference<PlayerObject*> ghost = creature->getPlayerObject();
@@ -213,5 +258,48 @@ int PlaceStructureSessionImplementation::completeSession() {
 		}
 	}
 
-	return cancelSession(); //Canceling the session just removes the session from the player's map.
+	return 0;
+}
+
+int PlaceStructureSessionImplementation::cancelSession() {
+	ManagedReference<CreatureObject*> creature = creatureObject.get();
+	ManagedReference<StructureDeed*> deed = deedObject.get();
+	ManagedReference<SceneObject*> barricade = constructionBarricade.get();
+	uint64 reservation = lotReservation;
+
+	// Clear each handle before cleanup so cancellation can safely be repeated.
+	lotReservation = 0;
+	deedObject = nullptr;
+	constructionBarricade = nullptr;
+
+	if (reservation != 0)
+		StructureManager::instance()->releaseAccountLots(reservation);
+
+	if (barricade != nullptr) {
+		Locker locker(barricade);
+		barricade->destroyObjectFromWorld(true);
+	}
+
+	removeTemporaryNoBuildZone();
+
+	if (creature != nullptr) {
+		if (deed != nullptr) {
+			Locker locker(deed, creature);
+
+			// A transferred or deleted deed is no longer ours to restore.
+			if (deed->isPersistent() && deed->getParent() == nullptr && deed->getZone() == nullptr) {
+				auto inventory = creature->getSlottedObject("inventory");
+
+				if (inventory == nullptr || !inventory->transferObject(deed, -1, true, true))
+					error("Unable to return the deed after cancelling structure placement.");
+			}
+		}
+
+		auto activeSession = creature->getActiveSession(SessionFacadeType::PLACESTRUCTURE).castTo<PlaceStructureSession*>();
+
+		if (activeSession == _this.getReferenceUnsafeStaticCast())
+			creature->dropActiveSession(SessionFacadeType::PLACESTRUCTURE);
+	}
+
+	return 0;
 }

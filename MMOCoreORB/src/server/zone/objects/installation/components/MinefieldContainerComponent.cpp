@@ -60,7 +60,7 @@ bool MinefieldContainerComponent::checkContainerPermission(SceneObject* sceneObj
 	bool isPrivileged = (ghost != nullptr && ghost->isPrivileged());
 
 	if (!isPrivileged) {
-		if (baseBuilding->getOwnerObjectID() != creature->getObjectID()) {
+		if (!baseBuilding->isOwnedByAccount(creature)) {
 			return false;
 		}
 

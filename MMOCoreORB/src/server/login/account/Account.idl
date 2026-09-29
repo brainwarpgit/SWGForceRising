@@ -34,6 +34,9 @@ class Account extends ManagedObject implements Logger {
 	@dereferenced
 	protected GalaxyAccountInfoMap galaxyAccountInfo;
 
+	@dereferenced
+	protected VectorMap<unsigned int, int> structureLotBonuses;
+
 	protected transient unsigned int banExpires;
 	protected transient string banReason;
 	protected transient unsigned int banAdmin;
@@ -120,6 +123,18 @@ class Account extends ManagedObject implements Logger {
 	public GalaxyAccountInfoMap getGalaxyAccountInfo() {
 		return galaxyAccountInfo;
 	}
+
+	@read
+	public synchronized int getStructureLotBonus(unsigned int galaxyID) {
+		if (!structureLotBonuses.contains(galaxyID))
+			return 0;
+
+		return structureLotBonuses.get(galaxyID);
+	}
+
+	public native boolean adjustStructureLotBonus(unsigned int galaxyID, int delta);
+
+	public native void initializeStructureLotBonus(unsigned int galaxyID, int legacyBonus);
 
 	@read
 	public unsigned int getStationID() {

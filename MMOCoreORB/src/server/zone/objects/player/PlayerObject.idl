@@ -110,7 +110,7 @@ class PlayerObject extends IntangibleObject {
 	@dereferenced
 	protected SortedVector<unsigned long> ownedVendors;
 
-	protected byte maximumLots;
+	protected byte maximumLots; // Legacy persisted allowance, migrated into the account bonus once.
 
 	protected int jediState;
 	protected unsigned int adminLevel;
@@ -1743,14 +1743,8 @@ class PlayerObject extends IntangibleObject {
 		return hologrindProfessions;
 	}
 
-	public void setMaximumLots(byte lots) {
-		maximumLots = lots;
-	}
-
-	@read
-	public byte getMaximumLots() {
-		return maximumLots;
-	}
+	@dirty
+	public native int getMaximumLots();
 
 	@read
 	public string getStarterProfession() {

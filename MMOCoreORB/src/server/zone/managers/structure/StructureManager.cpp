@@ -50,6 +50,10 @@
 #include "server/zone/objects/player/FactionStatus.h"
 #include "templates/building/CampStructureTemplate.h"
 #include "templates/customization/CustomizationIdManager.h"
+#include "server/login/account/Account.h"
+#include "server/zone/objects/creature/commands/QueueCommand.h"
+#include "server/zone/objects/creature/commands/TransferstructureCommand.h"
+#include <limits>
 
 namespace StorageManagerNamespace {
 int indexCallback(DB* secondary, const DBT* key, const DBT* data, DBT* result) {
@@ -86,6 +90,162 @@ StructureManager::StructureManager() : Logger("StructureManager") {
 
 	setGlobalLogging(true);
 	setLogging(false);
+}
+
+void StructureManager::initializeAccountLots() {
+	// Read persisted scalar data before zones/players start. Do not load offline
+	// creatures or take sibling player locks while answering a lot query.
+	accountLots.setReady(false);
+	std::map<uint64, uint32> ownerAccounts;
+	std::map<uint32, int64> bonuses;
+	int structureCount = 0;
+
+	try {
+		auto databaseManager = ObjectDatabaseManager::instance();
+		auto sceneDatabase = databaseManager->loadObjectDatabase("sceneobjects", true);
+		auto structureDatabase = databaseManager->loadObjectDatabase("playerstructures", true);
+		if (sceneDatabase == nullptr || structureDatabase == nullptr)
+			throw Exception("Could not open account-lot source databases");
+
+		ObjectDatabaseIterator players(sceneDatabase);
+		ObjectInputStream data(2000);
+		uint64 objectID = 0;
+		while (players.getNextKeyAndValue(objectID, &data)) {
+			uint32 accountID = 0;
+			if (Serializable::getVariable<uint32>(STRING_HASHCODE("PlayerObject.accountID"), &accountID, &data) && accountID != 0) {
+				uint64 ownerID = 0;
+				if (!Serializable::getVariable<uint64>(STRING_HASHCODE("TreeEntry.parent"), &ownerID, &data) || ownerID == 0)
+					throw Exception("Player account record has no parent character");
+
+				if (!accountLots.registerOwner(ownerID, accountID))
+					throw Exception("Conflicting character account ownership");
+				ownerAccounts[ownerID] = accountID;
+
+				uint8 previousMaximum = 10;
+				Serializable::getVariable<uint8>(STRING_HASHCODE("PlayerObject.maximumLots"), &previousMaximum, &data);
+				bonuses[accountID] += static_cast<int>(previousMaximum) - 10;
+			}
+			data.clear();
+		}
+
+		for (const auto& bonus : bonuses) {
+			if (bonus.second < std::numeric_limits<int>::min() || bonus.second > std::numeric_limits<int>::max())
+				throw Exception("Legacy account lot bonus exceeds integer range");
+			legacyLotBonuses[bonus.first] = static_cast<int>(bonus.second);
+		}
+
+		auto loadStructures = [&](ObjectDatabase* database) {
+			ObjectDatabaseIterator structures(database);
+			while (structures.getNextKeyAndValue(objectID, &data)) {
+				uint64 ownerID = 0;
+				if (!Serializable::getVariable<uint64>(STRING_HASHCODE("StructureObject.ownerObjectID"), &ownerID, &data) || ownerID == 0) {
+					data.clear();
+					continue;
+				}
+				uint32 templateCRC = 0;
+				if (!Serializable::getVariable<uint32>(STRING_HASHCODE("SceneObject.serverObjectCRC"), &templateCRC, &data))
+					throw Exception("Owned structure has no template CRC");
+				auto structureTemplate = dynamic_cast<SharedStructureObjectTemplate*>(templateManager->getTemplate(templateCRC));
+				if (structureTemplate == nullptr)
+					throw Exception("Owned structure template is unavailable");
+				if (ownerAccounts.count(ownerID) == 0) {
+					// Building-owned defenses and other zero-lot objects need no charge.
+					// A positive-lot owner must be provably non-player before exclusion.
+					if (structureTemplate->getLotSize() > 0) {
+						ObjectInputStream ownerData(2000);
+						VectorMap<String, uint64> slots;
+						if (sceneDatabase->getData(ownerID, &ownerData) != 0 ||
+								!Serializable::getVariable<VectorMap<String, uint64>>(STRING_HASHCODE("SceneObject.slottedObjects"), &slots, &ownerData) ||
+								(slots.contains("ghost") && slots.get("ghost") != 0))
+							throw Exception("Could not resolve account for a lot-consuming structure owner");
+					}
+					data.clear();
+					continue;
+				}
+				if (!accountLots.setStructure(objectID, ownerID, structureTemplate->getLotSize()))
+					throw Exception("Could not initialize structure account lots");
+				++structureCount;
+				data.clear();
+			}
+		};
+		loadStructures(sceneDatabase);
+		loadStructures(structureDatabase);
+
+		accountLots.setReady(true);
+		info(true) << "Account lots initialized for " << ownerAccounts.size() << " characters and " << structureCount << " structures.";
+	} catch (const Exception& e) {
+		error() << "Account lot initialization failed; new lot allocations are disabled: " << e.getMessage();
+	} catch (...) {
+		error("Account lot initialization failed; new lot allocations are disabled.");
+	}
+}
+
+int StructureManager::getMaximumAccountLots(PlayerObject* player) {
+	if (player == nullptr || player->getAccountID() == 0 || server == nullptr || !accountLots.isReady())
+		return 0;
+
+	auto account = player->getAccount();
+	if (account == nullptr || account->getAccountID() != player->getAccountID())
+		return 0;
+
+	const auto legacyBonus = legacyLotBonuses.find(player->getAccountID());
+	account->initializeStructureLotBonus(server->getGalaxyID(), legacyBonus == legacyLotBonuses.end() ? 0 : legacyBonus->second);
+	const int slots = ConfigManager::instance()->getInt("Core3.PlayerCreationManager.MaxCharactersPerGalaxy", 10);
+	const int64 base = static_cast<int64>(slots > 0 ? slots : 0) * 10;
+	const int64 total = base + account->getStructureLotBonus(server->getGalaxyID());
+	if (total <= 0)
+		return 0;
+	return total > std::numeric_limits<int>::max() ? std::numeric_limits<int>::max() : static_cast<int>(total);
+}
+
+int StructureManager::getAccountLotsRemaining(PlayerObject* player) {
+	if (player == nullptr)
+		return 0;
+	return accountLots.remaining(player->getAccountID(), getMaximumAccountLots(player));
+}
+
+uint64 StructureManager::reserveAccountLots(PlayerObject* player, int lots, uint64 existingStructureID) {
+	if (player == nullptr || player->getAccountID() == 0 || server == nullptr || !accountLots.isReady())
+		return 0;
+	auto account = player->getAccount();
+	if (account == nullptr || account->getAccountID() != player->getAccountID())
+		return 0;
+	auto owner = player->getParent().get();
+	if (owner == nullptr || !accountLots.registerOwner(owner->getObjectID(), player->getAccountID()))
+		return 0;
+	return accountLots.reserve(player->getAccountID(), getMaximumAccountLots(player), lots, existingStructureID);
+}
+
+bool StructureManager::updateStructureLotOwner(StructureObject* structure, uint64 ownerID, uint64 reservation) {
+	if (structure == nullptr)
+		return false;
+	if (ownerID == 0) {
+		if (reservation != 0)
+			return false;
+		accountLots.removeStructure(structure->getObjectID());
+		return true;
+	}
+	if (accountLots.setStructure(structure->getObjectID(), ownerID, structure->getLotSize(), reservation))
+		return true;
+	if (reservation != 0)
+		return false;
+
+	ManagedReference<SceneObject*> owner;
+	if (server != nullptr)
+		owner = server->getObject(ownerID);
+	if (owner == nullptr)
+		return false;
+	if (!owner->isPlayerCreature()) {
+		accountLots.removeStructure(structure->getObjectID());
+		return true;
+	}
+	ManagedReference<PlayerObject*> ghost;
+	ghost = owner->getSlottedObject("ghost").castTo<PlayerObject*>();
+	if (ghost == nullptr || ghost->getAccountID() == 0)
+		return false;
+	if (!accountLots.registerOwner(ownerID, ghost->getAccountID()))
+		return false;
+	return accountLots.setStructure(structure->getObjectID(), ownerID, structure->getLotSize(), reservation);
 }
 
 IndexDatabase* StructureManager::createSubIndex() {
@@ -467,7 +627,8 @@ int StructureManager::placeStructureFromDeed(CreatureObject* creature, Structure
 	creature->addActiveSession(SessionFacadeType::PLACESTRUCTURE, session);
 
 	// Construct the structure.
-	session->constructStructure(x, y, angle);
+	if (session->constructStructure(x, y, angle) != 0)
+		return 1;
 
 	// Remove the deed from it's container.
 	deed->destroyObjectFromWorld(true);
@@ -475,7 +636,9 @@ int StructureManager::placeStructureFromDeed(CreatureObject* creature, Structure
 	return 0;
 }
 
-StructureObject* StructureManager::placeStructure(CreatureObject* creature, const String& structureTemplatePath, float x, float y, int angle, int persistenceLevel) {
+StructureObject* StructureManager::placeStructure(CreatureObject* creature, const String& structureTemplatePath, float x, float y, int angle, int persistenceLevel, uint64 lotReservation) {
+	if (creature == nullptr)
+		return nullptr;
 	ManagedReference<Zone*> zone = creature->getZone();
 
 	if (zone == nullptr)
@@ -488,6 +651,18 @@ StructureObject* StructureManager::placeStructure(CreatureObject* creature, cons
 		info("server template is null");
 		return nullptr;
 	}
+
+	auto ghost = creature->getPlayerObject();
+	if (creature->isPlayerCreature()) {
+		if (lotReservation == 0)
+			lotReservation = reserveAccountLots(ghost, serverTemplate->getLotSize());
+		if (lotReservation == 0)
+			return nullptr;
+	} else if (lotReservation != 0) {
+		return nullptr;
+	}
+	LotReservationGuard reservationGuard(this, lotReservation);
+
 	float z = zone->getHeight(x, y);
 
 	float floraRadius = serverTemplate->getClearFloraRadius();
@@ -538,38 +713,47 @@ StructureObject* StructureManager::placeStructure(CreatureObject* creature, cons
 
 	Locker sLocker(structureObject);
 
-	structureObject->grantPermission("ADMIN", creature->getObjectID());
-	structureObject->setOwner(creature->getObjectID());
+	try {
+		structureObject->grantPermission("ADMIN", creature->getObjectID());
+		structureObject->setOwner(creature->getObjectID(), lotReservation);
 
-	ManagedReference<PlayerObject*> ghost = creature->getPlayerObject();
-	if (ghost != nullptr) {
-		ghost->addOwnedStructure(structureObject);
+		if (ghost != nullptr) {
+			ghost->addOwnedStructure(structureObject);
+		}
+
+		if (structureObject->isTurret() || structureObject->isMinefield() || structureObject->isScanner()) {
+			structureObject->setFaction(creature->getFaction());
+		}
+
+		BuildingObject* buildingObject = nullptr;
+		if (structureObject->isBuildingObject()) {
+			buildingObject = cast<BuildingObject*>(structureObject);
+			if (buildingObject != nullptr)
+				buildingObject->createCellObjects();
+		}
+
+		structureObject->setPublicStructure(serverTemplate->isPublicStructure());
+		structureObject->initializePosition(x, z, y);
+		structureObject->rotate(angle);
+
+		TransactionLog trx(TrxCode::STRUCTUREDEED, creature, structureObject);
+
+		if (!zone->transferObject(structureObject, -1, true))
+			throw Exception("Could not insert structure into zone");
+
+		structureObject->createChildObjects();
+
+		structureObject->notifyStructurePlaced(creature);
+
+		return structureObject;
+	} catch (...) {
+		if (ghost != nullptr)
+			ghost->removeOwnedStructure(structureObject);
+		structureObject->destroyObjectFromWorld(true);
+		structureObject->destroyObjectFromDatabase(true);
+		error("Structure placement failed; released its account lots.");
+		return nullptr;
 	}
-
-	if (structureObject->isTurret() || structureObject->isMinefield() || structureObject->isScanner()) {
-		structureObject->setFaction(creature->getFaction());
-	}
-
-	BuildingObject* buildingObject = nullptr;
-	if (structureObject->isBuildingObject()) {
-		buildingObject = cast<BuildingObject*>(structureObject);
-		if (buildingObject != nullptr)
-			buildingObject->createCellObjects();
-	}
-
-	structureObject->setPublicStructure(serverTemplate->isPublicStructure());
-	structureObject->initializePosition(x, z, y);
-	structureObject->rotate(angle);
-
-	TransactionLog trx(TrxCode::STRUCTUREDEED, creature, structureObject);
-
-	zone->transferObject(structureObject, -1, true);
-
-	structureObject->createChildObjects();
-
-	structureObject->notifyStructurePlaced(creature);
-
-	return structureObject;
 }
 
 StructureObject* StructureManager::placeCamp(CreatureObject* player, CustomizationVariables* customVars, const String& campTemplatePath, float x, float y, int angle, int persistenceLevel) {
@@ -646,8 +830,21 @@ StructureObject* StructureManager::placeCamp(CreatureObject* player, Customizati
 }
 
 int StructureManager::destroyStructure(StructureObject* structureObject, bool playEffect) {
-	Reference<DestroyStructureTask*> task = new DestroyStructureTask(structureObject, playEffect);
-	task->execute();
+	if (structureObject == nullptr)
+		return 1;
+
+	Locker locker(structureObject);
+	if (structureObject->getZone() == nullptr || structureObject->isPendingDestruction())
+		return 1;
+
+	structureObject->setPendingDestruction(true);
+	try {
+		Reference<DestroyStructureTask*> task = new DestroyStructureTask(structureObject, playEffect);
+		task->execute();
+	} catch (...) {
+		structureObject->setPendingDestruction(false);
+		throw;
+	}
 
 	return 0;
 }
@@ -680,6 +877,72 @@ String StructureManager::getTimeString(uint32 timestamp) {
 	return "(" + str.toString() + ")";
 }
 
+bool StructureManager::canTakeOwnership(CreatureObject* player, StructureObject* structure) {
+	if (player == nullptr || !player->isPlayerCreature() || structure == nullptr
+			|| structure->getZone() == nullptr || player->getZone() != structure->getZone()
+			|| structure->isPendingDestruction() || structure->getOwnerObjectID() == player->getObjectID()
+			|| !structure->isOwnedByAccount(player))
+		return false;
+
+	// These structures have separate civic, faction, guild, or camp ownership rules.
+	if (structure->isCivicStructure() || structure->isGCWBase() || structure->isTurret()
+			|| structure->isMinefield() || structure->isScanner() || structure->isCampStructure() || structure->isGuildHall())
+		return false;
+
+	auto ghost = player->getPlayerObject();
+	if (ghost == nullptr || !ghost->isOnline())
+		return false;
+
+	auto structureTemplate = dynamic_cast<SharedStructureObjectTemplate*>(structure->getObjectTemplate());
+	if (structureTemplate == nullptr)
+		return false;
+	const String& ability = structureTemplate->getAbilityRequired();
+	if (!ability.isEmpty() && !ghost->hasAbility(ability))
+		return false;
+
+	if (structure->isBuildingObject()) {
+		auto building = cast<BuildingObject*>(structure);
+		if (building->isResidence() || player->getRootParent() != structure)
+			return false;
+
+		// Retain the normal transfer restriction on character-bound contents.
+		for (int i = 1; i <= building->getTotalCellNumber(); ++i) {
+			auto cell = building->getCell(i);
+			if (cell == nullptr)
+				continue;
+			for (int j = 0; j < cell->getContainerObjectsSize(); ++j) {
+				auto object = cell->getContainerObject(j);
+				if (object != nullptr && !object->isVendor() && (object->isNoTrade() || object->containsNoTradeObjectRecursive()))
+					return false;
+			}
+		}
+	} else if (!player->isInRange(structure, 16.f)) {
+		return false;
+	}
+
+	return true;
+}
+
+int StructureManager::takeOwnership(CreatureObject* creature, StructureObject* structureObject) {
+	if (!canTakeOwnership(creature, structureObject)) {
+		if (creature != nullptr)
+			creature->sendSystemMessage("This structure is not eligible for you to take ownership.");
+		return 1;
+	}
+
+	ManagedReference<CreatureObject*> player = creature;
+	ManagedReference<StructureObject*> structure = structureObject;
+	// Radial dispatch holds the selected object (the structure for installations).
+	// Run the transfer afterward so its normal lock ordering is preserved.
+	Core::getTaskManager()->executeTask([player, structure] {
+		if (TransferstructureCommand::doTransferStructure(player, player, structure, true, true) == QueueCommand::SUCCESS)
+			player->sendSystemMessage("You are now the named owner of this structure.");
+		else
+			player->sendSystemMessage("Ownership was not changed. The structure must remain eligible and cannot be a declared residence.");
+	}, "takeStructureOwnership");
+	return 0;
+}
+
 int StructureManager::declareResidence(CreatureObject* player, StructureObject* structureObject, bool isCityHall) {
 	if (!structureObject->isBuildingObject()) {
 		player->sendSystemMessage("@player_structure:residence_must_be_building"); // Your declared residence must be a building.
@@ -699,7 +962,8 @@ int StructureManager::declareResidence(CreatureObject* player, StructureObject* 
 
 	ManagedReference<BuildingObject*> buildingObject = cast<BuildingObject*>(structureObject);
 
-	if (!buildingObject->isOwnerOf(player)) {
+	// Residence and city citizenship remain attached to the named owner.
+	if (buildingObject->getOwnerObjectID() != player->getObjectID() && !ghost->isPrivileged()) {
 		player->sendSystemMessage("@player_structure:declare_must_be_owner"); // You must be the owner of the building to declare residence.
 		return 1;
 	}
@@ -793,6 +1057,10 @@ Reference<SceneObject*> StructureManager::getInRangeParkingGarage(SceneObject* o
 }
 
 int StructureManager::redeedStructure(CreatureObject* creature) {
+	if (creature == nullptr)
+		return 0;
+
+	Locker creatureLock(creature);
 	ManagedReference<DestroyStructureSession*> session = creature->getActiveSession(SessionFacadeType::DESTROYSTRUCTURE).castTo<DestroyStructureSession*>();
 
 	if (session == nullptr)
@@ -803,12 +1071,18 @@ int StructureManager::redeedStructure(CreatureObject* creature) {
 	if (structureObject == nullptr)
 		return 0;
 
-	Locker _locker(structureObject);
+	Locker _locker(structureObject, creature);
+
+	if (structureObject->getZone() == nullptr || structureObject->isPendingDestruction())
+		return session->cancelSession();
+
+	auto ghost = creature->getPlayerObject();
+	if (ghost == nullptr || (!structureObject->isOwnedByAccount(creature) && !ghost->isStaff())) {
+		creature->sendSystemMessage("@player_structure:destroy_must_be_owner");
+		return session->cancelSession();
+	}
 
 	ManagedReference<StructureDeed*> deed = server->getObject(structureObject->getDeedObjectID()).castTo<StructureDeed*>();
-
-	int maint = structureObject->getSurplusMaintenance();
-	int redeedCost = structureObject->getRedeedCost();
 
 	TransactionLog trx(creature, TrxCode::STRUCTUREDEED, structureObject);
 
@@ -817,6 +1091,22 @@ int StructureManager::redeedStructure(CreatureObject* creature) {
 
 	if (deed != nullptr && structureObject->isRedeedable()) {
 		Locker _lock(deed, structureObject);
+		if (structureObject->getZone() == nullptr || structureObject->isPendingDestruction()
+				|| structureObject->getDeedObjectID() != deed->getObjectID()
+				|| (!structureObject->isOwnedByAccount(creature) && !ghost->isStaff()))
+			return session->cancelSession();
+
+		String redeedMessage = structureObject->getRedeedMessage();
+		if (!redeedMessage.isEmpty() || !structureObject->isRedeedable()) {
+			if (!redeedMessage.isEmpty())
+				creature->sendSystemMessage("@player_structure:" + redeedMessage);
+			creature->sendSystemMessage("@player_structure:deed_reclaimed_failed");
+			trx.abort() << "structure no longer eligible for redeeding";
+			return session->cancelSession();
+		}
+
+		int maint = structureObject->getSurplusMaintenance();
+		int redeedCost = structureObject->getRedeedCost();
 
 		ManagedReference<SceneObject*> inventory = creature->getSlottedObject("inventory");
 
@@ -873,19 +1163,36 @@ int StructureManager::redeedStructure(CreatureObject* creature) {
 			deed->setSurplusMaintenance(maint - redeedCost);
 			deed->setSurplusPower(structureObject->getSurplusPower());
 
+			if (!inventory->transferObject(deed, -1, true)) {
+				creature->sendSystemMessage("@player_structure:deed_reclaimed_failed");
+				trx.abort() << "failed to transfer deed to player inventory";
+				return session->cancelSession();
+			}
+
 			structureObject->setDeedObjectID(0); // Set this to 0 so the deed doesn't get destroyed with the structure.
 
-			destroyStructure(structureObject);
-
-			if (!inventory->transferObject(deed, -1, true)) {
-				trx.abort() << "failed to transfer deed to player inventory";
+			try {
+				if (destroyStructure(structureObject) != 0) {
+					deed->destroyObjectFromWorld(true);
+					structureObject->setDeedObjectID(deed->getObjectID());
+					creature->sendSystemMessage("@player_structure:deed_reclaimed_failed");
+					trx.abort() << "failed to schedule structure destruction";
+					return session->cancelSession();
+				}
+			} catch (...) {
+				deed->destroyObjectFromWorld(true);
+				structureObject->setDeedObjectID(deed->getObjectID());
+				creature->sendSystemMessage("@player_structure:deed_reclaimed_failed");
+				session->cancelSession();
+				throw;
 			}
 
 			inventory->broadcastObject(deed, true);
 			creature->sendSystemMessage("@player_structure:deed_reclaimed"); // Structure destroyed and deed reclaimed.
 		}
 	} else {
-		destroyStructure(structureObject);
+		if (destroyStructure(structureObject) != 0)
+			return session->cancelSession();
 		creature->sendSystemMessage("@player_structure:structure_destroyed"); // Structured destroyed.
 	}
 

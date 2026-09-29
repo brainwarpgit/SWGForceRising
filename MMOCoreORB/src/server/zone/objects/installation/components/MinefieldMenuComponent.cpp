@@ -82,7 +82,7 @@ void MinefieldMenuComponent::fillObjectMenuResponse(SceneObject* sceneObject, Ob
 		}
 	}
 
-	if (baseBuilding->getOwnerObjectID() == player->getObjectID()) {
+	if (baseBuilding->isOwnedByAccount(player)) {
 		menuResponse->addRadialMenuItem(RadialOptions::SERVER_MENU2, 3, "@player_structure:management_mine_inv"); // "Mine Inventory"
 	}
 
@@ -167,7 +167,7 @@ int MinefieldMenuComponent::handleObjectMenuSelect(SceneObject* sceneObject, Cre
 				return 1;
 			}
 
-			if (isPrivileged || (baseBuilding->getOwnerObjectID() == player->getObjectID())) {
+			if (isPrivileged || baseBuilding->isOwnedByAccount(player)) {
 				minefield->sendWithoutParentTo(player);
 				minefield->openContainerTo(player);
 				minefield->notifyObservers(ObserverEventType::OPENCONTAINER, player);

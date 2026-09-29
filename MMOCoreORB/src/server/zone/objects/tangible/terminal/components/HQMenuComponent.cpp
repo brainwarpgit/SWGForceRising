@@ -95,7 +95,7 @@ void HQMenuComponent::fillObjectMenuResponse(SceneObject* sceneObject, ObjectMen
 	menuResponse->addRadialMenuItem(210, 3, "@player_structure:management");
 	menuResponse->addRadialMenuItemToRadialID(210, 227, 3, "@player_structure:management_status");
 
-	if (building->getOwnerCreatureObject() == player || privileged) {
+	if (building->isOwnedByAccount(player) || privileged) {
 		menuResponse->addRadialMenuItemToRadialID(210, 228, 3, "@hq:mnu_defense_status");
 
 		if ((building->getPvpStatusBitmask() & ObjectFlag::OVERT) && !gcwMan->isBaseVulnerable(building)) {
@@ -218,7 +218,7 @@ int HQMenuComponent::handleObjectMenuSelect(SceneObject* sceneObject, CreatureOb
 	} else if (selectedID == 228) {
 		gcwMan->sendBaseDefenseStatus(creature, building);
 	} else if (selectedID == 235) {
-		if (building->getOwnerCreatureObject() == creature || ghost->isPrivileged())
+		if (building->isOwnedByAccount(creature) || ghost->isPrivileged())
 			gcwMan->resetVulnerability(creature, building);
 	} else if (selectedID == 236) {
 		creature->executeObjectControllerAction(0x18FC1726, building->getObjectID(), ""); //destroyStructure

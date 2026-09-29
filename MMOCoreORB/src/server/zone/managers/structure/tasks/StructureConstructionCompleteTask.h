@@ -14,24 +14,35 @@
 
 class StructureConstructionCompleteTask : public Task {
 	ManagedWeakReference<CreatureObject*> creatureObject;
+	ManagedWeakReference<PlaceStructureSession*> placementSession;
 
 public:
-	StructureConstructionCompleteTask(CreatureObject* creature) : Task() {
+	StructureConstructionCompleteTask(CreatureObject* creature, PlaceStructureSession* session) : Task() {
 		creatureObject = creature;
+		placementSession = session;
 	}
 
 	void run() {
-		ManagedReference<CreatureObject*> creature = creatureObject.get();
-
-		if (creature == nullptr)
-			return;
-
-		Locker lock(creature);
-
-		ManagedReference<PlaceStructureSession*> session = creature->getActiveSession(SessionFacadeType::PLACESTRUCTURE).castTo<PlaceStructureSession*>();
+		ManagedReference<PlaceStructureSession*> session = placementSession.get();
 
 		if (session == nullptr)
 			return;
+
+		ManagedReference<CreatureObject*> creature = creatureObject.get();
+
+		if (creature == nullptr) {
+			session->cancelSession();
+			return;
+		}
+
+		Locker lock(creature);
+
+		auto activeSession = creature->getActiveSession(SessionFacadeType::PLACESTRUCTURE).castTo<PlaceStructureSession*>();
+
+		if (activeSession != session) {
+			session->cancelSession();
+			return;
+		}
 
 		session->completeSession();
 	}

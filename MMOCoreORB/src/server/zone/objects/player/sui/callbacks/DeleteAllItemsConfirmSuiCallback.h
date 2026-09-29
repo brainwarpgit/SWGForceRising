@@ -30,6 +30,8 @@ public:
 			return;
 
 		Locker _lock(sceneO, creature);
+		if (sceneO->isBuildingObject() && !cast<BuildingObject*>(sceneO.get())->isOnAdminList(creature))
+			return;
 
 		TransactionLog trx(TrxCode::PLAYERMISCACTION, creature, sceneO);
 
