@@ -132,7 +132,7 @@ int CellObjectImplementation::canAddObject(SceneObject* object, int containmentT
 			count += object->getCountableObjectsRecursive();
 		}
 
-		if ((strongParent->getCurrentNumberOfPlayerItems() + count) > strongParent->getMaximumNumberOfPlayerItems()) {
+		if ((static_cast<int64>(strongParent->getCurrentNumberOfPlayerItems()) + count) > strongParent->getMaximumNumberOfPlayerItems()) {
 			errorDescription = "@container_error_message:container13"; // This house has too many items in it
 
 			return TransferErrorCode::TOOMANYITEMSINHOUSE;

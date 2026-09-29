@@ -2,6 +2,12 @@
 
 ## 2026-09-29
 
+### Committed structure capacity configuration
+
+- Added `Core3.StructureManager.ItemsPerLot = 200`, `NoLotItemCount = 1000`, and `LotsPerCharacter = 10` to both configuration files, preserving the current defaults. Building storage and the structure report use the configured limits; the shared account lot pool uses maximum character slots times `LotsPerCharacter`, plus its admin bonus.
+- Zero/negative settings provide zero base capacity, and large calculations avoid integer overflow. Existing items, structures, admin bonuses, and historical lot-bonus migration are preserved when settings change.
+- Verification passed: 173 lot-capacity/bonus checks and 68 storage/configuration checks, including Lua validation of both files and strict-C++11 overflow checks. Source/caller and whitespace review passed. The user confirmed all changes are verified and requested the commit. This overall runtime confirmation supersedes the pending rebuild/restart and in-game checklist; no necessary verification remains. No TRE update is needed, and the assistant has not built or run Core3.
+
 ### Committed shared account lots and structure permissions
 
 - Replaced separate character lot allowances with a shared account pool in the current galaxy: `Core3.PlayerCreationManager.MaxCharactersPerGalaxy * 10`, plus an account-wide admin bonus. Updated the explanatory comment in both configuration files. `/adjustLotCount` now adjusts the whole account; existing character bonuses migrate once.

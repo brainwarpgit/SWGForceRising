@@ -107,11 +107,15 @@ struct AccountImplementation: Lockable {
 using Account = AccountImplementation;
 struct ConfigManager {
     int slots = 10;
+    std::map<std::string, int> values;
     static ConfigManager* instance() { static ConfigManager config; return &config; }
+    void setLotsPerCharacter(int value) { values["Core3.StructureManager.LotsPerCharacter"] = value; }
     int getInt(const char* key, int fallback) const {
-        assert(std::string(key) == "Core3.PlayerCreationManager.MaxCharactersPerGalaxy");
         assert(fallback == 10);
-        return slots;
+        if (std::string(key) == "Core3.PlayerCreationManager.MaxCharactersPerGalaxy") return slots;
+        assert(std::string(key) == "Core3.StructureManager.LotsPerCharacter");
+        auto found = values.find(key);
+        return found == values.end() ? fallback : found->second;
     }
 };
 struct PlayerObject;
@@ -180,6 +184,7 @@ struct Fixture {
     AdjustLotCountCommand command;
     Fixture() {
         ConfigManager::instance()->slots = 10;
+        ConfigManager::instance()->values.clear();
         StructureManager::current = &manager;
         manager.server = &server;
         ghost.account = altGhost.account = &account;
@@ -285,12 +290,67 @@ int main() {
     }
     {
         Fixture f;
+        ConfigManager::instance()->setLotsPerCharacter(10);
+        check(f.ghost.getMaximumLots() == 100, "explicit ten lots matches the missing-setting default");
+    }
+    for (const auto& example : std::vector<std::pair<int, int>>{
+            {4, 40}, {25, 250}, {0, 0}, {-4, 0}, {minimum, 0}, {maximum, maximum}}) {
+        Fixture f;
+        ConfigManager::instance()->setLotsPerCharacter(example.first);
+        check(f.ghost.getMaximumLots() == example.second, "configured lots per slot recomputes base with safe zero and upper clamps");
+        check(f.altGhost.getMaximumLots() == example.second, "configured base remains shared between account characters");
+    }
+    {
+        Fixture f;
+        auto config = ConfigManager::instance();
+        config->slots = 3;
+        config->setLotsPerCharacter(25);
+        check(f.ghost.getMaximumLots() == 75, "both configuration factors determine account base");
+        f.account.adjustStructureLotBonus(1, 15);
+        check(f.ghost.getMaximumLots() == 90, "configured base adds signed account bonus once");
+        config->setLotsPerCharacter(0);
+        check(f.ghost.getMaximumLots() == 15, "zero lots per character preserves only positive bonus");
+        config->setLotsPerCharacter(-7);
+        check(f.ghost.getMaximumLots() == 15, "negative lots per character contributes no base");
+        config->slots = -3;
+        check(f.ghost.getMaximumLots() == 15, "two negative settings cannot produce positive base");
+        config->slots = 0;
+        config->setLotsPerCharacter(maximum);
+        check(f.ghost.getMaximumLots() == 15, "zero slots with maximum lots still contributes no base");
+        f.account.adjustStructureLotBonus(1, -30);
+        check(f.ghost.getMaximumLots() == 0, "signed bonus still clamps final configured total at zero");
+    }
+    {
+        Fixture f;
+        auto config = ConfigManager::instance();
+        config->slots = 1;
+        config->setLotsPerCharacter(maximum);
+        check(f.ghost.getMaximumLots() == maximum, "maximum lots value is representable for one slot");
+        config->slots = maximum;
+        f.account.adjustStructureLotBonus(1, maximum);
+        check(f.ghost.getMaximumLots() == maximum, "two maximum factors plus maximum bonus do not overflow int64");
+    }
+    {
+        Fixture f;
+        ConfigManager::instance()->slots = 2;
+        ConfigManager::instance()->setLotsPerCharacter(maximum);
+        f.account.adjustStructureLotBonus(1, minimum);
+        check(f.ghost.getMaximumLots() == maximum - 1, "signed bonus applies before clamping an oversized base");
+    }
+    {
+        Fixture f;
+        ConfigManager::instance()->setLotsPerCharacter(4);
         f.manager.legacyLotBonuses[77] = 12;
-        check(f.ghost.getMaximumLots() == 112, "capacity lookup migrates legacy total");
+        check(f.ghost.getMaximumLots() == 52, "nondefault configured base preserves existing legacy bonus total");
+        check(f.altGhost.getMaximumLots() == 52 && f.account.getStructureLotBonus(1) == 12,
+              "sibling capacity lookup does not migrate legacy bonus twice");
         f.manager.legacyLotBonuses[77] = 99;
-        check(f.ghost.getMaximumLots() == 112, "later capacity lookup does not reapply changed legacy sum");
+        check(f.ghost.getMaximumLots() == 52, "later capacity lookup does not reapply changed legacy sum");
+        ConfigManager::instance()->setLotsPerCharacter(20);
+        check(f.ghost.getMaximumLots() == 212 && f.account.getStructureLotBonus(1) == 12,
+              "changing configured lots never rescales or reapplies migrated bonus");
         f.account.adjustStructureLotBonus(1, -2);
-        check(f.altGhost.getMaximumLots() == 110, "other character sees adjusted migrated total");
+        check(f.altGhost.getMaximumLots() == 210, "other character sees adjusted migrated total with configured base");
     }
     {
         Fixture f;
@@ -338,6 +398,11 @@ int main() {
         check(f.admin.messages.size() == 1 && f.admin.messages[0].find("Account bonus: 25") != String::npos &&
               f.admin.messages[0].find("total account lots: 125") != String::npos,
               "success message reports shared bonus and total");
+        ConfigManager::instance()->setLotsPerCharacter(4);
+        check(f.execute("0") == SUCCESS && f.altGhost.getMaximumLots() == 65 && f.account.getStructureLotBonus(1) == 25,
+              "admin command uses configured base while preserving account bonus");
+        check(f.admin.messages.back().find("total account lots: 65") != String::npos,
+              "admin success message reports newly configured total");
         check(f.otherAccount.structureLotBonuses.values.empty(), "command does not modify another account");
         f.account.initializeStructureLotBonus(2, 50);
         check(f.execute("-10") == SUCCESS && f.account.getStructureLotBonus(1) == 15,
@@ -418,6 +483,9 @@ def main():
     assert re.search(r"@dereferenced\s+protected VectorMap<unsigned int, int> structureLotBonuses;", account_idl)
     assert re.search(r"@read\s+public synchronized int getStructureLotBonus", account_idl)
     assert "structureLotBonuses" not in function(account, "void AccountImplementation::initializeTransientMembers()")
+    bootstrap = function(structure, "void StructureManager::initializeAccountLots()")
+    assert re.search(r"uint8\s+previousMaximum\s*=\s*10\s*;", bootstrap)
+    assert re.search(r"bonuses\[accountID\]\s*\+=\s*static_cast<int>\(previousMaximum\)\s*-\s*10\s*;", bootstrap)
 
     getter = function(account_idl, "int getStructureLotBonus")
     getter = getter.replace("int getStructureLotBonus", "int AccountImplementation::getStructureLotBonus", 1)
@@ -437,7 +505,7 @@ def main():
         subprocess.run(compiler + ["-std=c++17", "-Wall", "-Wextra", "-pedantic", "-pthread",
                                    str(cpp), "-o", str(executable)], check=True)
         subprocess.run([str(executable)], check=True)
-    print("3 account persistence/schema checks passed")
+    print("5 account persistence/legacy schema checks passed")
 
 
 if __name__ == "__main__":

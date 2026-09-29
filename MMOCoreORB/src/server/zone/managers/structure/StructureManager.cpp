@@ -191,7 +191,8 @@ int StructureManager::getMaximumAccountLots(PlayerObject* player) {
 	const auto legacyBonus = legacyLotBonuses.find(player->getAccountID());
 	account->initializeStructureLotBonus(server->getGalaxyID(), legacyBonus == legacyLotBonuses.end() ? 0 : legacyBonus->second);
 	const int slots = ConfigManager::instance()->getInt("Core3.PlayerCreationManager.MaxCharactersPerGalaxy", 10);
-	const int64 base = static_cast<int64>(slots > 0 ? slots : 0) * 10;
+	const int lotsPerCharacter = ConfigManager::instance()->getInt("Core3.StructureManager.LotsPerCharacter", 10);
+	const int64 base = static_cast<int64>(slots > 0 ? slots : 0) * (lotsPerCharacter > 0 ? lotsPerCharacter : 0);
 	const int64 total = base + account->getStructureLotBonus(server->getGalaxyID());
 	if (total <= 0)
 		return 0;

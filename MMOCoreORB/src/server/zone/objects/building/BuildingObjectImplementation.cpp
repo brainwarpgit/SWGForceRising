@@ -6,6 +6,8 @@
  */
 
 #include "server/zone/objects/building/BuildingObject.h"
+#include "conf/ConfigManager.h"
+#include <limits>
 #include "server/zone/Zone.h"
 #include "server/zone/ZoneProcessServer.h"
 #include "server/zone/ZoneClientSession.h"
@@ -1058,11 +1060,15 @@ uint32 BuildingObjectImplementation::getMaximumNumberOfPlayerItems() {
 
 	uint8 lots = ssot->getLotSize();
 
-	// Buildings without a lot cost have a fixed storage allowance.
-	if (lots == 0)
-		return 1000;
+	if (lots == 0) {
+		const int items = ConfigManager::instance()->getInt("Core3.StructureManager.NoLotItemCount", 1000);
+		return items > 0 ? static_cast<uint32>(items) : 0;
+	}
 
-	return lots * 200;
+	const int itemsPerLot = ConfigManager::instance()->getInt("Core3.StructureManager.ItemsPerLot", 200);
+	const int64 capacity = static_cast<int64>(lots) * (itemsPerLot > 0 ? itemsPerLot : 0);
+	// Item counters use signed integers; avoid wrapping large configured limits.
+	return capacity > std::numeric_limits<int>::max() ? std::numeric_limits<int>::max() : static_cast<uint32>(capacity);
 }
 
 int BuildingObjectImplementation::notifyObjectInsertedToChild(SceneObject* object, SceneObject* child, SceneObject* oldParent) {

@@ -253,7 +253,7 @@ int ContainerImplementation::canAddObject(SceneObject* object, int containmentTy
 				if (rootParent->isBuildingObject()) {
 					BuildingObject* building = rootParent.castTo<BuildingObject*>();
 
-					if (!building->isStaticBuilding() && (building->getCurrentNumberOfPlayerItems() + objectSize > building->getMaximumNumberOfPlayerItems())) {
+					if (!building->isStaticBuilding() && (static_cast<int64>(building->getCurrentNumberOfPlayerItems()) + objectSize > building->getMaximumNumberOfPlayerItems())) {
 						errorDescription = "@container_error_message:container13"; // This house has too many items in it
 
 						return TransferErrorCode::TOOMANYITEMSINHOUSE;

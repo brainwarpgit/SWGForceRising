@@ -261,7 +261,7 @@ Core3 = {
 	SameAccountTipsAreFree = false,
 	PlayerCreationManager = {
 		EnableTutorial = false,
-		-- Shared account base lots are this limit times 10, plus any admin bonus.
+		-- Shared account base lots are this limit times StructureManager.LotsPerCharacter.
 		MaxCharactersPerGalaxy = 10,
 	},
 	PlayerManager = {
@@ -363,6 +363,13 @@ Core3 = {
 	UnloadContainers = true,
 	MaxNavMeshJobs = 6,
 	StructureManager = {
+		-- Nonnegative integers; negative values are treated as zero.
+		-- Storage in buildings with a lot cost: lot cost times ItemsPerLot.
+		ItemsPerLot = 200,
+		-- Storage in all zero-lot buildings, including civic buildings.
+		NoLotItemCount = 1000,
+		-- Account base lots: MaxCharactersPerGalaxy times this value, plus admin bonus.
+		LotsPerCharacter = 10,
 		EnhancedFurnitureRotate = false,
 	},
 	StructureMaintenanceTask = {
