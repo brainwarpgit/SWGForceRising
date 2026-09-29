@@ -203,11 +203,150 @@ void concurrentSpending() {
     check(ledger.remaining(1, 10) == 4, "concurrent winner commit preserves balance");
 }
 
+void resizing() {
+    AccountLotLedger ledger;
+    ledger.registerOwner(11, 1);
+    ledger.registerOwner(12, 1);
+    ledger.registerOwner(21, 2);
+    ledger.setStructure(100, 11, 5);
+    ledger.setStructure(101, 12, 2);
+    ledger.setStructure(200, 21, 9);
+    check(!ledger.canResizeStructure(100, 11, 5), "unready ledger hides resizing capability");
+    check(!ledger.resizeStructure(100, 11, 5, 4, 10), "unready ledger rejects even shrinking");
+    ledger.setReady(true);
+    struct Invalid { AccountLotLedger::ID structure, owner; int expected; };
+    for (const auto& value : std::vector<Invalid>{
+            {0, 11, 5}, {100, 0, 5}, {999, 11, 5}, {100, 99, 5},
+            {100, 12, 5}, {100, 21, 5}, {100, 11, 4}, {100, 11, -1}, {100, 11, INT_MIN}}) {
+        check(!ledger.canResizeStructure(value.structure, value.owner, value.expected),
+              "unknown, zero, stale owner or stale cost cannot offer resizing");
+        check(!ledger.resizeStructure(value.structure, value.owner, value.expected, 6, 10),
+              "resize atomically rejects inconsistent identity or cost");
+    }
+    check(!ledger.resizeStructure(100, 11, 5, -1, 10), "negative new cost rejected");
+    check(!ledger.resizeStructure(100, 11, 5, INT_MIN, 10), "minimum integer new cost rejected before arithmetic");
+    check(ledger.remaining(1, 10) == 3, "rejected resizes preserve all account usage");
+    check(ledger.canResizeStructure(100, 11, 5), "matching record offers resizing");
+    check(ledger.resizeStructure(100, 11, 5, 7, 10), "growth charges positive difference only");
+    check(ledger.remaining(1, 10) == 1 && ledger.remaining(2, 10) == 1, "growth updates owning account alone");
+    check(!ledger.canResizeStructure(100, 11, 5) && !ledger.resizeStructure(100, 11, 5, 8, 10),
+          "stale expected cost cannot spend again");
+    auto placement = ledger.reserve(1, 10, 1);
+    check(placement != 0 && !ledger.resizeStructure(100, 11, 7, 8, 10), "pending placement prevents double spending capacity");
+    check(ledger.canResizeStructure(100, 11, 7), "capacity exhaustion does not invalidate the structure record");
+    ledger.release(placement);
+    auto otherAccount = ledger.reserve(2, 10, 1);
+    check(otherAccount != 0 && ledger.resizeStructure(100, 11, 7, 8, 10), "other account reservation does not block growth");
+    check(!ledger.resizeStructure(100, 11, 8, 9, 10), "full account rejects further growth");
+    check(ledger.resizeStructure(100, 11, 8, 8, 0), "unchanged cost succeeds without capacity");
+    check(ledger.resizeStructure(100, 11, 8, 7, 1), "over-capacity account may shrink");
+    check(ledger.remaining(1, 1) == 0, "partial shrink does not fabricate remaining capacity");
+    check(ledger.resizeStructure(100, 11, 7, 0, -10), "scalar ledger allows nonnegative shrink with negative capacity");
+    check(ledger.remaining(1, 10) == 8, "shrink releases actual usage");
+    auto transfer = ledger.reserve(2, 10, 0, 100);
+    check(transfer != 0 && !ledger.canResizeStructure(100, 11, 0), "pending transfer hides resizing capability");
+    check(!ledger.resizeStructure(100, 11, 0, 1, 10), "pending transfer blocks resize without cancelling transfer");
+    check(ledger.setStructure(100, 21, 0, transfer), "blocked resize leaves transfer token usable");
+    check(!ledger.canResizeStructure(100, 11, 0) && ledger.canResizeStructure(100, 21, 0),
+          "completed transfer changes permitted title owner");
+    ledger.setStructure(100, 21, 1);
+    auto internal = ledger.reserve(2, 0, 1, 100);
+    check(internal != 0 && !ledger.resizeStructure(100, 21, 1, 0, 0), "same-account pending transfer also blocks shrinking");
+    ledger.release(internal);
+    check(ledger.canResizeStructure(100, 21, 1) && ledger.resizeStructure(100, 21, 1, 0, 0),
+          "cancelled transfer restores capability and permits shrinking");
+    ledger.removeStructure(100);
+    check(!ledger.canResizeStructure(100, 21, 0) && !ledger.resizeStructure(100, 21, 0, 1, 10),
+          "removed structure cannot be recreated through resizing");
+}
+
+void resizeLimitsAndTransferGrowth() {
+    AccountLotLedger ledger;
+    ledger.registerOwner(11, 1);
+    ledger.registerOwner(12, 1);
+    ledger.setStructure(100, 11, 5);
+    ledger.setReady(true);
+    check(ledger.reserve(1, 5, 6, 100) == 0, "same-account transfer cannot grow cost in a full pool");
+    auto growth = ledger.reserve(1, 10, 9, 100);
+    check(growth != 0 && ledger.remaining(1, 10) == 1, "existing same-account reservation charges growth difference");
+    check(ledger.reserve(1, 10, 2) == 0, "reserved transfer growth blocks competing placement");
+    check(!ledger.setStructure(100, 12, 10, growth), "transfer commit cannot grow beyond reserved final cost");
+    check(ledger.setStructure(100, 12, 9, growth) && ledger.remaining(1, 10) == 1,
+          "same-account growth commit replaces charged difference without double billing");
+    auto shrink = ledger.reserve(1, 0, 6, 100);
+    check(shrink != 0 && ledger.setStructure(100, 11, 6, shrink), "same-account shrinking transfer needs no free lots");
+    check(ledger.remaining(1, 10) == 4, "shrinking transfer releases correct difference");
+    ledger.setStructure(100, 11, INT_MAX - 1);
+    check(ledger.resizeStructure(100, 11, INT_MAX - 1, INT_MAX, INT_MAX), "growth reaches maximum integer cost without overflow");
+    check(ledger.remaining(1, INT_MAX) == 0, "maximum cost consumes exact capacity");
+    check(ledger.resizeStructure(100, 11, INT_MAX, 0, INT_MIN), "extreme shrink is safe even below zero capacity");
+    auto placement = ledger.reserve(1, INT_MAX, 1);
+    check(placement != 0 && !ledger.resizeStructure(100, 11, 0, INT_MAX, INT_MAX), "maximum growth still respects other reservations");
+    ledger.release(placement);
+    check(ledger.resizeStructure(100, 11, 0, INT_MAX, INT_MAX), "full integer-range growth succeeds with sufficient capacity");
+    ledger.setStructure(101, 12, INT_MAX);
+    check(ledger.resizeStructure(100, 11, INT_MAX, INT_MAX - 1, INT_MAX), "huge aggregate usage still permits shrinking");
+    check(!ledger.resizeStructure(100, 11, INT_MAX - 1, INT_MAX, INT_MAX), "huge aggregate usage cannot wrap and fund growth");
+}
+
+void concurrentResizing() {
+    AccountLotLedger ledger;
+    ledger.registerOwner(11, 1);
+    ledger.registerOwner(12, 1);
+    ledger.setStructure(100, 11, 2);
+    ledger.setStructure(101, 12, 2);
+    ledger.setReady(true);
+    std::atomic<int> ready{0}, winners{0};
+    std::atomic<bool> start{false};
+    std::vector<std::thread> threads;
+    for (int i = 0; i < 16; ++i) {
+        threads.emplace_back([&, i] {
+            ready.fetch_add(1);
+            while (!start.load()) std::this_thread::yield();
+            if (ledger.resizeStructure(100 + i % 2, 11 + i % 2, 2, 3, 5)) winners.fetch_add(1);
+        });
+    }
+    while (ready.load() != 16) std::this_thread::yield();
+    start.store(true);
+    for (auto& thread : threads) thread.join();
+    check(winners.load() == 1 && ledger.remaining(1, 5) == 0, "concurrent sibling storage additions admit one funded change");
+    check(ledger.canResizeStructure(100, 11, 3) != ledger.canResizeStructure(101, 12, 3),
+          "only one concurrent structure cost changes");
+
+    AccountLotLedger mixed;
+    mixed.registerOwner(11, 1);
+    mixed.setStructure(100, 11, 4);
+    mixed.setReady(true);
+    ready.store(0); start.store(false);
+    AccountLotLedger::ID token = 0;
+    bool resized = false;
+    std::thread placement([&] {
+        ready.fetch_add(1);
+        while (!start.load()) std::this_thread::yield();
+        token = mixed.reserve(1, 5, 1);
+    });
+    std::thread resize([&] {
+        ready.fetch_add(1);
+        while (!start.load()) std::this_thread::yield();
+        resized = mixed.resizeStructure(100, 11, 4, 5, 5);
+    });
+    while (ready.load() != 2) std::this_thread::yield();
+    start.store(true);
+    placement.join(); resize.join();
+    check((token != 0) != resized, "placement and resizing atomically compete for the same remaining lot");
+    check(mixed.remaining(1, 5) == 0, "mixed concurrent allocation cannot overspend");
+    mixed.release(token);
+    check(mixed.remaining(1, 5) == (resized ? 0 : 1), "cancelling competing placement preserves any committed resize");
+}
+
 int main() {
     ownershipAndCapacity();
     reservations();
     transfers();
     concurrentSpending();
+    resizing();
+    resizeLimitsAndTransferGrowth();
+    concurrentResizing();
     std::cout << "PASS: " << checks << " account lot ledger checks\n";
 }
 '''

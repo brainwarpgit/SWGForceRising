@@ -25,6 +25,7 @@
 #include "server/chat/ChatManager.h"
 #include "server/zone/managers/stringid/StringIdManager.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
+#include <limits>
 
 void StructureObjectImplementation::loadTemplateData(SharedObjectTemplate* templateData) {
 	TangibleObjectImplementation::loadTemplateData(templateData);
@@ -301,13 +302,36 @@ void StructureObjectImplementation::destroyOrphanCivicStructure() {
 	structureManager->destroyStructure(_this.getReferenceUnsafeStaticCast());
 }
 
-int StructureObjectImplementation::getLotSize() const {
+int StructureObjectImplementation::getBaseLotSize() const {
 	const SharedStructureObjectTemplate* ssot = dynamic_cast<SharedStructureObjectTemplate*>(templateObject.get());
 
 	if (ssot == nullptr)
 		return 0;
 
 	return ssot->getLotSize();
+}
+
+int StructureObjectImplementation::getLotSize() const {
+	const int64 lots = static_cast<int64>(getBaseLotSize()) + (additionalLots > 0 ? additionalLots : 0);
+	return lots > std::numeric_limits<int>::max() ? std::numeric_limits<int>::max() : static_cast<int>(lots);
+}
+
+bool StructureObjectImplementation::setAdditionalLots(int lots, int accountCapacity) {
+	const int baseLots = getBaseLotSize();
+	if (lots < 0 || baseLots <= 0 || !isBuildingObject() || getZone() == nullptr || isPendingDestruction())
+		return false;
+	if (lots > additionalLots && static_cast<int64>(lots) > static_cast<int64>(baseLots) * 2)
+		return false;
+
+	const int64 totalLots = static_cast<int64>(baseLots) + lots;
+	if (totalLots > std::numeric_limits<int>::max())
+		return false;
+
+	if (!StructureManager::instance()->updateStructureLotCount(_this.getReferenceUnsafeStaticCast(), static_cast<int>(totalLots), accountCapacity))
+		return false;
+
+	additionalLots = lots;
+	return true;
 }
 
 CreatureObject* StructureObjectImplementation::getOwnerCreatureObject() const {

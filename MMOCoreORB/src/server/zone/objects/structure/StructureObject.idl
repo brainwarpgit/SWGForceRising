@@ -37,6 +37,7 @@ class StructureObject extends TangibleObject {
 	protected unsigned long ownerObjectID;
 	protected unsigned long deedObjectID;
 	protected unsigned long waypointID;
+	protected int additionalLots;
 
 	protected float surplusMaintenance;
 	protected float surplusPower;
@@ -56,6 +57,7 @@ class StructureObject extends TangibleObject {
 		deedObjectID = 0;
 
 		waypointID = 0;
+		additionalLots = 0;
 
 		surplusMaintenance = 0;
 
@@ -317,6 +319,17 @@ class StructureObject extends TangibleObject {
 
 	@read
 	public native int getLotSize();
+
+	@read
+	public native int getBaseLotSize();
+
+	@read
+	public int getAdditionalLots() {
+		return additionalLots;
+	}
+
+	@preLocked
+	public native boolean setAdditionalLots(int lots, int accountCapacity);
 
 	@preLocked
 	public void setMaintenanceReduced(boolean value) {

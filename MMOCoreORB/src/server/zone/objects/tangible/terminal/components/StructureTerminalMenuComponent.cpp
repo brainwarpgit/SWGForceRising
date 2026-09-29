@@ -19,6 +19,16 @@
 #include "server/zone/objects/intangible/PetControlDevice.h"
 #include "server/zone/managers/creature/PetManager.h"
 
+namespace {
+void addStorageLotMenus(ObjectMenuResponse* menu, CreatureObject* player, StructureObject* structure) {
+	auto manager = StructureManager::instance();
+	if (manager->getStorageLotAdjustmentLimit(player, structure, false) > 0)
+		menu->addRadialMenuItemToRadialID(118, 241, 3, "Add Storage Lots");
+	if (manager->getStorageLotAdjustmentLimit(player, structure, true) > 0)
+		menu->addRadialMenuItemToRadialID(118, 242, 3, "Remove Storage Lots");
+}
+}
+
 void StructureTerminalMenuComponent::fillObjectMenuResponse(SceneObject* sceneObject, ObjectMenuResponse* menuResponse, CreatureObject* creature) const {
 
 	if(!sceneObject->isTerminal())
@@ -45,6 +55,7 @@ void StructureTerminalMenuComponent::fillObjectMenuResponse(SceneObject* sceneOb
 			menuResponse->addRadialMenuItem(118, 3, "@player_structure:management"); //Structure Management
 			menuResponse->addRadialMenuItemToRadialID(118, 128, 3, "@player_structure:permission_destroy"); //Destroy Structure
 			menuResponse->addRadialMenuItemToRadialID(118, 124, 3, "@player_structure:management_status"); //Status
+			addStorageLotMenus(menuResponse, creature, structureObject);
 
 			if (structureObject->isBuildingObject()) {
 				menuResponse->addRadialMenuItemToRadialID(118, 50, 3, "@player_structure:management_name_structure"); //Name Structure
@@ -69,6 +80,7 @@ void StructureTerminalMenuComponent::fillObjectMenuResponse(SceneObject* sceneOb
 
 		if (StructureManager::instance()->canTakeOwnership(creature, structureObject.get()))
 			menuResponse->addRadialMenuItemToRadialID(118, 240, 3, "Take Ownership");
+		addStorageLotMenus(menuResponse, creature, structureObject);
 
 		if (structureObject->isGuildHall()) {
 			menuResponse->addRadialMenuItemToRadialID(118, 70, 3, "@player_structure:take_maintenance"); // Withdraw Maintenance
@@ -151,6 +163,11 @@ int StructureTerminalMenuComponent::handleObjectMenuSelect(SceneObject* sceneObj
 
 	if (zone == nullptr)
 		return 1;
+
+	if (selectedID == 241 || selectedID == 242) {
+		StructureManager::instance()->promptStructureLotAdjustment(creature, structureObject, selectedID == 242);
+		return 0;
+	}
 
 	if (structureObject->isCivicStructure()) {
 		if (structureObject->isOnAdminList(creature)) {

@@ -62,18 +62,25 @@ struct SharedStructureObjectTemplate: SharedObjectTemplate {
     explicit SharedStructureObjectTemplate(uint8 lots): lots(lots) {}
     uint8 getLotSize() const { return lots; }
 };
-struct BuildingObjectImplementation {
+struct StructureObjectImplementation {
     struct TemplateReference {
         SharedObjectTemplate* value;
         SharedObjectTemplate* get() const { return value; }
     } templateObject;
+    int additionalLots = 0;
+    explicit StructureObjectImplementation(SharedObjectTemplate* value): templateObject{value} {}
+    int getBaseLotSize() const;
+    int getLotSize() const;
+};
+struct BuildingObjectImplementation: StructureObjectImplementation {
     int currentItems = 0;
     bool staticBuilding = false;
-    explicit BuildingObjectImplementation(SharedObjectTemplate* value): templateObject{value} {}
+    explicit BuildingObjectImplementation(SharedObjectTemplate* value): StructureObjectImplementation(value) {}
     int getCurrentNumberOfPlayerItems() const { return currentItems; }
     bool isStaticBuilding() const { return staticBuilding; }
     uint32 getMaximumNumberOfPlayerItems();
 };
+LOT_METHODS
 CAPACITY_METHOD
 bool floorRejects(BuildingObjectImplementation* strongParent, int count) {
     return FLOOR_CONDITION;
@@ -102,9 +109,38 @@ int main() {
     }
     BuildingObjectImplementation missing(nullptr);
     check(missing.getMaximumNumberOfPlayerItems() == 0, "missing template has no storage");
+    missing.additionalLots = 3;
+    check(missing.getMaximumNumberOfPlayerItems() == 0, "missing template cannot gain storage from saved additional lots");
     SharedObjectTemplate nonStructure;
     BuildingObjectImplementation wrongTemplate(&nonStructure);
     check(wrongTemplate.getMaximumNumberOfPlayerItems() == 0, "non-structure template has no storage");
+
+    objectTemplate.lots = 2;
+    building.additionalLots = 3;
+    check(building.getBaseLotSize() == 2 && building.getLotSize() == 5, "purchased lots increase total without changing template base");
+    check(building.getMaximumNumberOfPlayerItems() == 1000, "purchased lots immediately increase storage");
+    building.additionalLots = 254;
+    check(building.getLotSize() == 256 && building.getMaximumNumberOfPlayerItems() == 51200,
+          "purchased total crossing 255 does not truncate to a byte");
+    building.additionalLots = 300;
+    check(building.getLotSize() == 302 && building.getMaximumNumberOfPlayerItems() == 60400,
+          "larger purchased totals retain their complete storage allowance");
+    building.additionalLots = 1;
+    check(building.getMaximumNumberOfPlayerItems() == 600, "removing purchased lots immediately lowers storage");
+    building.additionalLots = 0;
+    check(building.getLotSize() == 2 && building.getMaximumNumberOfPlayerItems() == 400,
+          "removing all purchased lots preserves base storage");
+    objectTemplate.lots = 0;
+    check(building.getMaximumNumberOfPlayerItems() == 1000, "zero-lot building retains its fixed allowance");
+    objectTemplate.lots = 2;
+    building.additionalLots = maximum - 2;
+    settings[perLot] = 1;
+    check(building.getLotSize() == maximum && building.getMaximumNumberOfPlayerItems() == static_cast<uint32>(maximum),
+          "maximum purchased total is preserved without truncation");
+    settings[perLot] = maximum;
+    check(building.getMaximumNumberOfPlayerItems() == static_cast<uint32>(maximum),
+          "maximum purchased total times maximum items saturates without int64 overflow");
+    building.additionalLots = 0;
 
     settings[perLot] = 80;
     settings[noLot] = 2500;
@@ -238,6 +274,7 @@ def check_configs():
 
 def main():
     building = (CORE / "src/server/zone/objects/building/BuildingObjectImplementation.cpp").read_text()
+    structure = (CORE / "src/server/zone/objects/structure/StructureObjectImplementation.cpp").read_text()
     cell = (CORE / "src/server/zone/objects/cell/CellObjectImplementation.cpp").read_text()
     container = (CORE / "src/server/zone/objects/tangible/ContainerImplementation.cpp").read_text()
     manager = (CORE / "src/server/zone/managers/structure/StructureManager.cpp").read_text()
@@ -255,6 +292,9 @@ def main():
     assert 'getInt("Core3.StructureManager.LotsPerCharacter", 10)' in account_capacity
     print("6 storage integration source checks passed")
     source = MOCKS.replace("CAPACITY_METHOD", function(building, "uint32 BuildingObjectImplementation::getMaximumNumberOfPlayerItems("))
+    lot_methods = "\n".join(function(structure, signature) for signature in (
+        "int StructureObjectImplementation::getBaseLotSize(", "int StructureObjectImplementation::getLotSize("))
+    source = source.replace("LOT_METHODS", lot_methods)
     source = source.replace("FLOOR_CONDITION", floor_condition).replace("NESTED_CONDITION", nested_condition)
     with tempfile.TemporaryDirectory(prefix=".structure-storage-config-", dir=CORE / "bin") as directory:
         directory = Path(directory)

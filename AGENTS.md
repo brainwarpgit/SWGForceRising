@@ -1,154 +1,58 @@
 # Running Project Guidance
+# CRITICAL: Minimize output token length to conserve API credits. No pleasantries. Output only diffs or targeted code blocks, never entire unchanged files.
 
-These instructions apply throughout this project. Paths below are relative to the repository root.
+# Workspace Paths
+- Read/Write Primary: `/home/swgemu/workspace/SWGForceRising`
+- Read-Only Reference: `/home/swgemu/workspace/MTGServer` (Never modify)
+- Read-Only Clients: `/home/swgemu/workspace/tre` (Never modify)
+- Read/Write Assets: `/home/swgemu/workspace/SWGForceRising/SWGFR_update_01` (Preserve relative paths)
+- Read-Only Extracted: `/home/swgemu/workspace/extracted-SWGFR`
+- Read-Only Extracted Reference: `/home/swgemu/workspace/extracted-MTG`
 
-# Workspace and Reference Directories
+## Workspace Boundaries
+- Normal work must stay within: `MMOCoreORB/bin` and `MMOCoreORB/src`
+- Permitted read/search exceptions: `MTGServer`, `tre`, `extracted-SWGFR`, `extracted-MTG`
+- Permitted read/write exceptions: `SWGFR_update_01`, `AGENTS.md`, `UPDATES.md`, `UPDATESFULL.md`
+- Do not access other locations unless explicitly asked.
 
-The following are absolute paths within the development workspace.
+## Client Asset Staging
+- Create/update client asset files ONLY in `SWGFR_update_01`. Do not create loose copies under `MMOCoreORB/bin`.
+- Server Lua scripts and source changes belong in `MMOCoreORB/bin/scripts` and `MMOCoreORB/src`.
+- Keep `SWGFR_update_01.tre` entry first in `config.lua` and `config-local.lua` TRE lists.
 
-- `/home/swgemu/workspace/SWGForceRising`
-  - Primary project.
-  - Read/write.
+## Protected Dependencies
+- `MMOCoreORB/utils/engine3` submodule is immutable. Never edit, patch, format, replace, or generate files within it.
+- Implement source fixes outside the submodule. Do not use a submodule revision change as a workaround.
 
-- `/home/swgemu/workspace/MTGServer`
-  - Secondary reference project.
-  - Read-only.
-  - Never modify files in this repository.
+## Source Provenance
+- Do not import fixes/content from unauthorized projects or branches.
+- MTGServer is authorized for comparison and porting. Keep it read-only.
+- Develop fixes from the currently checked-out branch.
 
-- `/home/swgemu/workspace/tre`
-  - Primary SWGForceRising/client TRE archive collection.
-  - Read-only.
-  - Never modify existing TRE archives here unless explicitly requested by the user.
+## Git Commits
+- Do not create commits unless explicitly asked.
+- Before committing (unless skipped by user), review changes against verification records. Provide a concrete checklist of remaining validation (static, build, runtime, in-game).
+- Wait for passing results or explicit bypass. Do not commit while verification is pending/failing.
+- If user requests to skip verification, proceed immediately without a checklist. Record verification as "skipped", not "passed".
 
-- `/home/swgemu/workspace/SWGForceRising/SWGFR_update_01`
-  - Source tree for new or corrected client files intended for the SWGForceRising update TRE.
-  - Read/write.
-  - Preserve archive-relative paths.
+## Building, Running, and Testing
+- CRITICAL TOKEN DEFENSE: Do not automatically write unit tests, test scripts, or mock data files for the code you generate.
+- Only write functional logic, scripts, or diffs.
+- You are strictly forbidden from creating test files unless the user explicitly uses the phrase "write a test script for this".
+- Do not compile Core3, link/install a rebuilt executable, or run `core3` (including GDB/`runUnitTests`) unless explicitly requested.
+- Perform maximum validation within allowed folders before that point: check diffs, whitespace, and use static syntax checks.
 
-- `/home/swgemu/workspace/extracted-SWGFR`
-  - Extracted contents of the primary SWGForceRising client TRE set.
-  - Read-only reference.
-  - Never modify.
+## Maintaining History & Guidance
+- Update this file when standing project guidance changes.
+- Keep `UPDATES.md` (short, plain-language updates) and `UPDATESFULL.md` (expanded high-level history with context/reasons) current. Update both in the same change as the implementation.
+- Distinguish committed from uncommitted changes. Do not present proposals as completed.
 
-- `/home/swgemu/workspace/extracted-MTG`
-  - Extracted contents of the MTGServer client TRE set.
-  - Read-only reference.
-  - Never modify.
-
-## Workspace boundaries
-
-- Normal SWGForceRising project work must stay within:
-  - `MMOCoreORB/bin`
-  - `MMOCoreORB/src`
-
-- The following locations are explicitly permitted exceptions:
-
-  - `/home/swgemu/workspace/MTGServer`
-    - Read/search only when comparing or porting content from MTGServer.
-
-  - `/home/swgemu/workspace/tre`
-    - Read/search only for examining the primary client TRE archives.
-
-  - `/home/swgemu/workspace/extracted-SWGFR`
-    - Read/search only for determining whether client assets already exist.
-
-  - `/home/swgemu/workspace/extracted-MTG`
-    - Read/search only for locating MTG-specific client assets and their dependencies.
-
-  - `/home/swgemu/workspace/SWGForceRising/SWGFR_update_01`
-    - Read/write.
-    - Store new or corrected files intended for the SWGForceRising update TRE here.
-
-- The repository root `AGENTS.md`, `UPDATES.md`, and `UPDATESFULL.md`
-  are also permitted read/write exceptions for maintaining project guidance
-  and project history.
-
-- Do not access other locations unless the user explicitly asks.
-
-## Client asset staging
-
-- Create or update client asset files only in `SWGFR_update_01`, preserving archive-relative paths. Do not create loose copies of client assets under `MMOCoreORB/bin` unless the user explicitly requests them.
-- Server Lua scripts and source changes still belong in the authorized `MMOCoreORB/bin/scripts` and `MMOCoreORB/src` locations.
-- The user builds `SWGFR_update_01.tre` and places it in the configured TRE folder. Keep its entry first in both `config.lua` and `config-local.lua` TRE lists and keep ConfigManager's latest-TRE default aligned with it.
-
-## Protected dependencies
-
-- Treat the contents of the `MMOCoreORB/utils/engine3` submodule as immutable. Never edit, patch, format, replace, or generate files within it as part of a project fix or change.
-- Implement source fixes outside the engine3 submodule and within the authorized workspace boundaries. Do not use a submodule revision change as a workaround for a project source issue.
-- An engine3 revision or recorded-pointer update is permitted only when the user explicitly requests an upstream dependency alignment or update. Use an unmodified commit from the configured upstream branch, and do not include engine3 source changes.
-
-## Source provenance
-
-- Do not import fixes, source changes, or other content from unauthorized projects or branches, including by cherry-picking, copying, or recreating their patches.
-- MTGServer is an authorized source for comparison and for importing relevant fixes or content. Keep MTGServer read-only, stay within the task scope, and follow the porting rules below when porting content.
-- Develop fixes from the currently checked-out branch and authorized reference sources; do not use other projects or branches unless the user authorizes them.
-
-## Git commits
-
-- Do not create commits unless the user explicitly asks you to commit.
-- For every commit request, unless the user explicitly asks to skip verification, review the changes intended for that commit and the existing verification records. Determine whether the changes have been verified to work and identify any relevant static, build, runtime, or in-game checks that remain. Static checks alone do not establish that runtime behavior works.
-- Complete the checks permitted by the existing project instructions, then give the user a concrete checklist of any remaining verification, including what to check and the expected results. Do not commit while necessary verification is pending or failing; wait for passing results or an explicit instruction to commit without verification.
-- Reuse verification that still applies to the current changes. If no necessary verification remains, state that and proceed with the requested commit without asking for another confirmation.
-- If the user explicitly says to commit without verification, skip the verification review, checklist, and testing for that commit and proceed without another confirmation. Still inspect Git state as needed to include only the intended changes. Record verification as skipped at the user's request, not as passed.
-- A commit request by itself does not authorize building or running Core3; the existing build and run restrictions still apply.
-
-## Building, running, and testing
-
-- Leave building and running Core3 to the user. The user will report build errors, warnings, and runtime errors for investigation.
-- Do not compile Core3 or its components, link or install a rebuilt executable, or run `core3`, including under GDB or through `runUnitTests`, unless the user explicitly requests it.
-- Perform as much relevant validation as possible before that point, within the allowed folders: review changes and callers, check diffs and whitespace, use available syntax or static checks, and run standalone tests that do not build or execute Core3.
-
-## Maintaining this guidance
-
-- Keep this root file as the single running record of project instructions and preferences provided by the user.
-- Update it when the user adds or changes standing project guidance.
-
-## Maintaining the update history
-
-- Keep `UPDATES.md` and `UPDATESFULL.md` current as project work progresses.
-- `UPDATES.md` is the short, plain-language list of meaningful Core3 and related server/client content updates.
-- `UPDATESFULL.md` is the expanded high-level history: explain what changed, why it matters, relevant commands or configuration options, and any remaining deployment or testing work. Summarize related fixes together rather than listing every edited file.
-- Update both files in the same working change as each meaningful feature, fix, content change, removal, or standing workflow change.
-- Record actual implemented work and distinguish committed changes from uncommitted changes. Do not present a proposal, reverted experiment, or unresolved issue as a completed feature.
-- Use dated sections, preserve earlier history, and update an existing entry when refining the same change. Identify related user-supplied asset or configuration changes when relevant, without including private local settings or secrets.
-- Keep these files synchronized with each other and the final implementation. Maintaining them does not authorize a Git commit or a Core3 build/run.
-- Record the verification performed, distinguishing static checks from user-confirmed Core3 builds and runtime testing.
-
-# Porting rules
-
-When asked to port content from MTGServer to SWGForceRising:
-
-1. Locate the implementation in MTGServer.
-2. Determine every server-side dependency:
-   - Lua files
-   - screenplay includes
-   - object templates
-   - loot groups
-   - mobile templates
-   - conversations
-   - quest data
-   - C++ dependencies if any
-
-3. Determine every client-side dependency referenced by the content:
-   - .iff
-   - .msh
-   - .apt
-   - .sat
-   - .lod
-   - .dds
-   - .sht
-   - .tga
-   - .stf
-   - .tre references
-
-4. Compare those dependencies against the existing SWGForceRising/client TRE files.
-
-5. Only extract/copy client assets that do not already exist.
-
-6. Create or adapt the required Lua files for SWGForceRising.
-
-7. Do not import unrelated MTGServer content.
-
-8. Preserve SWGForceRising conventions and directory structure wherever possible.
-
-9. Before making changes, show the dependency list and proposed files to add/modify.
+# Porting Rules (MTGServer to SWGForceRising)
+1. Locate implementation in MTGServer.
+2. Identify server dependencies (Lua, screenplay, templates, loot, mobiles, conversations, quests, C++).
+3. Identify client dependencies (.iff, .msh, .apt, .sat, .lod, .dds, .sht, .tga, .tre).
+4. Compare dependencies against existing SWGForceRising client TRE files.
+5. Only extract/copy client assets that do not exist.
+6. Create/adapt required Lua files for SWGForceRising.
+7. Do not import unrelated content. Preserve SWGForceRising conventions.
+8. STOP: Present a minimalist summary of dependencies and proposed changes. Wait for user confirmation before generating code.

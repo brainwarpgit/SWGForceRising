@@ -140,6 +140,7 @@ struct CreatureObject : SceneObject {
 };
 struct StructureObject : SceneObject {
     bool allowed = true, pending = false, redeedable = true, gcw = false;
+    int additionalLots = 0;
     int pvp = 0;
     int maintenance = 1000, redeedCost = 200;
     uint64 deedID = 200;
@@ -148,6 +149,7 @@ struct StructureObject : SceneObject {
     String reason;
     Zone* getZone() { return zone; }
     bool isPendingDestruction() const { return pending; }
+    int getAdditionalLots() const { return additionalLots; }
     void setPendingDestruction(bool value) { pending = value; }
     bool isOwnedByAccount(CreatureObject* player) const {
         return allowed && (player->id == ownerID || (player->accountID != 0 && player->accountID == ownerAccountID));
@@ -297,6 +299,33 @@ struct Fixture {
     }
 };
 int main() {
+    const char* addedLotsMessage = "Remove all added storage lots before destroying or redeeding this structure.";
+    {
+        Fixture f; f.structure.additionalLots = 1; f.player.active = nullptr;
+        f.session.initializeSession();
+        check(f.player.active == nullptr && f.player.ghost.boxes == 0 && f.messaged(addedLotsMessage),
+              "added lots block the initial destruction prompt");
+    }
+    {
+        Fixture f; f.structure.additionalLots = 1;
+        f.session.sendDestroyCode();
+        check(f.session.destroyCode == 0 && f.player.active == nullptr && f.messaged(addedLotsMessage),
+              "added lots arising before the code prompt cancel destruction");
+    }
+    {
+        Fixture f; f.session.sendDestroyCode(); f.structure.additionalLots = 1;
+        f.session.destroyStructure();
+        check(queued == 0 && !f.structure.pending && f.deed.parent == nullptr && f.player.active == nullptr,
+              "added lots arising after the code prompt block final destruction");
+    }
+    {
+        Fixture f; f.structure.additionalLots = 1;
+        f.manager.redeedStructure(&f.player);
+        check(queued == 0 && f.deed.parent == nullptr && f.player.active == nullptr && f.messaged(addedLotsMessage),
+              "direct redeed entry refuses added lots before touching the deed");
+        check(f.manager.destroyStructure(&f.structure) == 0 && queued == 1,
+              "server cleanup can still destroy a structure and refund its ledger entry");
+    }
     for (int mode = 0; mode < 3; ++mode) {
         Fixture f;
         if (mode == 1) f.player.id = 101;
@@ -439,13 +468,14 @@ int main() {
         check(queued == 1 && f.structure.pending && f.deed.parent == nullptr, "nonredeedable structure schedules destruction without giving deed");
         check(f.messaged("@player_structure:structure_destroyed"), "nonredeedable success retains message");
     }
-    for (int mode = 0; mode < 4; ++mode) {
+    for (int mode = 0; mode < 5; ++mode) {
         Fixture f;
         onDeedLock = [&] {
             if (mode == 0) f.structure.redeedable = false;
             if (mode == 1) f.structure.reason = "not_empty";
             if (mode == 2) { f.structure.maintenance = 1500; f.structure.redeedCost = 500; }
             if (mode == 3) f.structure.allowed = false;
+            if (mode == 4) f.structure.additionalLots = 1;
         };
         f.manager.redeedStructure(&f.player);
         check(queued == (mode == 2 ? 1 : 0), "deed lock reacquisition revalidates eligibility and ownership");
@@ -453,6 +483,7 @@ int main() {
         if (mode == 2) check(f.deed.maintenance == 1000, "redeed uses current maintenance and cost after lock wait");
         else check(f.structure.deedID == f.deed.id && f.player.active == nullptr, "changed structure is retained and confirmation cancelled");
         if (mode == 1) check(f.messaged("@player_structure:not_empty"), "changed contents report current blocking message");
+        if (mode == 4) check(f.messaged(addedLotsMessage), "lots added while waiting for the deed lock block redeeding");
     }
     {
         Fixture f; f.structure.allowed = false; f.player.ghost.staff = true;

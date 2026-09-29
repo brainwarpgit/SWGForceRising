@@ -106,6 +106,28 @@ public:
 		return ready && account != 0 ? remainingLocked(account, capacity) : 0;
 	}
 
+	bool canResizeStructure(ID structure, ID owner, int expectedLots) const {
+		std::lock_guard<std::mutex> lock(mutex);
+		return canResizeStructureLocked(structure, owner, expectedLots);
+	}
+
+	bool resizeStructure(ID structure, ID owner, int expectedLots, int newLots, int capacity) {
+		if (newLots < 0)
+			return false;
+
+		std::lock_guard<std::mutex> lock(mutex);
+		if (!canResizeStructureLocked(structure, owner, expectedLots))
+			return false;
+
+		auto existing = structures.find(structure);
+		const int addedLots = std::max(0, newLots - expectedLots);
+		if (addedLots > remainingLocked(existing->second.account, capacity))
+			return false;
+
+		existing->second.lots = newLots;
+		return true;
+	}
+
 	ID reserve(AccountID account, int capacity, int lots, ID existingStructure = 0) {
 		if (account == 0 || lots < 0)
 			return 0;
@@ -123,7 +145,7 @@ public:
 				return 0;
 
 			if (existing->second.account == account)
-				chargedLots = 0;
+				chargedLots = std::max(0, lots - existing->second.lots);
 		}
 
 		if (chargedLots > remainingLocked(account, capacity))
@@ -160,6 +182,17 @@ private:
 		int chargedLots;
 		ID structure;
 	};
+
+	bool canResizeStructureLocked(ID structure, ID owner, int expectedLots) const {
+		if (!ready || structure == 0 || owner == 0 || expectedLots < 0)
+			return false;
+
+		auto ownerEntry = owners.find(owner);
+		auto existing = structures.find(structure);
+		return ownerEntry != owners.end() && existing != structures.end()
+				&& existing->second.owner == owner && existing->second.account == ownerEntry->second
+				&& existing->second.lots == expectedLots && reservedStructures.count(structure) == 0;
+	}
 
 	int remainingLocked(AccountID account, int capacity) const {
 		std::int64_t available = std::max(0, capacity);

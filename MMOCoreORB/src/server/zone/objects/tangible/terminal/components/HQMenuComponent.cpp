@@ -94,6 +94,10 @@ void HQMenuComponent::fillObjectMenuResponse(SceneObject* sceneObject, ObjectMen
 
 	menuResponse->addRadialMenuItem(210, 3, "@player_structure:management");
 	menuResponse->addRadialMenuItemToRadialID(210, 227, 3, "@player_structure:management_status");
+	if (StructureManager::instance()->getStorageLotAdjustmentLimit(player, building, false) > 0)
+		menuResponse->addRadialMenuItemToRadialID(210, 241, 3, "Add Storage Lots");
+	if (StructureManager::instance()->getStorageLotAdjustmentLimit(player, building, true) > 0)
+		menuResponse->addRadialMenuItemToRadialID(210, 242, 3, "Remove Storage Lots");
 
 	if (building->isOwnedByAccount(player) || privileged) {
 		menuResponse->addRadialMenuItemToRadialID(210, 228, 3, "@hq:mnu_defense_status");
@@ -213,7 +217,9 @@ int HQMenuComponent::handleObjectMenuSelect(SceneObject* sceneObject, CreatureOb
 		return 1;
 	}
 
-	if (selectedID == 210 || selectedID == 20 || selectedID == 227) {
+	if (selectedID == 241 || selectedID == 242) {
+		StructureManager::instance()->promptStructureLotAdjustment(creature, building, selectedID == 242);
+	} else if (selectedID == 210 || selectedID == 20 || selectedID == 227) {
 		StructureManager::instance()->reportStructureStatus(creature, building, sceneObject);
 	} else if (selectedID == 228) {
 		gcwMan->sendBaseDefenseStatus(creature, building);

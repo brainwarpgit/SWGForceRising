@@ -8,6 +8,7 @@
 #include "server/ServerCore.h"
 #include "server/zone/ZoneServer.h"
 #include "server/zone/objects/scene/SceneObject.h"
+#include "server/zone/objects/building/BuildingObject.h"
 #include "server/zone/managers/objectcontroller/ObjectController.h"
 #include "server/zone/managers/player/PlayerManager.h"
 #include "server/zone/objects/player/sessions/TradeSession.h"
@@ -17,6 +18,39 @@
 #include "QueueCommand.h"
 
 class TransferItemMiscCommand : public QueueCommand {
+	class StorageBuildingLock {
+		ManagedReference<BuildingObject*> building;
+	public:
+		bool acquire(BuildingObject* value) {
+			if (value == nullptr)
+				return true;
+			// Some callers already hold a corpse or container lock. Never wait
+			// for the building while holding one of those inherited locks.
+			if (!value->tryWLock())
+				return false;
+			building = value;
+			return true;
+		}
+		void release() {
+			if (building != nullptr) {
+				building->unlock();
+				building = nullptr;
+			}
+		}
+		StorageBuildingLock() = default;
+		~StorageBuildingLock() { release(); }
+		StorageBuildingLock(const StorageBuildingLock&) = delete;
+		StorageBuildingLock& operator=(const StorageBuildingLock&) = delete;
+	};
+
+	static BuildingObject* getStorageBuilding(SceneObject* object) {
+		ManagedReference<SceneObject*> root = object->getRootParent();
+		if (root == nullptr || !root->isBuildingObject())
+			return nullptr;
+		auto building = cast<BuildingObject*>(root.get());
+		return !building->isStaticBuilding() && building->getBaseLotSize() > 0 ? building : nullptr;
+	}
+
 public:
 	TransferItemMiscCommand(const String& name, ZoneProcessServer* server) : QueueCommand(name, server) {
 	}
@@ -114,6 +148,24 @@ public:
 		if (destinationObject == nullptr) {
 			creature->error("destinationObject nullptr in tansferItemMisc command");
 			trx.abort() << "destinationObject nullptr";
+			return GENERALERROR;
+		}
+
+		// Serialize capacity changes with the entire admission/transfer operation.
+		// Include outgoing and inventory moves inside the building so no transfer
+		// waits for its building while another transfer holds a child container.
+		ManagedReference<BuildingObject*> sourceBuilding = getStorageBuilding(objectToTransfer);
+		ManagedReference<BuildingObject*> destinationBuilding = getStorageBuilding(destinationObject);
+		StorageBuildingLock sourceStorageLock;
+		StorageBuildingLock destinationStorageLock;
+		if (!sourceStorageLock.acquire(sourceBuilding)
+				|| !destinationStorageLock.acquire(destinationBuilding != sourceBuilding ? destinationBuilding.get() : nullptr)) {
+			creature->sendSystemMessage("The building is busy. Please try moving the item again.");
+			trx.abort() << "Storage building is busy";
+			return GENERALERROR;
+		}
+		if (getStorageBuilding(objectToTransfer) != sourceBuilding || getStorageBuilding(destinationObject) != destinationBuilding) {
+			trx.abort() << "Storage building changed during transfer";
 			return GENERALERROR;
 		}
 
@@ -356,10 +408,18 @@ public:
 
 		Locker clocker(objectsParent, creature);
 
+		// Cross-locking the source can temporarily release the player lock.
+		if (getStorageBuilding(objectToTransfer) != sourceBuilding || getStorageBuilding(destinationObject) != destinationBuilding) {
+			trx.abort() << "Storage building changed before transfer";
+			return GENERALERROR;
+		}
+
 		if (!objectController->transferObject(objectToTransfer, destinationObject, transferType, true)){
 			trx.abort() << "transferObject failed";
 			return GENERALERROR;
 		}
+		destinationStorageLock.release();
+		sourceStorageLock.release();
 
 		if (clearWeapon) {
 			creature->setWeapon(nullptr, true);

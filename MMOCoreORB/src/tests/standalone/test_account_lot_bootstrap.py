@@ -21,11 +21,11 @@ HEADER = CORE / "src/server/zone/managers/structure/AccountLotLedger.h"
 
 MOCKS = r'''
 #include "AccountLotLedger.h"
-#include <any>
 #include <cstdlib>
 #include <iostream>
 #include <limits>
 #include <map>
+#include <memory>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -52,7 +52,21 @@ struct Exception : std::runtime_error {
     using std::runtime_error::runtime_error;
     const char* getMessage() const { return what(); }
 };
-using Record = std::map<String, std::any>;
+struct Value {
+    struct Base { virtual ~Base() {} };
+    template<class T> struct Typed: Base {
+        T value;
+        explicit Typed(const T& value): value(value) {}
+    };
+    std::shared_ptr<Base> value;
+    Value() {}
+    template<class T> Value(const T& initial): value(new Typed<T>(initial)) {}
+    template<class T> const T* get() const {
+        auto typed = dynamic_cast<Typed<T>*>(value.get());
+        return typed == nullptr ? nullptr : &typed->value;
+    }
+};
+using Record = std::map<String, Value>;
 struct ObjectInputStream {
     Record record;
     explicit ObjectInputStream(int) {}
@@ -62,7 +76,7 @@ struct Serializable {
     template<class T> static bool getVariable(const char* field, T* value, ObjectInputStream* data) {
         auto entry = data->record.find(field);
         if (entry == data->record.end()) return false;
-        auto typed = std::any_cast<T>(&entry->second);
+        auto typed = entry->second.get<T>();
         if (typed == nullptr) return false;
         *value = *typed;
         return true;
@@ -247,6 +261,68 @@ void invalidSavedRecords() {
       f.rejected("non-structure template fails closed"); }
     { Fixture f; f.player(11, 101, 1); f.structure(201, 11, 17);
       f.rejected("negative player structure lot size fails closed"); }
+    { Fixture f; f.player(11, 101, 1); f.structure(201, 11); f.structure(202, 11, 15);
+      f.db.structures.rows[202]["StructureObject.additionalLots"] = -1;
+      f.rejected("negative purchased lots fail closed after partial population"); }
+    { Fixture f; f.player(11, 101, 1); f.structure(201, 11);
+      f.db.structures.rows[201]["StructureObject.additionalLots"] = std::numeric_limits<int>::min();
+      f.rejected("minimum signed purchased lots cannot reduce the account charge"); }
+    { Fixture f; f.player(11, 101, 1); f.structure(201, 11);
+      f.db.structures.rows[201]["StructureObject.additionalLots"] = std::numeric_limits<int>::max();
+      f.rejected("template plus purchased lots cannot overflow the persisted charge"); }
+    { Fixture f; f.structure(201, 99, 10);
+      f.db.structures.rows[201]["StructureObject.additionalLots"] = 1;
+      f.rejected("purchased lots make a zero-base unresolved owner require account resolution"); }
+}
+
+void persistedAdditionalLots() {
+    {
+        Fixture f;
+        f.player(11, 101, 1);
+        f.player(12, 102, 1);
+        f.player(21, 103, 2);
+        f.structure(201, 11, 12);
+        f.db.structures.rows[201]["StructureObject.additionalLots"] = 3;
+        f.structure(202, 12, 15);
+        f.db.structures.rows[202]["StructureObject.additionalLots"] = 7;
+        f.db.structures.rows[202]["SceneObject.zone"] = String("disabled_planet");
+        f.structure(203, 11, 13, true);
+        f.db.scene.rows[203]["StructureObject.additionalLots"] = 300;
+        f.structure(203, 11, 13);
+        f.db.structures.rows[203]["StructureObject.additionalLots"] = 300;
+        f.structure(204, 12, 14); // Existing records omit the new field entirely.
+        f.structure(205, 11, 10);
+        f.db.structures.rows[205]["StructureObject.additionalLots"] = 0;
+        f.structure(300, 21, 16);
+        f.db.structures.rows[300]["StructureObject.additionalLots"] = 4;
+        f.run();
+        check(f.manager.accountLots.isReady() && f.manager.errors == 0, "persisted purchased lots initialize successfully");
+        check(f.manager.accountLots.remaining(1, 500) == 176,
+              "offline siblings and disabled zones charge base plus purchased lots exactly once without byte truncation");
+        check(f.manager.accountLots.remaining(2, 500) == 490, "purchased lots remain charged to their actual owner's account");
+        auto token = f.manager.accountLots.reserve(1, 500, 176);
+        check(token != 0, "only remaining capacity after purchased lots may be reserved");
+        check(f.manager.accountLots.reserve(1, 500, 1) == 0, "purchased lots cannot be spent twice after restart");
+        f.manager.accountLots.release(token);
+        check(f.manager.accountLots.remaining(1, 500) == 176, "reservation cancellation does not erase persisted purchased lots");
+    }
+    {
+        Fixture f;
+        f.player(11, 101, 1);
+        f.structure(201, 11, 15);
+        f.db.structures.rows[201]["StructureObject.additionalLots"] = std::numeric_limits<int>::max() - 5;
+        f.run();
+        check(f.manager.accountLots.isReady() && f.manager.errors == 0, "maximum representable persisted total is accepted");
+        check(f.manager.accountLots.remaining(1, std::numeric_limits<int>::max()) == 0,
+              "maximum total consumes its entire account allowance without overflow");
+    }
+    {
+        Fixture f;
+        f.player(11, 101, 1);
+        f.structure(201, 11, 15);
+        f.run();
+        check(f.manager.accountLots.remaining(1, 100) == 95, "legacy missing additional-lots field defaults to zero");
+    }
 }
 
 void exclusionsAndDefaults() {
@@ -265,6 +341,7 @@ void exclusionsAndDefaults() {
 int main() {
     completeSavedRoster();
     invalidSavedRecords();
+    persistedAdditionalLots();
     exclusionsAndDefaults();
     std::cout << "PASS: " << checks << " account lot bootstrap checks\n";
 }
@@ -290,8 +367,9 @@ def main():
         source.write_text(MOCKS + initializer(SOURCE.read_text()) + CASES)
         compiler = shlex.split(os.environ.get("CXX", "c++"))
         subprocess.run(
-            compiler + ["-std=c++17", "-O2", "-pthread", "-Wall", "-Wextra", "-Werror",
-                        "-pedantic", "-I", str(HEADER.parent), str(source), "-o", str(executable)],
+            compiler + ["-std=c++11", "-O2", "-pthread", "-Wall", "-Wextra", "-Werror",
+                        "-pedantic-errors", "-fsanitize=undefined", "-fno-sanitize-recover=undefined",
+                        "-I", str(HEADER.parent), str(source), "-o", str(executable)],
             check=True, timeout=60,
         )
         subprocess.run([str(executable)], check=True, timeout=20)

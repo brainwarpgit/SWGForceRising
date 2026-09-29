@@ -74,6 +74,7 @@ public:
 		accountLots.release(reservation);
 	}
 	bool updateStructureLotOwner(StructureObject* structure, uint64 ownerID, uint64 reservation = 0);
+	bool updateStructureLotCount(StructureObject* structure, int lots, int accountCapacity);
 	void removeStructureLots(uint64 structureID) {
 		accountLots.removeStructure(structureID);
 	}
@@ -125,6 +126,10 @@ public:
 
 	bool canTakeOwnership(CreatureObject* player, StructureObject* structure);
 	int takeOwnership(CreatureObject* player, StructureObject* structure);
+	int getStorageLotAdjustmentLimit(CreatureObject* player, StructureObject* structure, bool remove);
+	void promptStructureLotAdjustment(CreatureObject* player, StructureObject* structure, bool remove);
+	bool applyStructureLotAdjustment(CreatureObject* player, StructureObject* structure, bool remove,
+			int amount, uint64 expectedOwner, int expectedAdditionalLots);
 
 	/**
 	 * Converts seconds remaining into days, hours, minutes timestamp

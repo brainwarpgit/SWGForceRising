@@ -39,6 +39,7 @@
 #include "server/zone/objects/player/sui/callbacks/StructurePayMaintenanceSuiCallback.h"
 #include "server/zone/objects/player/sui/callbacks/StructureWithdrawMaintenanceSuiCallback.h"
 #include "server/zone/objects/player/sui/callbacks/StructureSelectSignSuiCallback.h"
+#include "server/zone/objects/player/sui/callbacks/StructureLotAdjustmentSuiCallback.h"
 #include "server/zone/managers/stringid/StringIdManager.h"
 #include "terrain/layer/boundaries/BoundaryRectangle.h"
 #include "tasks/DestroyStructureTask.h"
@@ -53,6 +54,7 @@
 #include "server/login/account/Account.h"
 #include "server/zone/objects/creature/commands/QueueCommand.h"
 #include "server/zone/objects/creature/commands/TransferstructureCommand.h"
+#include <algorithm>
 #include <limits>
 
 namespace StorageManagerNamespace {
@@ -148,10 +150,15 @@ void StructureManager::initializeAccountLots() {
 				auto structureTemplate = dynamic_cast<SharedStructureObjectTemplate*>(templateManager->getTemplate(templateCRC));
 				if (structureTemplate == nullptr)
 					throw Exception("Owned structure template is unavailable");
+				int additionalLots = 0;
+				Serializable::getVariable<int>(STRING_HASHCODE("StructureObject.additionalLots"), &additionalLots, &data);
+				const int64 totalLots = static_cast<int64>(structureTemplate->getLotSize()) + additionalLots;
+				if (additionalLots < 0 || totalLots > std::numeric_limits<int>::max())
+					throw Exception("Owned structure has invalid additional lots");
 				if (ownerAccounts.count(ownerID) == 0) {
 					// Building-owned defenses and other zero-lot objects need no charge.
 					// A positive-lot owner must be provably non-player before exclusion.
-					if (structureTemplate->getLotSize() > 0) {
+					if (totalLots > 0) {
 						ObjectInputStream ownerData(2000);
 						VectorMap<String, uint64> slots;
 						if (sceneDatabase->getData(ownerID, &ownerData) != 0 ||
@@ -162,7 +169,7 @@ void StructureManager::initializeAccountLots() {
 					data.clear();
 					continue;
 				}
-				if (!accountLots.setStructure(objectID, ownerID, structureTemplate->getLotSize()))
+				if (!accountLots.setStructure(objectID, ownerID, static_cast<int>(totalLots)))
 					throw Exception("Could not initialize structure account lots");
 				++structureCount;
 				data.clear();
@@ -247,6 +254,14 @@ bool StructureManager::updateStructureLotOwner(StructureObject* structure, uint6
 	if (!accountLots.registerOwner(ownerID, ghost->getAccountID()))
 		return false;
 	return accountLots.setStructure(structure->getObjectID(), ownerID, structure->getLotSize(), reservation);
+}
+
+bool StructureManager::updateStructureLotCount(StructureObject* structure, int lots, int accountCapacity) {
+	if (structure == nullptr || structure->getZone() == nullptr || structure->isPendingDestruction())
+		return false;
+
+	return accountLots.resizeStructure(structure->getObjectID(), structure->getOwnerObjectID(),
+			structure->getLotSize(), lots, accountCapacity);
 }
 
 IndexDatabase* StructureManager::createSubIndex() {
@@ -878,6 +893,110 @@ String StructureManager::getTimeString(uint32 timestamp) {
 	return "(" + str.toString() + ")";
 }
 
+int StructureManager::getStorageLotAdjustmentLimit(CreatureObject* player, StructureObject* structure, bool remove) {
+	if (player == nullptr || !player->isPlayerCreature() || structure == nullptr
+			|| !isAccountLotsReady() || !structure->isBuildingObject() || structure->getZone() == nullptr
+			|| player->getZone() != structure->getZone() || player->getRootParent() != structure
+			|| structure->isPendingDestruction() || !structure->isOwnedByAccount(player))
+		return 0;
+
+	auto ghost = player->getPlayerObject();
+	auto building = cast<BuildingObject*>(structure);
+	const int baseLots = structure->getBaseLotSize();
+	const int extraLots = structure->getAdditionalLots();
+	if (ghost == nullptr || !ghost->isOnline() || building->isStaticBuilding() || baseLots <= 0 || extraLots < 0)
+		return 0;
+
+	const int totalLots = structure->getLotSize();
+	if (!accountLots.canResizeStructure(structure->getObjectID(), structure->getOwnerObjectID(), totalLots))
+		return 0;
+	if (!remove) {
+		const int available = getAccountLotsRemaining(ghost);
+		const int room = std::numeric_limits<int>::max() - totalLots;
+		const int structureRoom = std::max(0, baseLots * 2 - extraLots);
+		return std::min(std::min(available, room), structureRoom);
+	}
+
+	if (extraLots == 0)
+		return 0;
+	const int used = building->getCurrentNumberOfPlayerItems();
+	if (used < 0)
+		return 0;
+	const int itemsPerLot = ConfigManager::instance()->getInt("Core3.StructureManager.ItemsPerLot", 200);
+	if (itemsPerLot <= 0)
+		return used == 0 ? extraLots : 0;
+
+	const int64 neededForItems = (static_cast<int64>(used) + itemsPerLot - 1) / itemsPerLot;
+	const int64 minimumLots = neededForItems > baseLots ? neededForItems : baseLots;
+	if (minimumLots >= totalLots)
+		return 0;
+	const int removable = static_cast<int>(totalLots - minimumLots);
+	return removable < extraLots ? removable : extraLots;
+}
+
+void StructureManager::promptStructureLotAdjustment(CreatureObject* player, StructureObject* structure, bool remove) {
+	if (player == nullptr || structure == nullptr)
+		return;
+
+	// Radial and SUI dispatch already hold the player lock.
+	Locker locker(structure, player);
+	const int limit = getStorageLotAdjustmentLimit(player, structure, remove);
+	if (limit <= 0) {
+		player->sendSystemMessage("No storage lots can be changed here. Only the owning account may change lots, within its available balance and the building's storage needs.");
+		return;
+	}
+
+	auto building = cast<BuildingObject*>(structure);
+	StringBuffer prompt;
+	prompt << "Base: " << structure->getBaseLotSize() << ", added: " << structure->getAdditionalLots()
+			<< " / " << structure->getBaseLotSize() * 2
+			<< "\nStorage: " << building->getCurrentNumberOfPlayerItems() << " / " << building->getMaximumNumberOfPlayerItems();
+
+	ManagedReference<SuiTransferBox*> box = new SuiTransferBox(player, 0x00);
+	box->setUsingObject(structure);
+	box->setCallback(new StructureLotAdjustmentSuiCallback(player->getZoneServer(), structure->getOwnerObjectID(), structure->getAdditionalLots(), remove));
+	box->setPromptTitle(remove ? "Remove Storage Lots" : "Add Storage Lots");
+	box->setPromptText(prompt.toString());
+	box->setCancelButton(true, "@cancel");
+	box->addFrom(remove ? "Removable Lots" : "Available Lots", String::valueOf(limit), String::valueOf(limit), "1");
+	box->addTo(remove ? "Lots to Remove" : "Lots to Add", "0", "0", "1");
+	player->getPlayerObject()->addSuiBox(box);
+	player->sendMessage(box->generateMessage());
+}
+
+bool StructureManager::applyStructureLotAdjustment(CreatureObject* player, StructureObject* structure, bool remove,
+		int amount, uint64 expectedOwner, int expectedAdditionalLots) {
+	if (player == nullptr || structure == nullptr)
+		return false;
+
+	Locker locker(structure, player);
+	if (structure->getOwnerObjectID() != expectedOwner || structure->getAdditionalLots() != expectedAdditionalLots) {
+		player->sendSystemMessage("The structure changed. Reopen its lot adjustment menu and try again.");
+		return false;
+	}
+
+	const int limit = getStorageLotAdjustmentLimit(player, structure, remove);
+	if (amount <= 0 || amount > limit) {
+		player->sendSystemMessage("The lot adjustment is no longer available. Check account ownership, available lots, and stored items, then reopen the menu.");
+		return false;
+	}
+
+	const int updatedLots = remove ? expectedAdditionalLots - amount : expectedAdditionalLots + amount;
+	if (!structure->setAdditionalLots(updatedLots, getMaximumAccountLots(player->getPlayerObject()))) {
+		player->sendSystemMessage("The account balance or structure operation changed. Reopen the lot adjustment menu and try again.");
+		return false;
+	}
+
+	auto building = cast<BuildingObject*>(structure);
+	StringBuffer message;
+	message << "Structure lots: " << structure->getLotSize() << " (base " << structure->getBaseLotSize()
+			<< ", added " << structure->getAdditionalLots() << "). Storage Used: "
+			<< building->getCurrentNumberOfPlayerItems() << " / " << building->getMaximumNumberOfPlayerItems()
+			<< ". Account lots available: " << getAccountLotsRemaining(player->getPlayerObject()) << ".";
+	player->sendSystemMessage(message.toString());
+	return true;
+}
+
 bool StructureManager::canTakeOwnership(CreatureObject* player, StructureObject* structure) {
 	if (player == nullptr || !player->isPlayerCreature() || structure == nullptr
 			|| structure->getZone() == nullptr || player->getZone() != structure->getZone()
@@ -1076,6 +1195,10 @@ int StructureManager::redeedStructure(CreatureObject* creature) {
 
 	if (structureObject->getZone() == nullptr || structureObject->isPendingDestruction())
 		return session->cancelSession();
+	if (structureObject->getAdditionalLots() > 0) {
+		creature->sendSystemMessage("Remove all added storage lots before destroying or redeeding this structure.");
+		return session->cancelSession();
+	}
 
 	auto ghost = creature->getPlayerObject();
 	if (ghost == nullptr || (!structureObject->isOwnedByAccount(creature) && !ghost->isStaff())) {
@@ -1092,6 +1215,10 @@ int StructureManager::redeedStructure(CreatureObject* creature) {
 
 	if (deed != nullptr && structureObject->isRedeedable()) {
 		Locker _lock(deed, structureObject);
+		if (structureObject->getAdditionalLots() > 0) {
+			creature->sendSystemMessage("Remove all added storage lots before destroying or redeeding this structure.");
+			return session->cancelSession();
+		}
 		if (structureObject->getZone() == nullptr || structureObject->isPendingDestruction()
 				|| structureObject->getDeedObjectID() != deed->getObjectID()
 				|| (!structureObject->isOwnedByAccount(creature) && !ghost->isStaff()))
@@ -1370,6 +1497,9 @@ void StructureManager::reportStructureStatus(CreatureObject* creature, Structure
 		}
 
 		status->addMenuItem("Storage Used: " + String::valueOf(building->getCurrentNumberOfPlayerItems()) + " / " + String::valueOf(building->getMaximumNumberOfPlayerItems()));
+		if (building->getBaseLotSize() > 0)
+			status->addMenuItem("Lots Used: " + String::valueOf(building->getLotSize()) + " (Base: "
+					+ String::valueOf(building->getBaseLotSize()) + ", Added: " + String::valueOf(building->getAdditionalLots()) + ")");
 
 #if ENABLE_STRUCTURE_JSON_EXPORT
 		if (creature->hasSkill("admin_base")) {

@@ -32,6 +32,10 @@ bool canDestroyStructure(CreatureObject* player, StructureObject* structure) {
 		player->sendSystemMessage("@player_structure:destroy_must_be_owner");
 		return false;
 	}
+	if (structure->getAdditionalLots() > 0) {
+		player->sendSystemMessage("Remove all added storage lots before destroying or redeeding this structure.");
+		return false;
+	}
 
 	if (structure->isGCWBase() && !ghost->isStaff()) {
 		auto gcwManager = structure->getZone()->getGCWManager();

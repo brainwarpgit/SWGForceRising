@@ -1058,7 +1058,7 @@ uint32 BuildingObjectImplementation::getMaximumNumberOfPlayerItems() {
 	if (ssot == nullptr)
 		return 0;
 
-	uint8 lots = ssot->getLotSize();
+	const int lots = getLotSize();
 
 	if (lots == 0) {
 		const int items = ConfigManager::instance()->getInt("Core3.StructureManager.NoLotItemCount", 1000);

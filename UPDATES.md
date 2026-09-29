@@ -2,6 +2,17 @@
 
 ## 2026-09-29
 
+### Committed additional structure storage lots
+
+- Added **Structure Management → Add Storage Lots / Remove Storage Lots** for buildings that already consume lots. Only characters on the owning account receive these options; ordinary structure admins do not. Each option appears only when a valid adjustment is available.
+- The add/remove window uses the client's existing transfer slider. Added lots use the shared account allowance and increase storage by the configured `ItemsPerLot`; each building can add at most twice its original lot cost. A two-lot house can therefore have up to four added lots, six total. Players cannot remove a building's base lots or reduce capacity below its current contents. The structure report shows base, added, and total lots alongside storage usage.
+- Added lots persist across restarts and ownership transfers. Player-initiated destruction and redeeding cancel while any added lots remain; the player must remove them first. Server cleanup still frees all lots if it destroys a structure. A newly placed deed starts at its normal base cost. Zero-lot buildings retain their configured capacity and have no lot-adjustment menus.
+- All 1,280 targeted standalone checks passed, including the slider, twice-base limit, and destruction/redeed block; source and whitespace review passed. The user confirmed all changes are verified and requested this commit. No necessary verification remains. No TRE update is needed; the assistant did not build or run Core3.
+
+### Committed project guidance update
+
+- The user replaced root `AGENTS.md` with concise workspace, source, commit, testing, and history guidance, and now requires a dependency summary and confirmation before MTGServer ports. A later user edit also prohibited automatic test-file creation without the stated explicit request. The standalone tests in this change were written before that new rule appeared. The user's wording was preserved and trailing whitespace was cleaned.
+
 ### Committed structure capacity configuration
 
 - Added `Core3.StructureManager.ItemsPerLot = 200`, `NoLotItemCount = 1000`, and `LotsPerCharacter = 10` to both configuration files, preserving the current defaults. Building storage and the structure report use the configured limits; the shared account lot pool uses maximum character slots times `LotsPerCharacter`, plus its admin bonus.
