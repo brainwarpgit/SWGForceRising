@@ -2,6 +2,13 @@
 
 ## 2026-09-28
 
+### Committed structure storage limits and reporting
+
+- Building storage now allows 200 items per lot with no separate per-building cap. All zero-lot buildings, including civic structures, allow 1,000 items, as clarified by the user.
+- Floor placement and transfers into containers inside buildings use the same updated limit. Existing buildings adopt it after a Core3 rebuild/restart; no TRE update or database migration is needed.
+- The building structure report now shows `Storage Used: item count / max storage` on one line, using the same limit and counting methods as storage enforcement. Refresh recalculates both values.
+- Source/caller, report-refresh, numeric-range, and whitespace review passed. The user verified that lot-based storage and the structure report are working and requested the commit. This overall runtime confirmation supersedes the pending checklist; no necessary verification remains. The assistant has not built or run Core3.
+
 ### Committed Medium Corellia House Style 2 schematic
 
 - Added the Medium Corellia House (Style 2) draft schematic to Architect Buildings III. Completed its server recipe using the existing medium Corellian house's materials and 8,000 XP, registered it for crafting, and staged its skill-group assignment in `SWGFR_update_01/datatables/crafting/schematic_group.iff`.
