@@ -2,6 +2,10 @@
 
 ## 2026-09-29
 
+### Committed structure planet placement option
+
+- Added `Core3.StructureManager.AllowPlacementOnAllPlanets = true` to both configuration files. When enabled, structure deeds ignore their template planet lists, and the deed’s “Can Be Built On” detail shows **All Planets**. Turning it off restores the template list and original placement restriction; terrain, zoning, faction, and other placement rules remain. Source and whitespace review passed, and the user verified the change and requested the commit. No necessary verification remains. The assistant did not build or run Core3.
+
 ### Committed city population downgrade override
 
 - Added an admin-only **City Hacks → Ignore Citizen Requirements** toggle, saved on each city and off by default. When on, scheduled city updates do not downgrade the city because its citizen count is below the current rank requirement. It remains enabled across restarts and mayor changes until an admin turns it off. Elections, maintenance, tax processing, population-based advancement, and the admin force-rank action remain available. Source and whitespace review passed; the user verified all changes and requested the commit. No necessary verification remains. The assistant did not build or run Core3.

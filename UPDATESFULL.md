@@ -2,6 +2,12 @@
 
 ## 2026-09-29
 
+### Committed structure planet placement option
+
+- Added `Core3.StructureManager.AllowPlacementOnAllPlanets = true` alongside the other structure settings in both `config.lua` and ignored `config-local.lua`. The placement path now bypasses a structure template's `allowedZones` test when enabled, while still requiring a valid template and preserving all later terrain, zoning, faction, city, lot, and other placement checks. Disabling the option restores the existing per-template planet restriction.
+- The structure deed examine panel reads the same setting. It shows one **Can Be Built On: All Planets** detail while enabled and the template's original localized planet list when disabled. Event perk deeds have a separate zone rule and are unchanged.
+- Source/caller and whitespace review passed; the added config entries match in both files, and their surrounding Lua table syntax was reviewed. No Lua interpreter was available in this workspace for a parser check. The user verified the final change and requested the commit, satisfying the pending in-game checklist; no necessary verification remains. The assistant did not build or run Core3, and no TRE asset is required.
+
 ### Committed city population downgrade override
 
 - Added a persistent, per-city `ignoreCitizenRequirements` flag, initialized false for both new and database-restored cities. Only a level-15 administrator sees the new **City Hacks → Ignore Citizen Requirements: On/Off** radial; selection rechecks admin status and toggles the saved flag. The current state appears in the radial label, and the admin receives a confirmation message.

@@ -363,11 +363,13 @@ Core3 = {
 	UnloadContainers = true,
 	MaxNavMeshJobs = 6,
 	StructureManager = {
+		-- Ignore structure template planet lists when placing deeds; other placement rules still apply.
+		AllowPlacementOnAllPlanets = false,
 		-- Nonnegative integers; negative values are treated as zero.
 		-- Storage in buildings with a lot cost: lot cost times ItemsPerLot.
-		ItemsPerLot = 200,
+		ItemsPerLot = 100,
 		-- Storage in all zero-lot buildings, including civic buildings.
-		NoLotItemCount = 1000,
+		NoLotItemCount = 400,
 		-- Account base lots: MaxCharactersPerGalaxy times this value, plus admin bonus.
 		LotsPerCharacter = 10,
 		EnhancedFurnitureRotate = false,
