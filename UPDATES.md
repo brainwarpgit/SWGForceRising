@@ -2,6 +2,10 @@
 
 ## 2026-09-29
 
+### Committed account structure list in `/find`
+
+- Added `/find lots` to list structures owned by any character on the account, with assigned lots, maintenance balance, power on installations that consume it, and city treasury where applicable. Generators do not show a power balance. Structures within city limits include the city after their name, such as `City Hall / Chicago`. It also shows total account lots used and available. Source and whitespace review passed; the user verified the change. No necessary verification remains. The assistant did not build or run Core3.
+
 ### Committed city militia zoning rights
 
 - City militia members now have zoning rights automatically for as long as they serve. Militia members can already use `/grantZoningRights`; the command now explains that temporary grants cannot be toggled for another militia member. Source review and whitespace checks passed, and the user verified the change in game. No necessary verification remains. The assistant did not build or run Core3.

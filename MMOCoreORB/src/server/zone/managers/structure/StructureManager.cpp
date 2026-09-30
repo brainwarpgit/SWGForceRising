@@ -217,6 +217,10 @@ int StructureManager::getAccountLotsRemaining(PlayerObject* player) {
 	return accountLots.remaining(player->getAccountID(), getMaximumAccountLots(player));
 }
 
+std::vector<AccountLotLedger::ID> StructureManager::getAccountStructureIDs(PlayerObject* player) const {
+	return player == nullptr ? std::vector<AccountLotLedger::ID>() : accountLots.getStructuresForAccount(player->getAccountID());
+}
+
 uint64 StructureManager::reserveAccountLots(PlayerObject* player, int lots, uint64 existingStructureID) {
 	if (player == nullptr || player->getAccountID() == 0 || server == nullptr || !accountLots.isReady())
 		return 0;

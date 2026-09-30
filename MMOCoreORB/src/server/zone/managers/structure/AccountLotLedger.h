@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <mutex>
 #include <unordered_map>
+#include <vector>
 
 // Derived ownership records and reservations only. Callers supply persisted
 // owners/structures; no game objects or callbacks are accessed under this mutex.
@@ -45,6 +46,19 @@ public:
 		std::lock_guard<std::mutex> lock(mutex);
 		auto entry = owners.find(owner);
 		return ready && account != 0 && entry != owners.end() && entry->second == account;
+	}
+
+	std::vector<ID> getStructuresForAccount(AccountID account) const {
+		std::vector<ID> result;
+		std::lock_guard<std::mutex> lock(mutex);
+		if (!ready || account == 0)
+			return result;
+		for (const auto& entry : structures) {
+			if (entry.second.account == account)
+				result.push_back(entry.first);
+		}
+		std::sort(result.begin(), result.end());
+		return result;
 	}
 
 	bool setStructure(ID structure, ID owner, int lots, ID reservation = 0) {

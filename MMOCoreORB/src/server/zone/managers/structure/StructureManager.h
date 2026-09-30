@@ -69,6 +69,7 @@ public:
 	}
 	int getMaximumAccountLots(PlayerObject* player);
 	int getAccountLotsRemaining(PlayerObject* player);
+	std::vector<AccountLotLedger::ID> getAccountStructureIDs(PlayerObject* player) const;
 	uint64 reserveAccountLots(PlayerObject* player, int lots, uint64 existingStructureID = 0);
 	void releaseAccountLots(uint64 reservation) {
 		accountLots.release(reservation);

@@ -2,6 +2,11 @@
 
 ## 2026-09-29
 
+### Committed account structure list in `/find`
+
+- `/find lots` now opens a read-only list of all structures recorded in the account lot ledger, including structures placed by other characters on the account. The heading reports used, maximum, and available lots; each row shows the structure name, its current lot cost, maintenance balance on non-civic structures, power reserve on installations that consume power, and city treasury on city halls. Generators omit the power field because they do not require power. Any structure within a city appends the city name after the building name, for example `City Hall / Chicago`. It confirms current account ownership before displaying each loaded object. The ledger returns a snapshot of structure IDs without holding its mutex while game objects are loaded.
+- Source and whitespace review passed, and the user verified the change in game. No necessary verification remains. The assistant did not build or run Core3.
+
 ### Committed city militia zoning rights
 
 - The city's zoning-rights check now accepts any current militia member, including the mayor, so members can place structures in a zoned city without a separate 24-hour grant. This membership-based access persists through restarts and ends when a member is removed from the militia. Existing explicit grants remain governed by their expiration times.
