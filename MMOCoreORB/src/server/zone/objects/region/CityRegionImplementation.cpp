@@ -62,6 +62,7 @@ void CityRegionImplementation::notifyLoadFromDatabase() {
 
 void CityRegionImplementation::initialize() {
 	zoningEnabled = true;
+	ignoreCitizenRequirements = false;
 
 	registered = false;
 

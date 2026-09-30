@@ -2,6 +2,10 @@
 
 ## 2026-09-29
 
+### Committed city population downgrade override
+
+- Added an admin-only **City Hacks → Ignore Citizen Requirements** toggle, saved on each city and off by default. When on, scheduled city updates do not downgrade the city because its citizen count is below the current rank requirement. It remains enabled across restarts and mayor changes until an admin turns it off. Elections, maintenance, tax processing, population-based advancement, and the admin force-rank action remain available. Source and whitespace review passed; the user verified all changes and requested the commit. No necessary verification remains. The assistant did not build or run Core3.
+
 ### Removal of Codex test scripts and notes
 
 - Removed all 26 Codex-created standalone test scripts from `MMOCoreORB/src/tests/standalone`, plus two Codex-created audit/dependency notes under `MMOCoreORB/bin/docs` that the user removed. Existing project tests and test-named game content remain. Earlier update entries describing results from the scripts remain historical records; the files are no longer present in the working tree. Verification was skipped at the user's explicit request before committing.

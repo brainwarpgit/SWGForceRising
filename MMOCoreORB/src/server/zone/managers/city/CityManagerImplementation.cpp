@@ -778,6 +778,20 @@ void CityManagerImplementation::assessCitizens(CityRegion* city) {
 	}
 }
 
+void CityManagerImplementation::toggleIgnoreCitizenRequirements(CityRegion* city, CreatureObject* admin) {
+	if (city == nullptr || admin == nullptr)
+		return;
+	PlayerObject* ghost = admin->getPlayerObject();
+	if (ghost == nullptr || !ghost->isAdmin())
+		return;
+
+	bool ignore = !city->ignoresCitizenRequirements();
+	city->setIgnoreCitizenRequirements(ignore);
+	admin->sendSystemMessage(ignore
+			? "This city will keep its rank when its citizen count falls below the required population."
+			: "This city will again follow citizen requirements during city updates.");
+}
+
 void CityManagerImplementation::processCityUpdate(CityRegion* city) {
 	auto zone = city->getZone();
 
@@ -829,7 +843,7 @@ void CityManagerImplementation::processCityUpdate(CityRegion* city) {
 
 		int maintainCitizens = citizensPerRank.get(cityRank - 1);
 
-		if (citizens < maintainCitizens) {
+		if (citizens < maintainCitizens && !city->ignoresCitizenRequirements()) {
 			contractCity(city);
 		} else if (cityRank < METROPOLIS) {
 			int advanceCitizens = citizensPerRank.get(cityRank);

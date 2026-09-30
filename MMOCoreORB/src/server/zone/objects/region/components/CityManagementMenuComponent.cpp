@@ -55,6 +55,9 @@ void CityManagementMenuComponent::fillObjectMenuResponse(SceneObject* sceneObjec
 		menuResponse->addRadialMenuItemToRadialID(227,228,3,"@city/city:rank_up"); // 	Force Rank Up
 		menuResponse->addRadialMenuItemToRadialID(227,229,3,"@city/city:rank_down"); // Force Rank Down
 		menuResponse->addRadialMenuItemToRadialID(227,230,3,"@city/city:force_update"); // Force City Update or Election
+		if (ghost->isAdmin())
+			menuResponse->addRadialMenuItemToRadialID(227, 231, 3,
+					city->ignoresCitizenRequirements() ? "Ignore Citizen Requirements: On" : "Ignore Citizen Requirements: Off");
 	}
 #endif
 
@@ -180,6 +183,10 @@ int CityManagementMenuComponent::handleObjectMenuSelect(SceneObject* sceneObject
 		if(ghost->isPrivileged()) {
 			cityManager->promptForceUpdate(city, player);
 		}
+		break;
+	case 231:
+		if (ghost->isAdmin())
+			cityManager->toggleIgnoreCitizenRequirements(city, player);
 		break;
 #endif
 

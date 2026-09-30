@@ -80,6 +80,7 @@ class CityRegion extends ManagedObject implements Logger {
 	protected unsigned long mayorID;
 
 	protected boolean zoningEnabled;
+	protected boolean ignoreCitizenRequirements = false;
 
 	protected boolean registered;
 
@@ -443,6 +444,16 @@ class CityRegion extends ManagedObject implements Logger {
 	@read
 	public boolean isZoningEnabled() {
 		return zoningEnabled;
+	}
+
+	@read
+	public boolean ignoresCitizenRequirements() {
+		return ignoreCitizenRequirements;
+	}
+
+	@dirty
+	public void setIgnoreCitizenRequirements(boolean ignore) {
+		ignoreCitizenRequirements = ignore;
 	}
 
 	@dirty

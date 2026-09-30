@@ -2,6 +2,12 @@
 
 ## 2026-09-29
 
+### Committed city population downgrade override
+
+- Added a persistent, per-city `ignoreCitizenRequirements` flag, initialized false for both new and database-restored cities. Only a level-15 administrator sees the new **City Hacks → Ignore Citizen Requirements: On/Off** radial; selection rechecks admin status and toggles the saved flag. The current state appears in the radial label, and the admin receives a confirmation message.
+- `processCityUpdate` now skips its automatic `contractCity` call when the flag is on and the citizen count is below the maintenance threshold. It still runs citizen cleanup, elections, scheduled updates, income tax, and city maintenance. Population-based advancement remains based on the normal thresholds; the existing admin Force Rank Down action remains effective. Turning the flag off restores the normal population downgrade rule at the next city update. City creation assessment is unchanged.
+- Source/caller and whitespace review passed. The user confirmed that all changes are verified and requested the commit; this overall runtime verification satisfies the pending checklist, so no necessary verification remains. The assistant did not build or run Core3, and no TRE asset is required.
+
 ### Removal of Codex test scripts and notes
 
 - Reviewed tracked test-file additions across the Codex project commits and removed all 26 Python standalone test scripts that Codex added under `MMOCoreORB/src/tests/standalone`. The user also removed `MMOCoreORB/bin/docs/configuration-audit-2026-09-27.md` and `MMOCoreORB/bin/docs/startup-ship-asset-dependencies-2026-09-26.md`, and requested that those deletions be included. The standalone directory is now gone from the working tree. The older C++ tests in `MMOCoreORB/src/tests`, bundled dependency tests, and test-named Lua/client content remain untouched. No production code, assets, or configuration changed.
