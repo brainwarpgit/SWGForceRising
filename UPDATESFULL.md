@@ -2,6 +2,12 @@
 
 ## 2026-09-30
 
+### Committed city recruitable NPCs
+
+- `/recruitSkillTrainer` now offers one SpyNet informant, a Rebel recruiter, and an Imperial recruiter alongside the 33 existing city trainer choices. It uses the existing level 1 informant creature template because the informant conversation now serves every Bounty Hunter investigation level. Each NPC spawns through the same city trainer path, charging 1,000 treasury credits and using one city trainer slot with the usual upkeep and persistence. The recruiter templates retain their faction conversations.
+- Added the existing `TrainerMenuComponent` to every appearance template used by those NPCs so the mayor's Remove radial remains available after a restart. The component now requires the selected NPC to be in that city's persisted trainer list before showing or executing Remove. This prevents unrelated informants, recruiters, or other NPCs using the same appearance from being removed. Existing recruited skill trainers continue to use the same removal path.
+- Source and whitespace review passed; all new menu choices map to registered creature templates, and the affected appearance templates were checked. No Lua parser was available. The user verified the change in game and requested the commit; no necessary verification remains. The assistant did not build or run Core3.
+
 ### Committed SpyNet informant access
 
 - Removed the conversation handler's requirement that a SpyNet informant's template level equal the active bounty mission's level. Any level 1, 2, or 3 informant can now provide the target information to a Bounty Hunter with an active bounty mission. Non-Bounty Hunters and players without an active mission retain their existing responses, and a mission that already received informant information is not advanced again.

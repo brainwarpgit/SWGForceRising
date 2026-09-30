@@ -611,6 +611,11 @@ class CityRegion extends ManagedObject implements Logger {
 		citySkillTrainers.put(trainer);
 	}
 
+	@dirty
+	public boolean isCitySkillTrainer(SceneObject trainer) {
+		return citySkillTrainers.contains(trainer);
+	}
+
 	@preLocked
 	public void removeMissionTerminal(SceneObject mt) {
 		cityMissionTerminals.drop(mt);

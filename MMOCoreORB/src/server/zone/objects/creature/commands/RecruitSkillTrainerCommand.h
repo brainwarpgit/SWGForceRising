@@ -44,8 +44,8 @@ public:
 		ManagedReference<SuiListBox*> suiTrainerType = new SuiListBox(creature, SuiWindowType::RECRUIT_SKILL_TRAINER, 0);
 		suiTrainerType->setCallback(new RecruitSkillTrainerSuiCallback(server->getZoneServer()));
 
-		suiTrainerType->setPromptTitle("@city/city:trainer_n"); // Recruit Skill Trainer
-		suiTrainerType->setPromptText("@city/city:trainer_d");
+		suiTrainerType->setPromptTitle("Recruit City Trainer or NPC");
+		suiTrainerType->setPromptText("Choose a skill trainer, SpyNet informant, or faction recruiter to place. Each uses one city trainer slot and costs 1,000 credits from the city treasury.");
 
 		suiTrainerType->addMenuItem("@city/city:st_architect", 0);
 		suiTrainerType->addMenuItem("@city/city:st_armorsmith", 1);
@@ -80,6 +80,9 @@ public:
 		suiTrainerType->addMenuItem("@city/city:st_tailor", 30);
 		suiTrainerType->addMenuItem("@city/city:st_unarmed", 31);
 		suiTrainerType->addMenuItem("@city/city:st_weaponsmith", 32);
+		suiTrainerType->addMenuItem("SpyNet Informant", 33);
+		suiTrainerType->addMenuItem("Rebel Recruiter", 34);
+		suiTrainerType->addMenuItem("Imperial Recruiter", 35);
 
 		ghost->addSuiBox(suiTrainerType);
 		creature->sendMessage(suiTrainerType->generateMessage());

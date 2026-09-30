@@ -156,6 +156,16 @@ public:
 				break;
 
 		case 32: trainerTemplatePath = "trainer_weaponsmith";
+				break;
+
+		case 33: trainerTemplatePath = "informant_npc_lvl_1";
+				break;
+
+		case 34: trainerTemplatePath = "rebel_recruiter";
+				break;
+
+		case 35: trainerTemplatePath = "imperial_recruiter";
+				break;
 
 		}
 

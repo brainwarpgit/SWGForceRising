@@ -42,7 +42,7 @@
 
 
 object_mobile_dressed_imperial_officer_m = object_mobile_shared_dressed_imperial_officer_m:new {
-
+	objectMenuComponent = "TrainerMenuComponent"
 }
 
 ObjectTemplates:addTemplate(object_mobile_dressed_imperial_officer_m, "object/mobile/dressed_imperial_officer_m.iff")

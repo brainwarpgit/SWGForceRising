@@ -16,7 +16,7 @@ void TrainerMenuComponent::fillObjectMenuResponse(SceneObject* sceneObject, Obje
 
 	ManagedReference<CityRegion*> city = sceneObject->getCityRegion().get();
 
-	if (city != nullptr && city->isMayor(player->getObjectID()))
+	if (city != nullptr && city->isMayor(player->getObjectID()) && city->isCitySkillTrainer(sceneObject))
 		menuResponse->addRadialMenuItem(72, 3, "@city/city:mt_remove"); // Remove
 }
 
@@ -24,7 +24,7 @@ int TrainerMenuComponent::handleObjectMenuSelect(SceneObject* sceneObject, Creat
 	if (selectedID == 72) {
 		ManagedReference<CityRegion*> city = sceneObject->getCityRegion().get();
 
-		if (city != nullptr && city->isMayor(player->getObjectID())) {
+		if (city != nullptr && city->isMayor(player->getObjectID()) && city->isCitySkillTrainer(sceneObject)) {
 			CityRemoveAmenityTask* task = new CityRemoveAmenityTask(sceneObject, city);
 			task->execute();
 
@@ -38,4 +38,3 @@ int TrainerMenuComponent::handleObjectMenuSelect(SceneObject* sceneObject, Creat
 
 	return TangibleObjectMenuComponent::handleObjectMenuSelect(sceneObject, player, selectedID);
 }
-

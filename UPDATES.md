@@ -2,6 +2,10 @@
 
 ## 2026-09-30
 
+### Committed city recruitable NPCs
+
+- Extended `/recruitSkillTrainer` with one SpyNet informant choice plus Rebel and Imperial recruiters. The existing city trainer choices remain. The informant works with all Bounty Hunter investigation levels. These NPCs use city trainer capacity, treasury cost, upkeep, and persistence. Mayors can remove recruited NPCs with the Remove radial; the option is hidden for unrelated NPCs that share an appearance. Source, template, and whitespace review passed, and the user verified the change. No necessary verification remains. The assistant did not build or run Core3.
+
 ### Committed SpyNet informant access
 
 - SpyNet informants now provide bounty investigation information regardless of the informant's old level and the player's investigation level. Bounty Hunter skill and an active bounty mission are still required. Mission progression uses the mission's level so its waypoint behavior remains correct. Source and whitespace review passed, and the user verified the change. No necessary verification remains. The assistant did not build or run Core3.
