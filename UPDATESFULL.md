@@ -1,5 +1,12 @@
 # Detailed Project Updates
 
+## 2026-09-30
+
+### Committed structure item search
+
+- Building structure management terminals now offer **Find Item by Name** for structure administrators, including characters on the owning account. Entering a case-insensitive keyword searches placed tangible items and their nested contents in the building's cells, excluding creatures, vendors, and building-owned child objects. The results list identifies up to 100 matching items by name; choosing one and pressing OK transfers it to the player's cell and places it at their feet.
+- The input and result callbacks retain the building reference, and selection rechecks administrator access, that the player remains inside the building, and that the item remains in that building with a matching name before moving it. The existing Find Lost Items option remains available. The user's first build exposed two managed-reference casts and one raw cell pointer call; all three were corrected. Source and whitespace review passed, and the user subsequently verified the change. No necessary verification remains. The assistant did not build or run Core3.
+
 ## 2026-09-29
 
 ### Committed account structure list in `/find`

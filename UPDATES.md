@@ -1,5 +1,11 @@
 # Project Updates
 
+## 2026-09-30
+
+### Committed structure item search
+
+- Added **Find Item by Name** to Structure Management in buildings with item storage. An administrator enters a keyword, selects a matching stored item, and moves it to their feet. The search includes items inside containers and limits the result list to 100 entries. Access and item location are checked again when the result is selected. The user's first build found pointer-type errors, which were corrected; the user subsequently verified the change. Source and whitespace review passed, and no necessary verification remains. The assistant did not build or run Core3.
+
 ## 2026-09-29
 
 ### Committed account structure list in `/find`

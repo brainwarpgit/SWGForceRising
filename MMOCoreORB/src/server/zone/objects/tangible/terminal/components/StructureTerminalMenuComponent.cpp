@@ -67,6 +67,7 @@ void StructureTerminalMenuComponent::fillObjectMenuResponse(SceneObject* sceneOb
 				menuResponse->addRadialMenuItemToRadialID(118, 50, 3, "@player_structure:management_name_structure"); //Name Structure
 				menuResponse->addRadialMenuItemToRadialID(118, 201, 3, "@player_structure:delete_all_items"); //Delete all items
 				menuResponse->addRadialMenuItemToRadialID(118, 202, 3, "@player_structure:move_first_item"); //Find Lost Items
+				menuResponse->addRadialMenuItemToRadialID(118, 248, 3, "Find Item by Name");
 
 				// Not all civic buildings have signs.  Check to see if build already has one before allowing a change
 				BuildingObject* building = cast<BuildingObject*>(structureObject.get());
@@ -132,6 +133,7 @@ void StructureTerminalMenuComponent::fillObjectMenuResponse(SceneObject* sceneOb
 			menuResponse->addRadialMenuItemToRadialID(118, 69, 3, "@player_structure:management_change_sign"); //Change Sign
 			menuResponse->addRadialMenuItemToRadialID(118, 201, 3, "@player_structure:delete_all_items"); //Delete all items
 			menuResponse->addRadialMenuItemToRadialID(118, 202, 3, "@player_structure:move_first_item"); //Find Lost Items
+			menuResponse->addRadialMenuItemToRadialID(118, 248, 3, "Find Item by Name");
 		}
 
 		menuResponse->addRadialMenuItem(117, 3, "@player_structure:permissions"); //Structure Permissions
@@ -198,6 +200,9 @@ int StructureTerminalMenuComponent::handleObjectMenuSelect(SceneObject* sceneObj
 			case 202:
 				structureManager->promptFindLostItems(creature, structureObject);
 				break;
+			case 248:
+				structureManager->promptFindItemByName(creature, structureObject);
+				break;
 			case 128:
 				creature->executeObjectControllerAction(0x18FC1726, structureObject->getObjectID(), ""); //destroyStructure
 				break;
@@ -231,6 +236,9 @@ int StructureTerminalMenuComponent::handleObjectMenuSelect(SceneObject* sceneObj
 			break;
 		case 202:
 			structureManager->promptFindLostItems(creature, structureObject);
+			break;
+		case 248:
+			structureManager->promptFindItemByName(creature, structureObject);
 			break;
 		case 121:
 			structureObject->sendPermissionListTo(creature, "ADMIN");

@@ -32,6 +32,8 @@
 #include "server/zone/objects/player/sui/inputbox/SuiInputBox.h"
 #include "server/zone/objects/player/sui/callbacks/StructurePayUncondemnMaintenanceSuiCallback.h"
 #include "server/zone/objects/player/sui/callbacks/FindLostItemsSuiCallback.h"
+#include "server/zone/objects/player/sui/callbacks/StructureFindItemInputSuiCallback.h"
+#include "server/zone/objects/player/sui/callbacks/StructureFindItemResultSuiCallback.h"
 #include "server/zone/objects/player/sui/callbacks/DeleteAllItemsSuiCallback.h"
 #include "server/zone/objects/player/sui/callbacks/StructureStatusSuiCallback.h"
 #include "server/zone/objects/player/sui/callbacks/StructureAssignDroidSuiCallback.h"
@@ -60,6 +62,7 @@
 #include "server/zone/objects/creature/commands/QueueCommand.h"
 #include "server/zone/objects/creature/commands/TransferstructureCommand.h"
 #include <algorithm>
+#include <functional>
 #include <limits>
 
 namespace StorageManagerNamespace {
@@ -1366,6 +1369,114 @@ void StructureManager::promptFindLostItems(CreatureObject* creature, StructureOb
 		ghost->addSuiBox(sui);
 		creature->sendMessage(sui->generateMessage());
 	}
+}
+
+void StructureManager::promptFindItemByName(CreatureObject* creature, StructureObject* structure) {
+	if (creature == nullptr || structure == nullptr || !structure->isBuildingObject()
+			|| !structure->isOnAdminList(creature) || creature->getRootParent() != structure)
+		return;
+
+	auto ghost = creature->getPlayerObject();
+	if (ghost == nullptr)
+		return;
+
+	ManagedReference<SuiInputBox*> box = new SuiInputBox(creature, 0);
+	box->setUsingObject(structure);
+	box->setPromptTitle("Find Item by Name");
+	box->setPromptText("Enter a keyword from the name of an item stored in this structure.");
+	box->setMaxInputSize(64);
+	box->setForceCloseDistance(32);
+	box->setCallback(new StructureFindItemInputSuiCallback(server));
+	ghost->addSuiBox(box);
+	creature->sendMessage(box->generateMessage());
+}
+
+void StructureManager::searchStructureItems(CreatureObject* creature, StructureObject* structure, const String& keyword) {
+	if (creature == nullptr || structure == nullptr || !structure->isBuildingObject()
+			|| !structure->isOnAdminList(creature) || creature->getRootParent() != structure)
+		return;
+
+	String term = keyword.trim().toLowerCase();
+	if (term.isEmpty() || term.length() > 64) {
+		creature->sendSystemMessage("Enter a keyword of 1 to 64 characters.");
+		return;
+	}
+
+	auto ghost = creature->getPlayerObject();
+	if (ghost == nullptr)
+		return;
+
+	auto building = cast<BuildingObject*>(structure);
+	Locker buildingLocker(building, creature);
+	ManagedReference<SuiListBox*> box = new SuiListBox(creature, 0);
+	box->setUsingObject(structure);
+	box->setPromptTitle("Matching Stored Items");
+	box->setPromptText("Select an item and click OK to move it to your feet. Showing up to 100 matches.");
+	box->setForceCloseDistance(32);
+	box->setCallback(new StructureFindItemResultSuiCallback(server, term));
+
+	std::function<void(SceneObject*, int)> searchContainer = [&](SceneObject* container, int depth) {
+		if (depth > 16 || box->getMenuSize() >= 100)
+			return;
+		for (int i = 0; i < container->getContainerObjectsSize() && box->getMenuSize() < 100; ++i) {
+			auto item = container->getContainerObject(i);
+			if (item == nullptr || !item->isTangibleObject() || item->isCreatureObject()
+					|| item->isVendor() || building->containsChildObject(item.get()) || item->getRootParent() != building)
+				continue;
+			String name = item->getDisplayedName();
+			if (name.toLowerCase().contains(term))
+				box->addMenuItem(name, item->getObjectID());
+			searchContainer(item.get(), depth + 1);
+		}
+	};
+
+	for (uint32 i = 1; i <= building->getTotalCellNumber() && box->getMenuSize() < 100; ++i) {
+		auto cell = building->getCell(i);
+		if (cell != nullptr)
+			searchContainer(cell, 0);
+	}
+
+	if (box->getMenuSize() == 0) {
+		creature->sendSystemMessage("No stored items match that keyword.");
+		return;
+	}
+
+	ghost->addSuiBox(box);
+	creature->sendMessage(box->generateMessage());
+}
+
+void StructureManager::moveStructureItemTo(CreatureObject* creature, StructureObject* structure, uint64 itemID, const String& keyword) {
+	if (creature == nullptr || structure == nullptr || !structure->isBuildingObject() || itemID == 0
+			|| !structure->isOnAdminList(creature) || creature->getRootParent() != structure)
+		return;
+
+	auto destination = creature->getParent().get();
+	if (destination == nullptr || !destination->isCellObject() || destination->getParent().get() != structure)
+		return;
+
+	auto item = server->getObject(itemID);
+	auto building = cast<BuildingObject*>(structure);
+	if (item == nullptr || !item->isTangibleObject() || item->isCreatureObject() || item->isVendor()
+			|| building->containsChildObject(item.get()) || item->getRootParent() != building
+			|| !item->getDisplayedName().toLowerCase().contains(keyword)) {
+		creature->sendSystemMessage("That item is no longer stored in this structure.");
+		return;
+	}
+
+	Locker buildingLocker(building, creature);
+	Locker itemLocker(item, building);
+	if (!structure->isOnAdminList(creature) || creature->getRootParent() != structure
+			|| item->getRootParent() != building || building->containsChildObject(item.get())
+			|| !item->getDisplayedName().toLowerCase().contains(keyword)) {
+		creature->sendSystemMessage("That item is no longer available in this structure.");
+		return;
+	}
+	if (item->getParent().get() != destination && !destination->transferObject(item, -1, true)) {
+		creature->sendSystemMessage("The selected item could not be moved.");
+		return;
+	}
+	item->teleport(creature->getPositionX(), creature->getPositionZ(), creature->getPositionY(), destination->getObjectID());
+	creature->sendSystemMessage(item->getDisplayedName() + " has been moved to your feet.");
 }
 
 void StructureManager::moveFirstItemTo(CreatureObject* creature, StructureObject* structure) {

@@ -174,6 +174,9 @@ public:
 	 * @param structure The structure which holds the items.
 	 */
 	void promptFindLostItems(CreatureObject* creature, StructureObject* structure);
+	void promptFindItemByName(CreatureObject* creature, StructureObject* structure);
+	void searchStructureItems(CreatureObject* creature, StructureObject* structure, const String& keyword);
+	void moveStructureItemTo(CreatureObject* creature, StructureObject* structure, uint64 itemID, const String& keyword);
 
 	/**
 	 * Moves the first object in the building to the creature's feet.
