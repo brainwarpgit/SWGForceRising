@@ -10,6 +10,7 @@
 #include "server/zone/packets/object/ObjectMenuResponse.h"
 #include "server/zone/objects/creature/CreatureObject.h"
 #include "server/zone/managers/city/CityManager.h"
+#include "server/zone/managers/structure/StructureManager.h"
 #include "server/zone/objects/player/PlayerObject.h"
 
 #ifndef CITY_DEBUG
@@ -29,6 +30,12 @@ void CityManagementMenuComponent::fillObjectMenuResponse(SceneObject* sceneObjec
 		return;
 	}
 
+	if (city->isMayor(player->getObjectID()) && city->getQuickTreasuryAmount() > 0) {
+		menuResponse->addRadialMenuItem(243, 3, "Quick Options");
+		menuResponse->addRadialMenuItemToRadialID(243, 244, 3,
+				StructureManager::formatQuickAmount(city->getQuickTreasuryAmount()) + " Treasury Deposit");
+	}
+
 	menuResponse->addRadialMenuItem(211, 3, "@city/city:city_info"); //City Information
 	menuResponse->addRadialMenuItemToRadialID(211, 212, 3, "@city/city:city_status"); //Status Report
 	menuResponse->addRadialMenuItemToRadialID(211, 213, 3, "@city/city:city_citizens"); //Citizenship Report
@@ -39,6 +46,8 @@ void CityManagementMenuComponent::fillObjectMenuResponse(SceneObject* sceneObjec
 	menuResponse->addRadialMenuItem(210, 3, "@city/city:treasury_management"); // City Treasury
 	menuResponse->addRadialMenuItemToRadialID(210, 215, 3, "@city/city:treasury_status"); //Treasury Report
 	menuResponse->addRadialMenuItemToRadialID(210, 220, 3, "@city/city:treasury_deposit"); //Treasury Deposit
+	if (city->isMayor(player->getObjectID()))
+		menuResponse->addRadialMenuItemToRadialID(210, 247, 3, "Set Quick Treasury Deposit Amount");
 
 #ifdef CITY_DEBUG
 	if(ghost->isPrivileged()) {
@@ -100,6 +109,12 @@ int CityManagementMenuComponent::handleObjectMenuSelect(SceneObject* sceneObject
 	CityManager* cityManager = player->getZoneServer()->getCityManager();
 
 	switch (selectID) {
+	case 244: // Quick Treasury Deposit
+		cityManager->quickDepositCityTreasury(city, player, sceneObject);
+		break;
+	case 247: // Set Quick Treasury Deposit Amount
+		cityManager->promptQuickCityTreasuryAmount(city, player, sceneObject);
+		break;
 	case 211: // City Information
 	case 212: //Status Report
 		cityManager->sendStatusReport(city, player, sceneObject);

@@ -75,6 +75,7 @@ class CityRegion extends ManagedObject implements Logger {
 	protected transient Mutex structureListMutex;
 
 	protected double cityTreasury;
+	protected int quickTreasuryAmount = 100000;
 
 	protected unsigned long mayorID;
 
@@ -413,6 +414,16 @@ class CityRegion extends ManagedObject implements Logger {
 	@read
 	public double getCityTreasury() {
 		return cityTreasury;
+	}
+
+	@read
+	public int getQuickTreasuryAmount() {
+		return quickTreasuryAmount;
+	}
+
+	@dirty
+	public void setQuickTreasuryAmount(int amount) {
+		quickTreasuryAmount = amount;
 	}
 
 	@preLocked

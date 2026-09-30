@@ -23,6 +23,7 @@
 #include "server/zone/objects/player/sui/messagebox/SuiMessageBox.h"
 #include "server/zone/objects/player/sui/inputbox/SuiInputBox.h"
 #include "server/zone/objects/player/sui/callbacks/CityTreasuryDepositSuiCallback.h"
+#include "server/zone/objects/player/sui/callbacks/CityQuickTreasuryAmountSuiCallback.h"
 #include "server/zone/objects/player/sui/callbacks/CityManageMilitiaSuiCallback.h"
 #include "server/zone/objects/player/sui/callbacks/CityAddMilitiaMemberSuiCallback.h"
 #include "server/zone/objects/player/sui/callbacks/CityRegisterSuiCallback.h"
@@ -591,6 +592,51 @@ void CityManagerImplementation::withdrawFromCityTreasury(CityRegion* city, Creat
 	emailBody.setTT(reason);
 
 	sendMail(city, "@city/city:treasury_withdraw_from", "@city/city:treasury_withdraw_subject", emailBody, nullptr);
+}
+
+void CityManagerImplementation::promptQuickCityTreasuryAmount(CityRegion* city, CreatureObject* mayor, SceneObject* terminal) {
+	if (city == nullptr || mayor == nullptr || terminal == nullptr || !city->isMayor(mayor->getObjectID())
+			|| terminal->getCityRegion().get() != city || !terminal->isInRange(mayor, 16.f))
+		return;
+	PlayerObject* ghost = mayor->getPlayerObject();
+	if (ghost == nullptr)
+		return;
+
+	ManagedReference<SuiInputBox*> box = new SuiInputBox(mayor, SuiWindowType::CITY_TREASURY_DEPOSIT);
+	box->setUsingObject(terminal);
+	box->setForceCloseDistance(16.f);
+	box->setCallback(new CityQuickTreasuryAmountSuiCallback(zoneServer, city));
+	box->setPromptTitle("Set Quick Treasury Deposit");
+	box->setPromptText(String("Current amount: ") + String::valueOf(city->getQuickTreasuryAmount())
+			+ "\nEnter the amount to deposit each time. Setting the quick option to 0 disables the option.");
+	ghost->addSuiBox(box);
+	mayor->sendMessage(box->generateMessage());
+}
+
+void CityManagerImplementation::setQuickCityTreasuryAmount(CityRegion* city, CreatureObject* mayor, SceneObject* terminal, int amount) {
+	if (city == nullptr || mayor == nullptr || terminal == nullptr || amount < 0 || amount > 100000000)
+		return;
+	Locker locker(city, mayor);
+	if (!city->isMayor(mayor->getObjectID()) || terminal->getCityRegion().get() != city
+			|| !terminal->isInRange(mayor, 16.f))
+		return;
+	city->setQuickTreasuryAmount(amount);
+	mayor->sendSystemMessage("Quick treasury deposit amount saved for this city.");
+}
+
+void CityManagerImplementation::quickDepositCityTreasury(CityRegion* city, CreatureObject* mayor, SceneObject* terminal) {
+	if (city == nullptr || mayor == nullptr || terminal == nullptr || !city->isMayor(mayor->getObjectID())
+			|| terminal->getCityRegion().get() != city || !terminal->isInRange(mayor, 16.f))
+		return;
+	int amount = city->getQuickTreasuryAmount();
+	if (amount <= 0)
+		return;
+	int cash = mayor->getCashCredits();
+	if (cash < amount) {
+		mayor->sendSystemMessage("You do not have enough cash for the quick treasury deposit.");
+		return;
+	}
+	depositToCityTreasury(city, mayor, cash - amount);
 }
 
 void CityManagerImplementation::promptDepositCityTreasury(CityRegion* city, CreatureObject* creature, SceneObject* terminal) {

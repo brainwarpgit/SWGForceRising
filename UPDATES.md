@@ -2,6 +2,10 @@
 
 ## 2026-09-29
 
+### Committed quick city treasury deposit
+
+- The mayor now has a Quick Options treasury deposit at the city management terminal. Its per-city amount defaults to 100,000 credits, uses a compact radial label such as `100k Treasury Deposit`, and can be changed under City Treasury. Setting it to zero hides the shortcut and Quick Options menu. An existing city displayed an invalid 901.9M amount because old-city loading skipped the initialization path for the new field; a field-level default and load-time range check now protect older cities while preserving valid saved settings, including zero. The user confirmed all changes are verified and requested the commit; no necessary verification remains. The assistant did not build or run Core3.
+
 ### Committed structure quick options
 
 - Added an account-owner Quick Options radial for per-structure quick maintenance, quick power on powered installations, and withdraw-all resources on harvesters and generators. Structure Management lets owning-account characters set separate saved maintenance and power amounts for each structure; both default to 10,000. Setting one to zero hides that shortcut, and Quick Options disappears when it has no actions. Withdraw All Resources remains available on harvesters even when both amounts are zero. Quick menu labels shorten amounts, such as `10k Maintenance` or `100k Power`. Existing admins outside the owning account do not receive these options.

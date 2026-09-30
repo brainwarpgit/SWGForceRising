@@ -43,6 +43,8 @@ void CityRegionImplementation::initializeTransientMembers() {
 
 void CityRegionImplementation::notifyLoadFromDatabase() {
 	ManagedObjectImplementation::notifyLoadFromDatabase();
+	if (quickTreasuryAmount < 0 || quickTreasuryAmount > 100000000)
+		quickTreasuryAmount = 100000;
 
 	if (cityRank == CityManager::CLIENT)
 		return;
@@ -64,6 +66,7 @@ void CityRegionImplementation::initialize() {
 	registered = false;
 
 	cityTreasury = 0;
+	quickTreasuryAmount = 100000;
 
 	cityRank = RANK_CLIENT; //Default to client city
 
