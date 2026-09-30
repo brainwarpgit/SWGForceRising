@@ -1479,8 +1479,11 @@ void StructureManager::reportStructureStatus(CreatureObject* creature, Structure
 		status->addMenuItem("@player_structure:power_consumption_prompt " + String::valueOf((int)installation->getBasePowerRate()) + " @player_structure:units_per_hour");
 	}
 
-	if (ghost->isPrivileged())
-		status->addMenuItem(structure->getDebugStructureStatus());
+	if (ghost->isPrivileged()) {
+		String debugStatus = structure->getDebugStructureStatus();
+		if (!debugStatus.isEmpty())
+			status->addMenuItem(debugStatus);
+	}
 
 	if (structure->isBuildingObject()) {
 		BuildingObject* building = cast<BuildingObject*>(structure);

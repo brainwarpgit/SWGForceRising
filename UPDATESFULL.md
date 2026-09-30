@@ -2,6 +2,11 @@
 
 ## 2026-09-29
 
+### Civic structure status cleanup
+
+- Privileged viewers received a Structure Status list row from `getDebugStructureStatus()` even when it returned an empty string. A healthy civic structure can have no maintenance task and no missing-city warning, so that unconditional row appeared blank. The report now adds the row only when the debug text is nonempty; real maintenance and city warnings remain visible.
+- Static source and whitespace review passed. The user verified the civic status fix in game and requested the commit. The assistant did not build or run Core3.
+
 ### Committed additional structure storage lots
 
 - Added **Add Storage Lots** and **Remove Storage Lots** under Structure Management for nonstatic buildings whose template already consumes lots. As clarified by the user, zero-lot buildings are excluded. The new controls require actual ownership by the actor's account, including alts; an ordinary structure administrator or elevated player from another account does not receive an ownership bypass. Existing faction-terminal access rules still apply.

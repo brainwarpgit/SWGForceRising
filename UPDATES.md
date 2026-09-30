@@ -2,6 +2,10 @@
 
 ## 2026-09-29
 
+### Civic structure status cleanup
+
+- Structure Status no longer adds an empty privileged debug row. Civic structures without a maintenance warning now show no blank line, while actual warnings still appear. Source and whitespace review passed, and the user verified the fix in game.
+
 ### Committed additional structure storage lots
 
 - Added **Structure Management → Add Storage Lots / Remove Storage Lots** for buildings that already consume lots. Only characters on the owning account receive these options; ordinary structure admins do not. Each option appears only when a valid adjustment is available.
