@@ -493,7 +493,7 @@ void CityRegionImplementation::addZoningRights(uint64 objectid, uint32 duration)
 }
 
 bool CityRegionImplementation::hasZoningRights(uint64 objectid) {
-	if(getMayorID() != 0 && objectid == getMayorID())
+	if (isMilitiaMember(objectid))
 		return true;
 
 	uint32 timestamp = zoningRights.get(objectid);

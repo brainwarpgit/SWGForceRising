@@ -43,8 +43,10 @@ public:
 
 		CreatureObject* targetPlayer = cast<CreatureObject*>( targetObject.get());
 
-		if (city->isMayor(target))
-			return GENERALERROR; //Cannot revoke the rights of the mayor
+		if (city->isMilitiaMember(target)) {
+			creature->sendSystemMessage("City militia members already have zoning rights while they serve.");
+			return GENERALERROR;
+		}
 
 		//Target already has zoning rights
 		if (city->hasZoningRights(target)) {

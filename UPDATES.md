@@ -2,6 +2,10 @@
 
 ## 2026-09-29
 
+### Committed city militia zoning rights
+
+- City militia members now have zoning rights automatically for as long as they serve. Militia members can already use `/grantZoningRights`; the command now explains that temporary grants cannot be toggled for another militia member. Source review and whitespace checks passed, and the user verified the change in game. No necessary verification remains. The assistant did not build or run Core3.
+
 ### Committed structure planet placement option
 
 - Added `Core3.StructureManager.AllowPlacementOnAllPlanets = true` to both configuration files. When enabled, structure deeds ignore their template planet lists, and the deed’s “Can Be Built On” detail shows **All Planets**. Turning it off restores the template list and original placement restriction; terrain, zoning, faction, and other placement rules remain. Source and whitespace review passed, and the user verified the change and requested the commit. No necessary verification remains. The assistant did not build or run Core3.

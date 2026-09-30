@@ -2,6 +2,11 @@
 
 ## 2026-09-29
 
+### Committed city militia zoning rights
+
+- The city's zoning-rights check now accepts any current militia member, including the mayor, so members can place structures in a zoned city without a separate 24-hour grant. This membership-based access persists through restarts and ends when a member is removed from the militia. Existing explicit grants remain governed by their expiration times.
+- `/grantZoningRights` already permits militia members to grant or revoke another player's temporary rights. It now rejects militia targets with a clear message because their standing rights cannot be revoked through that command. Source and whitespace checks passed, and the user verified the change in game. No necessary verification remains. The assistant did not build or run Core3.
+
 ### Committed structure planet placement option
 
 - Added `Core3.StructureManager.AllowPlacementOnAllPlanets = true` alongside the other structure settings in both `config.lua` and ignored `config-local.lua`. The placement path now bypasses a structure template's `allowedZones` test when enabled, while still requiring a valid template and preserving all later terrain, zoning, faction, city, lot, and other placement checks. Disabling the option restores the existing per-template planet restriction.
