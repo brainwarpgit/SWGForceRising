@@ -2,6 +2,11 @@
 
 ## 2026-09-29
 
+### Removal of Codex test scripts and notes
+
+- Reviewed tracked test-file additions across the Codex project commits and removed all 26 Python standalone test scripts that Codex added under `MMOCoreORB/src/tests/standalone`. The user also removed `MMOCoreORB/bin/docs/configuration-audit-2026-09-27.md` and `MMOCoreORB/bin/docs/startup-ship-asset-dependencies-2026-09-26.md`, and requested that those deletions be included. The standalone directory is now gone from the working tree. The older C++ tests in `MMOCoreORB/src/tests`, bundled dependency tests, and test-named Lua/client content remain untouched. No production code, assets, or configuration changed.
+- Earlier dated entries retain their recorded standalone check results as history, but paths to these deleted scripts are no longer runnable from the current tree. The user explicitly requested no verification for this commit, so verification was skipped, not reported as passed. No Core3 build or run was performed.
+
 ### Committed quick city treasury deposit
 
 - Added a mayor-only Quick Options radial on the city management terminal with a compact `100k Treasury Deposit` label. The amount belongs to the city record, defaults to 100,000 credits, and is changed through **City Treasury → Set Quick Treasury Deposit Amount**. Setting zero disables and hides the quick action and its empty parent menu. A new mayor inherits the city's saved setting; staff and other citizens do not receive this mayor-only shortcut. The standard Treasury Deposit remains unchanged and available to its existing audience.

@@ -2,6 +2,10 @@
 
 ## 2026-09-29
 
+### Removal of Codex test scripts and notes
+
+- Removed all 26 Codex-created standalone test scripts from `MMOCoreORB/src/tests/standalone`, plus two Codex-created audit/dependency notes under `MMOCoreORB/bin/docs` that the user removed. Existing project tests and test-named game content remain. Earlier update entries describing results from the scripts remain historical records; the files are no longer present in the working tree. Verification was skipped at the user's explicit request before committing.
+
 ### Committed quick city treasury deposit
 
 - The mayor now has a Quick Options treasury deposit at the city management terminal. Its per-city amount defaults to 100,000 credits, uses a compact radial label such as `100k Treasury Deposit`, and can be changed under City Treasury. Setting it to zero hides the shortcut and Quick Options menu. An existing city displayed an invalid 901.9M amount because old-city loading skipped the initialization path for the new field; a field-level default and load-time range check now protect older cities while preserving valid saved settings, including zero. The user confirmed all changes are verified and requested the commit; no necessary verification remains. The assistant did not build or run Core3.
