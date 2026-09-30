@@ -2,6 +2,10 @@
 
 ## 2026-09-30
 
+### Committed SpyNet informant access
+
+- SpyNet informants now provide bounty investigation information regardless of the informant's old level and the player's investigation level. Bounty Hunter skill and an active bounty mission are still required. Mission progression uses the mission's level so its waypoint behavior remains correct. Source and whitespace review passed, and the user verified the change. No necessary verification remains. The assistant did not build or run Core3.
+
 ### Committed structure item search
 
 - Added **Find Item by Name** to Structure Management in buildings with item storage. An administrator enters a keyword, selects a matching stored item, and moves it to their feet. The search includes items inside containers and limits the result list to 100 entries. Access and item location are checked again when the result is selected. The user's first build found pointer-type errors, which were corrected; the user subsequently verified the change. Source and whitespace review passed, and no necessary verification remains. The assistant did not build or run Core3.

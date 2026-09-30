@@ -2,6 +2,11 @@
 
 ## 2026-09-30
 
+### Committed SpyNet informant access
+
+- Removed the conversation handler's requirement that a SpyNet informant's template level equal the active bounty mission's level. Any level 1, 2, or 3 informant can now provide the target information to a Bounty Hunter with an active bounty mission. Non-Bounty Hunters and players without an active mission retain their existing responses, and a mission that already received informant information is not advanced again.
+- The handler now passes the mission's own level to `updateMissionStatus`, preserving the level 1 waypoint update and the existing mission progression for levels 2 and 3 regardless of which informant was used. Source and whitespace review passed, and the user verified the change in game. No necessary verification remains. The assistant did not build or run Core3.
+
 ### Committed structure item search
 
 - Building structure management terminals now offer **Find Item by Name** for structure administrators, including characters on the owning account. Entering a case-insensitive keyword searches placed tangible items and their nested contents in the building's cells, excluding creatures, vendors, and building-owned child objects. The results list identifies up to 100 matching items by name; choosing one and pressing OK transfers it to the player's cell and places it at their feet.
