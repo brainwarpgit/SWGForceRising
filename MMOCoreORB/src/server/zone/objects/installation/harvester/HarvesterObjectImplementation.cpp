@@ -15,9 +15,8 @@ void HarvesterObjectImplementation::fillObjectMenuResponse(ObjectMenuResponse* m
 	if (!isOnAdminList(player))
 		return;
 
+	menuResponse->addRadialMenuItem(78, 3, "@harvester:manage"); //Operate Machinery
 	InstallationObjectImplementation::fillObjectMenuResponse(menuResponse, player);
-
-	menuResponse->addRadialMenuItemToRadialID(118, 78, 3, "@harvester:manage"); //Operate Machinery
 }
 
 void HarvesterObjectImplementation::synchronizedUIListen(CreatureObject* player, int value) {

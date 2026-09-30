@@ -2,6 +2,12 @@
 
 ## 2026-09-29
 
+### Committed structure quick options
+
+- Added a Quick Options radial for owning-account characters on ordinary structures and installations. It pays the structure's saved maintenance amount from carried cash, deposits the saved power amount from inventory resources on powered installations, or withdraws all resource types from a harvester/generator hopper. The quick maintenance and power amounts persist separately on each structure, default to 10,000 each, and are set under Structure Management. Setting an amount to zero hides that shortcut; if no actions remain, Quick Options itself is hidden. Withdraw All Resources keeps Quick Options visible on harvesters even when both deposit amounts are zero (and remains available on generators with a hopper). The settings dialog now explicitly explains that setting a quick option to zero disables the option. Quick radial labels show the configured value compactly, for example `10k Maintenance`, `100k Power`, or `1M Power`, while the settings dialog shows the exact amount. Normal range, funds, power availability, and hopper inventory checks apply. Withdraw-all transfers in stack-sized portions, preserves remaining hopper contents when inventory fills, and uses the existing resource transfer/transaction path.
+- Moved Operate Machinery out of Structure Management to the first main radial item for harvesters and generators. Quick Options appears next, then Structure Management. Other account-owned structures show Quick Options before Structure Management. Structure administrators outside the owning account retain their existing controls but do not get the quick options or amount settings. Civic structures do not expose the new shortcuts.
+- Source/caller and whitespace review passed. The user confirmed that all changes are working in game and requested the commit; this overall runtime verification satisfies the pending checks, so no necessary verification remains. The assistant did not build or run Core3, and no client TRE asset is required.
+
 ### Civic structure status cleanup
 
 - Privileged viewers received a Structure Status list row from `getDebugStructureStatus()` even when it returned an empty string. A healthy civic structure can have no maintenance task and no missing-city warning, so that unconditional row appeared blank. The report now adds the row only when the debug text is nonempty; real maintenance and city warnings remain visible.

@@ -196,6 +196,11 @@ public:
 	 * @param terminal The terminal used in the process. Defaults to null.
 	 */
 	void promptPayMaintenance(StructureObject* structure, CreatureObject* creature, SceneObject* terminal = nullptr);
+	void promptQuickAmount(StructureObject* structure, CreatureObject* creature, bool power);
+	static String formatQuickAmount(int amount);
+	void quickPayMaintenance(StructureObject* structure, CreatureObject* creature);
+	void quickDepositPower(StructureObject* structure, CreatureObject* creature);
+	void withdrawAllResources(StructureObject* structure, CreatureObject* creature);
 
 	/**
 	 * Sends the transfer box prompting for maintenance to be withdrawn.

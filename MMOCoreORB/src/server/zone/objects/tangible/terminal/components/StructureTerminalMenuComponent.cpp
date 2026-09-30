@@ -50,6 +50,12 @@ void StructureTerminalMenuComponent::fillObjectMenuResponse(SceneObject* sceneOb
 	if (structureObject == nullptr)
 		return;
 
+	if (structureObject->isOwnedByAccount(creature) && !structureObject->isCivicStructure()
+			&& structureObject->getQuickMaintenanceAmount() > 0) {
+		menuResponse->addRadialMenuItem(243, 3, "Quick Options");
+		menuResponse->addRadialMenuItemToRadialID(243, 244, 3, StructureManager::formatQuickAmount(structureObject->getQuickMaintenanceAmount()) + " Maintenance");
+	}
+
 	if (structureObject->isCivicStructure()) {
 		if (structureObject->isOnAdminList(creature)) {
 			menuResponse->addRadialMenuItem(118, 3, "@player_structure:management"); //Structure Management
@@ -77,6 +83,8 @@ void StructureTerminalMenuComponent::fillObjectMenuResponse(SceneObject* sceneOb
 		menuResponse->addRadialMenuItemToRadialID(118, 128, 3, "@player_structure:permission_destroy"); //Destroy Structure
 		menuResponse->addRadialMenuItemToRadialID(118, 124, 3, "@player_structure:management_status"); //Status
 		menuResponse->addRadialMenuItemToRadialID(118, 129, 3, "@player_structure:management_pay"); //Pay Maintenance
+		if (structureObject->isOwnedByAccount(creature))
+			menuResponse->addRadialMenuItemToRadialID(118, 247, 3, "Set Quick Maintenance Amount");
 
 		if (StructureManager::instance()->canTakeOwnership(creature, structureObject.get()))
 			menuResponse->addRadialMenuItemToRadialID(118, 240, 3, "Take Ownership");
@@ -166,6 +174,14 @@ int StructureTerminalMenuComponent::handleObjectMenuSelect(SceneObject* sceneObj
 
 	if (selectedID == 241 || selectedID == 242) {
 		StructureManager::instance()->promptStructureLotAdjustment(creature, structureObject, selectedID == 242);
+		return 0;
+	}
+	if (selectedID == 244) {
+		StructureManager::instance()->quickPayMaintenance(structureObject, creature);
+		return 0;
+	}
+	if (selectedID == 247) {
+		StructureManager::instance()->promptQuickAmount(structureObject, creature, false);
 		return 0;
 	}
 

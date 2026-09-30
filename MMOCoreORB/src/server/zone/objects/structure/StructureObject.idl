@@ -38,6 +38,8 @@ class StructureObject extends TangibleObject {
 	protected unsigned long deedObjectID;
 	protected unsigned long waypointID;
 	protected int additionalLots;
+	protected int quickMaintenanceAmount;
+	protected int quickPowerAmount;
 
 	protected float surplusMaintenance;
 	protected float surplusPower;
@@ -58,6 +60,8 @@ class StructureObject extends TangibleObject {
 
 		waypointID = 0;
 		additionalLots = 0;
+		quickMaintenanceAmount = 10000;
+		quickPowerAmount = 10000;
 
 		surplusMaintenance = 0;
 
@@ -243,6 +247,26 @@ class StructureObject extends TangibleObject {
 	// Title owner and characters on that account, without a staff override.
 	@read
 	public native boolean isOwnedByAccount(CreatureObject player);
+
+	@read
+	public int getQuickMaintenanceAmount() {
+		return quickMaintenanceAmount;
+	}
+
+	@read
+	public int getQuickPowerAmount() {
+		return quickPowerAmount;
+	}
+
+	@dirty
+	public void setQuickMaintenanceAmount(int amount) {
+		quickMaintenanceAmount = amount;
+	}
+
+	@dirty
+	public void setQuickPowerAmount(int amount) {
+		quickPowerAmount = amount;
+	}
 
 	@read
 	public native boolean isOwnerOf(SceneObject obj);

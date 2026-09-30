@@ -24,10 +24,28 @@ void InstallationObjectMenuComponent::fillObjectMenuResponse(SceneObject* sceneO
 	if (!installation->isOnAdminList(player))
 		return;
 
+	if (installation->isOwnedByAccount(player)) {
+		bool canWithdrawResources = installation->isHarvesterObject() || installation->isGeneratorObject();
+		bool showMaintenance = installation->getQuickMaintenanceAmount() > 0;
+		bool showPower = !installation->isGeneratorObject() && installation->getQuickPowerAmount() > 0;
+		if (showMaintenance || showPower || canWithdrawResources)
+			menuResponse->addRadialMenuItem(243, 3, "Quick Options");
+		if (showMaintenance)
+			menuResponse->addRadialMenuItemToRadialID(243, 244, 3, StructureManager::formatQuickAmount(installation->getQuickMaintenanceAmount()) + " Maintenance");
+		if (showPower)
+			menuResponse->addRadialMenuItemToRadialID(243, 245, 3, StructureManager::formatQuickAmount(installation->getQuickPowerAmount()) + " Power");
+		if (canWithdrawResources)
+			menuResponse->addRadialMenuItemToRadialID(243, 246, 3, "Withdraw All Resources");
+	}
 	menuResponse->addRadialMenuItem(118, 3, "@player_structure:management");
 	menuResponse->addRadialMenuItemToRadialID(118, 128, 3, "@player_structure:permission_destroy"); //Destroy Structure
 	menuResponse->addRadialMenuItemToRadialID(118, 124, 3, "@player_structure:management_status"); //Status
 	menuResponse->addRadialMenuItemToRadialID(118, 129, 3, "@player_structure:management_pay"); //Pay Maintenance
+	if (installation->isOwnedByAccount(player)) {
+		menuResponse->addRadialMenuItemToRadialID(118, 247, 3, "Set Quick Maintenance Amount");
+		if (!installation->isGeneratorObject())
+			menuResponse->addRadialMenuItemToRadialID(118, 248, 3, "Set Quick Power Amount");
+	}
 
 	if (StructureManager::instance()->canTakeOwnership(player, installation))
 		menuResponse->addRadialMenuItemToRadialID(118, 240, 3, "Take Ownership");
@@ -73,10 +91,26 @@ int InstallationObjectMenuComponent::handleObjectMenuSelect(SceneObject* sceneOb
 	if (selectedID == 240)
 		return StructureManager::instance()->takeOwnership(player, installation);
 
+	StructureManager* structureManager = StructureManager::instance();
+	if (selectedID == 244) {
+		structureManager->quickPayMaintenance(installation, player);
+		return 0;
+	}
+	if (selectedID == 245) {
+		structureManager->quickDepositPower(installation, player);
+		return 0;
+	}
+	if (selectedID == 246) {
+		structureManager->withdrawAllResources(installation, player);
+		return 0;
+	}
+	if (selectedID == 247 || selectedID == 248) {
+		structureManager->promptQuickAmount(installation, player, selectedID == 248);
+		return 0;
+	}
+
 	if (!installation->isOnAdminList(player))
 		return 1;
-
-	StructureManager* structureManager = StructureManager::instance();
 
 	switch (selectedID) {
 	case 124:
@@ -121,5 +155,3 @@ int InstallationObjectMenuComponent::handleObjectMenuSelect(SceneObject* sceneOb
 
 	return 0;
 }
-
-

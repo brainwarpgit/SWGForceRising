@@ -37,6 +37,7 @@
 #include "server/zone/objects/player/sui/callbacks/StructureAssignDroidSuiCallback.h"
 #include "server/zone/objects/player/sui/callbacks/NameStructureSuiCallback.h"
 #include "server/zone/objects/player/sui/callbacks/StructurePayMaintenanceSuiCallback.h"
+#include "server/zone/objects/player/sui/callbacks/StructureQuickAmountSuiCallback.h"
 #include "server/zone/objects/player/sui/callbacks/StructureWithdrawMaintenanceSuiCallback.h"
 #include "server/zone/objects/player/sui/callbacks/StructureSelectSignSuiCallback.h"
 #include "server/zone/objects/player/sui/callbacks/StructureLotAdjustmentSuiCallback.h"
@@ -46,6 +47,10 @@
 #include "server/zone/objects/intangible/PetControlDevice.h"
 #include "server/zone/managers/creature/PetManager.h"
 #include "server/zone/objects/installation/harvester/HarvesterObject.h"
+#include "server/zone/managers/resource/ResourceManager.h"
+#include "server/zone/managers/resource/resourcespawner/ResourceSpawner.h"
+#include "server/zone/objects/resource/ResourceContainer.h"
+#include "server/zone/objects/resource/ResourceSpawn.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
 #include "templates/faction/Factions.h"
 #include "server/zone/objects/player/FactionStatus.h"
@@ -1635,6 +1640,148 @@ void StructureManager::promptPayUncondemnMaintenance(CreatureObject* creature, S
 
 	ghost->addSuiBox(sui);
 	creature->sendMessage(sui->generateMessage());
+}
+
+String StructureManager::formatQuickAmount(int amount) {
+	if (amount < 1000)
+		return String::valueOf(amount);
+
+	int divisor = amount >= 1000000 ? 1000000 : 1000;
+	String suffix = divisor == 1000000 ? "M" : "k";
+	int whole = amount / divisor;
+	int tenths = ((amount % divisor) * 10 + divisor / 2) / divisor;
+	if (tenths == 10) {
+		++whole;
+		tenths = 0;
+	}
+	if (whole == 1000 && divisor == 1000)
+		return "1M";
+	String fraction;
+	if (tenths != 0)
+		fraction = String(".") + String::valueOf(tenths);
+	return String::valueOf(whole) + fraction + suffix;
+}
+
+void StructureManager::promptQuickAmount(StructureObject* structure, CreatureObject* creature, bool power) {
+	if (structure == nullptr || creature == nullptr || !structure->isOwnedByAccount(creature)
+			|| (power && (!structure->isInstallationObject() || structure->isGeneratorObject())))
+		return;
+
+	PlayerObject* ghost = creature->getPlayerObject();
+	if (ghost == nullptr)
+		return;
+
+	ManagedReference<SuiInputBox*> box = new SuiInputBox(creature, SuiWindowType::STRUCTURE_MANAGE_MAINTENANCE);
+	box->setCallback(new StructureQuickAmountSuiCallback(server, power));
+	box->setUsingObject(structure);
+	box->setPromptTitle(power ? "Set Quick Power" : "Set Quick Maintenance");
+	box->setPromptText(String("Current amount: ") + String::valueOf(power ? structure->getQuickPowerAmount() : structure->getQuickMaintenanceAmount())
+			+ "\nEnter the amount to deposit each time. Setting the quick option to 0 disables the option.");
+	ghost->addSuiBox(box);
+	creature->sendMessage(box->generateMessage());
+}
+
+void StructureManager::quickPayMaintenance(StructureObject* structure, CreatureObject* creature) {
+	if (structure == nullptr || creature == nullptr || !structure->isOwnedByAccount(creature))
+		return;
+	Locker locker(structure, creature);
+	int amount = structure->getQuickMaintenanceAmount();
+	if (amount <= 0) {
+		creature->sendSystemMessage("Set a quick maintenance amount in Structure Management first.");
+		return;
+	}
+	structure->updateStructureStatus();
+	payMaintenance(structure, creature, amount);
+}
+
+void StructureManager::quickDepositPower(StructureObject* structure, CreatureObject* creature) {
+	if (structure == nullptr || creature == nullptr || !structure->isOwnedByAccount(creature)
+			|| !structure->isInstallationObject() || structure->isGeneratorObject())
+		return;
+	Locker locker(structure, creature);
+	int amount = structure->getQuickPowerAmount();
+	if (amount <= 0) {
+		creature->sendSystemMessage("Set a quick power amount in Structure Management first.");
+		return;
+	}
+	if (!creature->isInRange(structure, 20.f)) {
+		creature->sendSystemMessage("You are too far away.");
+		return;
+	}
+	ResourceManager* manager = server->getResourceManager();
+	if (manager == nullptr || manager->getAvailablePowerFromPlayer(creature) < (uint32)amount) {
+		creature->sendSystemMessage("You do not have enough power resources for that deposit.");
+		return;
+	}
+	int current = (int)structure->getSurplusPower();
+	if (current < 0 || amount > 100000000 - current) {
+		creature->sendSystemMessage("This structure cannot hold that much power.");
+		return;
+	}
+	structure->addPower(amount);
+	manager->removePowerFromPlayer(creature, amount);
+	structure->updateToDatabase();
+	creature->sendSystemMessage("Deposited " + String::valueOf(amount) + " power units.");
+}
+
+void StructureManager::withdrawAllResources(StructureObject* structure, CreatureObject* creature) {
+	if (structure == nullptr || creature == nullptr || !structure->isOwnedByAccount(creature)
+			|| !structure->isInstallationObject())
+		return;
+	InstallationObject* installation = cast<InstallationObject*>(structure);
+	if (!installation->isHarvesterObject() && !installation->isGeneratorObject())
+		return;
+	Locker locker(installation, creature);
+	if (!installation->isInRange(creature, 20.f)) {
+		creature->sendSystemMessage("You are too far away.");
+		return;
+	}
+	ResourceManager* manager = server->getResourceManager();
+	if (manager == nullptr || manager->getResourceSpawner() == nullptr)
+		return;
+	SceneObject* inventory = creature->getSlottedObject("inventory");
+	if (inventory == nullptr)
+		return;
+	installation->updateInstallationWork();
+	int total = 0;
+	HopperList* hopper = installation->getHopperList();
+	for (int i = hopper->size() - 1; i >= 0; --i) {
+		ManagedReference<ResourceContainer*> container = hopper->get(i);
+		if (container == nullptr || container->getQuantity() <= 0)
+			continue;
+		ManagedReference<ResourceSpawn*> spawn = container->getSpawnObject();
+		if (spawn == nullptr)
+			continue;
+		Locker spawnLocker(spawn);
+		while (container->getQuantity() > 0) {
+			int amount = std::min(container->getQuantity(), ResourceContainer::MAXSIZE);
+			int stackSpace = 0;
+			for (int j = 0; j < inventory->getContainerObjectsSize(); ++j) {
+				SceneObject* item = inventory->getContainerObject(j);
+				if (item != nullptr && item->isResourceContainer()) {
+					ResourceContainer* held = cast<ResourceContainer*>(item);
+					if (held->getSpawnName() == spawn->getName() && held->getQuantity() < ResourceContainer::MAXSIZE) {
+						stackSpace = ResourceContainer::MAXSIZE - held->getQuantity();
+						break;
+					}
+				}
+			}
+			if (stackSpace > 0)
+				amount = std::min(amount, stackSpace);
+			else if (inventory->isContainerFullRecursive()) {
+				creature->sendSystemMessage("Inventory is full. Remaining resources are still in the hopper.");
+				return;
+			}
+			TransactionLog trx(installation, creature, TrxCode::MINED);
+			if (!manager->getResourceSpawner()->addResourceToPlayerInventory(trx, creature, spawn, amount)) {
+				creature->sendSystemMessage("Inventory is full. Remaining resources are still in the hopper.");
+				return;
+			}
+			installation->updateResourceContainerQuantity(container, container->getQuantity() - amount, true);
+			total += amount;
+		}
+	}
+	creature->sendSystemMessage("Withdrew " + String::valueOf(total) + " resource units.");
 }
 
 void StructureManager::promptPayMaintenance(StructureObject* structure, CreatureObject* creature, SceneObject* terminal) {

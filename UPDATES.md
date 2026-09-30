@@ -2,6 +2,11 @@
 
 ## 2026-09-29
 
+### Committed structure quick options
+
+- Added an account-owner Quick Options radial for per-structure quick maintenance, quick power on powered installations, and withdraw-all resources on harvesters and generators. Structure Management lets owning-account characters set separate saved maintenance and power amounts for each structure; both default to 10,000. Setting one to zero hides that shortcut, and Quick Options disappears when it has no actions. Withdraw All Resources remains available on harvesters even when both amounts are zero. Quick menu labels shorten amounts, such as `10k Maintenance` or `100k Power`. Existing admins outside the owning account do not receive these options.
+- Moved Operate Machinery to the first main radial position on harvesters and generators, followed by Quick Options and Structure Management. Houses show Quick Options before Structure Management. Source and whitespace review passed; the user verified all changes working in game and requested the commit. No necessary verification remains. The assistant did not build or run Core3.
+
 ### Civic structure status cleanup
 
 - Structure Status no longer adds an empty privileged debug row. Civic structures without a maintenance warning now show no blank line, while actual warnings still appear. Source and whitespace review passed, and the user verified the fix in game.
