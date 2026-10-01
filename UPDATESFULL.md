@@ -2,6 +2,11 @@
 
 ## 2026-10-01
 
+### Committed player-city bank terminals
+
+- Changed the middle child terminal in all three player-city bank Lua templates (Corellia, Naboo, and Tatooine) from a bank terminal to the existing bazaar terminal template. The two outer bank terminal positions and the structure-management terminal remain unchanged. Newly placed city banks therefore have two bank terminals and one bazaar terminal.
+- Existing banks persist their child terminals and are not changed automatically. They must be redeeded and placed again to receive the middle bazaar terminal. The attempted startup migration was removed at the user's request. The user verified a newly placed bank in game; no necessary verification remains for the template change. The assistant did not build or run Core3.
+
 ### Committed city trainer renaming
 
 - Added **Rename City NPC** to the recruited NPC's radial for the city mayor and game admins. It applies to recruited trainers, faction recruiters, and SpyNet informants. The menu option requires membership in the city's persisted trainer set, so NPC-city trainers using the same menu component do not expose it. The SUI shows the current name and accepts a personal name of 1–64 characters; the NPC's template role is appended in parentheses, with “a SpyNet operative” used for recruited informants. Entering the existing suffix does not duplicate it.

@@ -2,6 +2,10 @@
 
 ## 2026-10-01
 
+### Committed player-city bank terminals
+
+- Corellia, Naboo, and Tatooine player-city bank templates now have two outer bank terminals and a middle bazaar terminal. The user verified a newly placed bank in game. Existing banks retain their saved terminals and must be redeeded and placed again for this change to take effect. No automatic conversion remains; no necessary verification is pending.
+
 ### Committed city trainer renaming
 
 - Mayors and game admins can rename recruited city trainers, faction recruiters, and SpyNet informants from their radial. Their role stays in parentheses after the personal name, including on repeated renames. SpyNet informants now receive a random personal name with “(a SpyNet operative)” wherever they spawn, including NPC cities. The recruitment list calls these choices **SpyNet operative (Informant)**, **Rebel (Recruiter)**, and **Imperial (Recruiter)**. The rename option is absent from ordinary NPC-city trainers because it requires membership in the city's saved recruited-trainer list. Source and whitespace review passed, and the user verified the behavior in game. No necessary verification remains; the assistant did not build or run Core3.
