@@ -2,6 +2,12 @@
 
 ## 2026-09-30
 
+### Committed indoor and outdoor city trainer placement
+
+- `/recruitSkillTrainer` now accepts outdoor positions inside a city and indoor positions in a city civic building or city-limited player cantina, hospital, or theater. Indoor eligibility is identified from the containing building's city and template ability; the mayor does not need that building-placement skill, but must be on a player building's administrator list (including account ownership). Game admins bypass the mayor, recruitment-skill, and player-building access checks while still using the same city, building-type, capacity, and treasury rules. Unrelated buildings and locations outside city limits remain ineligible. The command and selection callback share this check and revalidate the city and cell when the player submits the choice.
+- An indoor NPC is spawned persistently in the player's cell using local coordinates; an outdoor NPC keeps world coordinates. The city trainer cap and 1,000-credit treasury charge still apply to both, and the charge occurs only after a successful spawn. Failed placements are cleaned up without a charge. Ongoing city upkeep recognizes a trainer's containing zone indoors as well as outdoors. City-radius cleanup now compares world coordinates, preventing an indoor trainer's cell-local position from appearing outside the city during a contraction. The Remove radial resolves the city from the containing building when an indoor NPC has no direct city-region reference; mayors and game admins can use it only for NPCs in the city's recruited trainer list.
+- Source and whitespace review passed, and the user verified the change in game, including the city-update behavior. No necessary verification remains. The assistant did not build or run Core3.
+
 ### Committed city recruitable NPCs
 
 - `/recruitSkillTrainer` now offers one SpyNet informant, a Rebel recruiter, and an Imperial recruiter alongside the 33 existing city trainer choices. It uses the existing level 1 informant creature template because the informant conversation now serves every Bounty Hunter investigation level. Each NPC spawns through the same city trainer path, charging 1,000 treasury credits and using one city trainer slot with the usual upkeep and persistence. The recruiter templates retain their faction conversations.

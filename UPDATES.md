@@ -2,6 +2,10 @@
 
 ## 2026-09-30
 
+### Committed indoor and outdoor city trainer placement
+
+- City trainers, SpyNet informants, and faction recruiters can now be placed outdoors within the mayor's city or indoors in its civic buildings and player cantinas, hospitals, and theaters. Mayors need building administrator access for player buildings; game admins bypass mayor and building-access requirements. Indoor NPCs spawn in the player's cell. The city charges the same 1,000-credit recruitment cost and ongoing upkeep in both locations, and mayors or game admins can remove them. City-radius cleanup now uses world coordinates so an indoor trainer is not mistaken for an out-of-bounds NPC during an update. Source and whitespace review passed, and the user verified the change. No necessary verification remains. The assistant did not build or run Core3.
+
 ### Committed city recruitable NPCs
 
 - Extended `/recruitSkillTrainer` with one SpyNet informant choice plus Rebel and Imperial recruiters. The existing city trainer choices remain. The informant works with all Bounty Hunter investigation levels. These NPCs use city trainer capacity, treasury cost, upkeep, and persistence. Mayors can remove recruited NPCs with the Remove radial; the option is hidden for unrelated NPCs that share an appearance. Source, template, and whitespace review passed, and the user verified the change. No necessary verification remains. The assistant did not build or run Core3.

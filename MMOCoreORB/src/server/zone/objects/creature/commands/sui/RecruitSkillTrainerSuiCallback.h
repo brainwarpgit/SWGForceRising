@@ -12,11 +12,51 @@
 #include "server/zone/Zone.h"
 #include "server/zone/managers/creature/CreatureManager.h"
 #include "server/zone/managers/city/CityManager.h"
+#include "server/zone/objects/building/BuildingObject.h"
+#include "server/zone/objects/player/PlayerObject.h"
+#include "templates/tangible/SharedStructureObjectTemplate.h"
 
 class RecruitSkillTrainerSuiCallback : public SuiCallback {
 public:
 	RecruitSkillTrainerSuiCallback(ZoneServer* server)
 		: SuiCallback(server) {
+	}
+
+	static ManagedReference<CityRegion*> getPlacementCity(CreatureObject* player, uint64& parentID) {
+		parentID = 0;
+		if (player == nullptr || player->getZone() == nullptr)
+			return nullptr;
+
+		SceneObject* parent = player->getParent().get();
+		if (parent == nullptr)
+			return player->getCityRegion().get();
+		if (!parent->isCellObject())
+			return nullptr;
+
+		ManagedReference<SceneObject*> root = player->getRootParent();
+		if (root == nullptr || !root->isBuildingObject() || parent->getParent().get() != root.get())
+			return nullptr;
+
+		BuildingObject* building = cast<BuildingObject*>(root.get());
+		PlayerObject* ghost = player->getPlayerObject();
+		if (ghost == nullptr)
+			return nullptr;
+		if (!building->isCivicStructure()) {
+			auto structureTemplate = dynamic_cast<SharedStructureObjectTemplate*>(building->getObjectTemplate());
+			if (structureTemplate == nullptr || !building->isCommercialStructure())
+				return nullptr;
+			const String& ability = structureTemplate->getAbilityRequired();
+			if (ability != "place_cantina" && ability != "place_hospital" && ability != "place_theater")
+				return nullptr;
+			if (!ghost->isAdmin() && !building->isOnAdminList(player))
+				return nullptr;
+		}
+
+		ManagedReference<CityRegion*> city = building->getCityRegion().get();
+		if (city == nullptr || (player->getCityRegion().get() != nullptr && player->getCityRegion().get() != city.get()))
+			return nullptr;
+		parentID = parent->getObjectID();
+		return city;
 	}
 
 	void run(CreatureObject* player, SuiBox* suiBox, uint32 eventIndex, Vector<UnicodeString>* args) {
@@ -28,15 +68,10 @@ public:
 		if (args->size() < 1)
 			return;
 
-		if (player->getParent() != nullptr)
-			return;
-
-		ManagedReference<CityRegion*> city = player->getCityRegion().get();
+		uint64 parentID = 0;
+		ManagedReference<CityRegion*> city = getPlacementCity(player, parentID);
 		CityManager* cityManager = player->getZoneServer()->getCityManager();
 		if (city == nullptr || cityManager == nullptr)
-			return;
-
-		if (!city->isMayor(player->getObjectID()))
 			return;
 
 		if (!cityManager->canSupportMoreTrainers(city)) {
@@ -50,7 +85,7 @@ public:
 		if (ghost == nullptr)
 			return;
 
-		if (!ghost->hasAbility("recruitskilltrainer"))
+		if ((!city->isMayor(player->getObjectID()) || !ghost->hasAbility("recruitskilltrainer")) && !ghost->isAdmin())
 			return;
 
 		int option = Integer::valueOf(args->get(0).toString());
@@ -171,6 +206,13 @@ public:
 
 		if (trainerTemplatePath != "") {
 			Locker clocker(city, player);
+			uint64 currentParentID = 0;
+			if (getPlacementCity(player, currentParentID) != city || currentParentID != parentID)
+				return;
+			if (!cityManager->canSupportMoreTrainers(city)) {
+				player->sendSystemMessage("@city/city:no_more_trainers");
+				return;
+			}
 
 			if(city->getCityTreasury() < 1000) {
 				StringIdChatParameter msg;
@@ -185,9 +227,17 @@ public:
 				return;
 			}
 
-			CreatureObject* trainer = zone->getCreatureManager()->spawnCreature(trainerTemplatePath.hashCode(),0,player->getWorldPositionX(),player->getWorldPositionZ(),player->getWorldPositionY(),0,true);
+			float x = parentID == 0 ? player->getWorldPositionX() : player->getPositionX();
+			float z = parentID == 0 ? player->getWorldPositionZ() : player->getPositionZ();
+			float y = parentID == 0 ? player->getWorldPositionY() : player->getPositionY();
+			CreatureObject* trainer = zone->getCreatureManager()->spawnCreature(trainerTemplatePath.hashCode(), 0, x, z, y, parentID, true);
 
-			if (trainer == nullptr) {
+			if (trainer == nullptr || trainer->getZone() == nullptr || (parentID != 0 && trainer->getParentID() != parentID)) {
+				if (trainer != nullptr) {
+					Locker trainerLocker(trainer, city);
+					trainer->destroyObjectFromWorld(true);
+					trainer->destroyObjectFromDatabase(true);
+				}
 				player->sendSystemMessage("@city/city:st_fail"); // Failed to create the skill trainer for some reason. Try again.
 				return;
 			}

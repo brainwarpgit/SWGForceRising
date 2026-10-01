@@ -1160,8 +1160,8 @@ void CityRegionImplementation::removeStructuresOutsideCity(int newRadius) {
 }
 
 bool CityRegionImplementation::isInsideRadius(SceneObject* obj, int radiusToUse) {
-	Vector3 cityCenter(cityHall->getPositionX(), cityHall->getPositionY(), 0);
-	Vector3 loc(obj->getPositionX(), obj->getPositionY(),0);
+	Vector3 cityCenter(cityHall->getWorldPositionX(), cityHall->getWorldPositionY(), 0);
+	Vector3 loc(obj->getWorldPositionX(), obj->getWorldPositionY(), 0);
 	//info("checking inside city for " + obj->getObjectNameStringIdName() + " " + String::valueOf(cityCenter.squaredDistanceTo(loc) <= (getRadius() * getRadius())),true);
 	return (cityCenter.squaredDistanceTo(loc) <= (radiusToUse * radiusToUse));
 

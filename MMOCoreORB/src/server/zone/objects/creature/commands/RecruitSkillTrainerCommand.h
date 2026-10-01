@@ -28,17 +28,20 @@ public:
 		if (ghost == nullptr)
 			return GENERALERROR;
 
-		if (!ghost->hasAbility("recruitskilltrainer"))
+		if (!ghost->hasAbility("recruitskilltrainer") && !ghost->isAdmin())
 			return GENERALERROR;
 
 		if (creature->isIncapacitated() || creature->isDead())
 			return GENERALERROR;
 
-		ManagedReference<CityRegion*> city = creature->getCityRegion().get();
-		if (city == nullptr)
+		uint64 parentID = 0;
+		ManagedReference<CityRegion*> city = RecruitSkillTrainerSuiCallback::getPlacementCity(creature, parentID);
+		if (city == nullptr) {
+			creature->sendSystemMessage("Recruit outdoors in a city, or indoors in a civic building or city cantina, hospital, or theater. Mayors need building administrator access in player buildings.");
 			return GENERALERROR;
+		}
 
-		if (!city->isMayor(creature->getObjectID()))
+		if (!city->isMayor(creature->getObjectID()) && !ghost->isAdmin())
 			return GENERALERROR;
 
 		ManagedReference<SuiListBox*> suiTrainerType = new SuiListBox(creature, SuiWindowType::RECRUIT_SKILL_TRAINER, 0);
