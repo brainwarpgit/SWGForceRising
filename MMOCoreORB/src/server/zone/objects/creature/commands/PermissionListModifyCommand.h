@@ -13,6 +13,9 @@
 #include "server/zone/managers/guild/GuildManager.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
 #include "server/zone/objects/guild/GuildStructurePermissionsTask.h"
+#include "server/login/account/Account.h"
+#include "server/login/account/AccountManager.h"
+#include "server/login/objects/CharacterList.h"
 
 class PermissionListModifyCommand : public QueueCommand {
 public:
@@ -111,6 +114,111 @@ public:
 		if (!structureObject->hasPermissionList(listName)) {
 			creature->sendSystemMessage("@player_structure:must_specify_list"); // You must specify a valid permission list (Entry, Ban, Admin, Hopper)
 			return INVALIDPARAMETERS;
+		}
+
+		if (targetName.beginsWith("account:")) {
+			if (listName != "ADMIN") {
+				creature->sendSystemMessage("Account entries are supported only on the structure Admin list.");
+				return INVALIDPARAMETERS;
+			}
+
+			String characterName = targetName.subString(8);
+			if (characterName.isEmpty()) {
+				creature->sendSystemMessage("That account character does not exist.");
+				return INVALIDPARAMETERS;
+			}
+
+			uint32 savedAccountID = structureObject->getAccountAdminID(characterName);
+			ManagedReference<CreatureObject*> accountCharacter = nullptr;
+			Reference<Account*> account = nullptr;
+			if (savedAccountID != 0 && action != "add")
+				account = AccountManager::getAccount(savedAccountID);
+			else if (!playerManager->existsName(characterName)) {
+				creature->sendSystemMessage("Character " + characterName + " does not exist.");
+				return INVALIDPARAMETERS;
+			} else {
+				accountCharacter = playerManager->getPlayer(characterName);
+				if (accountCharacter != nullptr && accountCharacter->getPlayerObject() != nullptr)
+					account = accountCharacter->getPlayerObject()->getAccount();
+			}
+			if (account == nullptr) {
+				creature->sendSystemMessage("Could not load the account for " + characterName + ".");
+				return INVALIDPARAMETERS;
+			}
+
+			uint32 accountID = account->getAccountID();
+			bool listed = structureObject->isAccountAdmin(accountID);
+			bool sameEntry = savedAccountID == accountID;
+			if (listed && !sameEntry) {
+				creature->sendSystemMessage("This account is already on the Admin list under a different character name.");
+				return INVALIDPARAMETERS;
+			}
+			bool removing = action == "remove" || (action == "toggle" && sameEntry);
+			if (removing && !listed) {
+				creature->sendSystemMessage("That account is not on the Admin list.");
+				return INVALIDPARAMETERS;
+			}
+			if (!removing && listed) {
+				creature->sendSystemMessage("That account is already on the Admin list.");
+				return INVALIDPARAMETERS;
+			}
+			if (accountCharacter != nullptr && structureObject->isOwnedByAccount(accountCharacter)) {
+				creature->sendSystemMessage("The owning account already has structure access.");
+				return INVALIDPARAMETERS;
+			}
+			PlayerObject* actorGhost = creature->getPlayerObject();
+			if (removing && actorGhost != nullptr && actorGhost->getAccountID() == accountID) {
+				creature->sendSystemMessage("You cannot remove your own account from the Admin list.");
+				return INVALIDPARAMETERS;
+			}
+
+			Reference<CharacterList*> characters = account->getCharacterList();
+			if (characters == nullptr)
+				return GENERALERROR;
+			characters->update();
+			for (int i = 0; i < characters->size(); ++i) {
+				const CharacterListEntry& entry = characters->get(i);
+				if (entry.getGalaxyID() == zoneServer->getGalaxyID() && !removing && structureObject->isOnBanList(entry.getObjectID())) {
+					creature->sendSystemMessage(entry.getFirstName() + " is banned from this structure. Remove the ban first.");
+					return INVALIDPARAMETERS;
+				}
+			}
+
+			Vector<uint64> individualEntries;
+			if (!removing) {
+				for (int i = 0; i < characters->size(); ++i) {
+					const CharacterListEntry& entry = characters->get(i);
+					if (entry.getGalaxyID() == zoneServer->getGalaxyID() && structureObject->isOnPermissionList("ADMIN", entry.getObjectID())) {
+						individualEntries.add(entry.getObjectID());
+						structureObject->revokePermission("ADMIN", entry.getObjectID());
+					}
+				}
+			}
+			int result = removing ? structureObject->revokeAccountAdmin(accountID) : structureObject->grantAccountAdmin(accountID, characterName);
+			if (result != (removing ? StructurePermissionList::REVOKED : StructurePermissionList::GRANTED)) {
+				for (int i = 0; i < individualEntries.size(); ++i)
+					structureObject->grantPermission("ADMIN", individualEntries.get(i));
+				creature->sendSystemMessage("Could not change the account Admin entry; check the list capacity.");
+				return INVALIDPARAMETERS;
+			}
+
+			TransactionLog trx(creature, accountCharacter != nullptr ? accountCharacter.get() : creature, structureObject, TrxCode::PERMISSIONLIST);
+			trx.addState("permissionAction", removing ? "remove" : "add");
+			trx.addState("permissionList", "admin");
+			trx.addState("permissionTarget", targetName);
+			trx.addState("permissionAccountID", accountID);
+			if (structureObject->isBuildingObject()) {
+				for (int i = 0; i < characters->size(); ++i) {
+					const CharacterListEntry& entry = characters->get(i);
+					if (entry.getGalaxyID() != zoneServer->getGalaxyID())
+						continue;
+					ManagedReference<CreatureObject*> member = zoneServer->getObject(entry.getObjectID()).castTo<CreatureObject*>();
+					if (member != nullptr)
+						cast<BuildingObject*>(structureObject)->updateCellPermissionsTo(member);
+				}
+			}
+			creature->sendSystemMessage(targetName + (removing ? " removed from" : " added to") + " the Admin list.");
+			return SUCCESS;
 		}
 
 		ManagedReference<SceneObject*> targetObject = nullptr;

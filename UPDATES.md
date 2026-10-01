@@ -2,6 +2,10 @@
 
 ## 2026-09-30
 
+### Committed structure account admin entry
+
+- Structure administrators can add one persistent `account:<character>` Admin List entry through the existing radial-opened list. Every current and future character on that account receives admin access; removing the entry removes that shared access. Another account token for the same account is rejected, while a separately added character entry remains after account removal. Existing character entries are consolidated when first adding the account. Unknown character names produce a clear error. Source and whitespace review passed; the user verified all behavior in game. No necessary verification remains. The assistant did not build or run Core3.
+
 ### Committed indoor and outdoor city trainer placement
 
 - City trainers, SpyNet informants, and faction recruiters can now be placed outdoors within the mayor's city or indoors in its civic buildings and player cantinas, hospitals, and theaters. Mayors need building administrator access for player buildings; game admins bypass mayor and building-access requirements. Indoor NPCs spawn in the player's cell. The city charges the same 1,000-credit recruitment cost and ongoing upkeep in both locations, and mayors or game admins can remove them. City-radius cleanup now uses world coordinates so an indoor trainer is not mistaken for an out-of-bounds NPC during an update. Source and whitespace review passed, and the user verified the change. No necessary verification remains. The assistant did not build or run Core3.

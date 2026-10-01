@@ -16,6 +16,7 @@
 StructurePermissionList::StructurePermissionList() {
 	permissionLists.setNoDuplicateInsertPlan();
 	idPermissionLists.setNoDuplicateInsertPlan();
+	accountAdminEntries.setNoDuplicateInsertPlan();
 	ownerID = 0;
 
 	//TODO: Load these from the structure template script.
@@ -28,7 +29,7 @@ StructurePermissionList::StructurePermissionList() {
 }
 
 StructurePermissionList::StructurePermissionList(const StructurePermissionList& spl) : Object(), permissionLists(spl.permissionLists),
-		idPermissionLists(spl.idPermissionLists), ownerName(spl.ownerName), ownerID(spl.ownerID), lock() {
+		idPermissionLists(spl.idPermissionLists), accountAdminEntries(spl.accountAdminEntries), ownerName(spl.ownerName), ownerID(spl.ownerID), lock() {
 }
 
 bool StructurePermissionList::toBinaryStream(ObjectOutputStream* stream) {
@@ -47,6 +48,7 @@ StructurePermissionList& StructurePermissionList::operator=(const StructurePermi
 
 	permissionLists = list.permissionLists;
 	idPermissionLists = list.idPermissionLists;
+	accountAdminEntries = list.accountAdminEntries;
 	ownerName = list.ownerName;
 	ownerID = list.ownerID;
 
@@ -56,6 +58,7 @@ StructurePermissionList& StructurePermissionList::operator=(const StructurePermi
 void to_json(nlohmann::json& j, const StructurePermissionList& p) {
 	j["permissionLists"] = p.permissionLists;
 	j["idPermissionLists"] = p.idPermissionLists;
+	j["accountAdminEntries"] = p.accountAdminEntries;
 	j["ownerName"] = p.ownerName;
 	j["ownerID"] = p.ownerID;
 }
@@ -79,6 +82,15 @@ int StructurePermissionList::writeObjectMembers(ObjectOutputStream* stream) {
 	_offset = stream->getOffset();
 	stream->writeInt(0);
 	TypeInfo<VectorMap<String, SortedVector<uint64> > >::toBinaryStream(&idPermissionLists, stream);
+	_totalSize = (uint32) (stream->getOffset() - (_offset + 4));
+	stream->writeInt(_offset, _totalSize);
+	varCount ++;
+
+	_name = "accountAdminEntries";
+	_name.toBinaryStream(stream);
+	_offset = stream->getOffset();
+	stream->writeInt(0);
+	TypeInfo<VectorMap<uint32, String> >::toBinaryStream(&accountAdminEntries, stream);
 	_totalSize = (uint32) (stream->getOffset() - (_offset + 4));
 	stream->writeInt(_offset, _totalSize);
 	varCount ++;
@@ -122,6 +134,10 @@ bool StructurePermissionList::readObjectMember(ObjectInputStream* stream, const 
 		return true;
 	} else if (name == "idPermissionLists") {
 		TypeInfo<VectorMap<String, SortedVector<uint64> > >::parseFromBinaryStream(&idPermissionLists, stream);
+
+		return true;
+	} else if (name == "accountAdminEntries") {
+		TypeInfo<VectorMap<uint32, String> >::parseFromBinaryStream(&accountAdminEntries, stream);
 
 		return true;
 	} else if (name == "ownerName") {
@@ -191,6 +207,10 @@ void StructurePermissionList::sendTo(CreatureObject* creature, const String& lis
 				invalidIDs.add(objectID);
 			}
 		}
+	}
+	if (listName == "ADMIN") {
+		for (int i = 0; i < accountAdminEntries.size(); ++i)
+			listMsg->addName("account:" + accountAdminEntries.elementAt(i).getValue());
 	}
 
 	locker.release();
@@ -267,6 +287,39 @@ int StructurePermissionList::revokePermission(const String& listName, const uint
 	return REVOKED;
 }
 
+int StructurePermissionList::grantAccountAdmin(uint32 accountID, const String& characterName) {
+	Locker locker(&lock);
+	if (accountAdminEntries.contains(accountID))
+		return LISTNOTFOUND;
+	if (!idPermissionLists.contains("ADMIN") || idPermissionLists.get("ADMIN").size() + accountAdminEntries.size() >= MAX_ENTRIES)
+		return LISTNOTFOUND;
+	accountAdminEntries.put(accountID, characterName);
+	return GRANTED;
+}
+
+int StructurePermissionList::revokeAccountAdmin(uint32 accountID) {
+	Locker locker(&lock);
+	if (!accountAdminEntries.contains(accountID))
+		return LISTNOTFOUND;
+	accountAdminEntries.drop(accountID);
+	return REVOKED;
+}
+
+bool StructurePermissionList::isAccountAdmin(uint32 accountID) const {
+	ReadLocker locker(&lock);
+	return accountAdminEntries.contains(accountID);
+}
+
+uint32 StructurePermissionList::getAccountAdminID(const String& characterName) const {
+	ReadLocker locker(&lock);
+	for (int i = 0; i < accountAdminEntries.size(); ++i) {
+		const auto& entry = accountAdminEntries.elementAt(i);
+		if (entry.getValue().toLowerCase() == characterName.toLowerCase())
+			return entry.getKey();
+	}
+	return 0;
+}
+
 int StructurePermissionList::revokeAllPermissions(const uint64 objectID) {
 	Locker locker(&lock);
 
@@ -284,6 +337,7 @@ int StructurePermissionList::revokeAllPermissions(const uint64 objectID) {
 
 void StructurePermissionList::revokeAllPermissions() {
 	Locker locker(&lock);
+	accountAdminEntries.removeAll();
 
 	for (int i = 0; i < idPermissionLists.size(); ++i) {
 		SortedVector<uint64>* list = &idPermissionLists.get(i);
@@ -374,7 +428,5 @@ bool StructurePermissionList::isListFull(const String& listName) const {
 
 	const SortedVector<uint64>& list = idPermissionLists.get(pos);
 
-	return list.size() >= MAX_ENTRIES;
+	return list.size() + (listName == "ADMIN" ? accountAdminEntries.size() : 0) >= MAX_ENTRIES;
 }
-
-

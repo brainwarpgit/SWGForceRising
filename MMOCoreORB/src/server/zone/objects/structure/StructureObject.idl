@@ -311,6 +311,24 @@ class StructureObject extends TangibleObject {
 		return structurePermissionList.revokePermission(listName, objectID);
 	}
 
+	public int grantAccountAdmin(unsigned int accountID, final string characterName) {
+		return structurePermissionList.grantAccountAdmin(accountID, characterName);
+	}
+
+	public int revokeAccountAdmin(unsigned int accountID) {
+		return structurePermissionList.revokeAccountAdmin(accountID);
+	}
+
+	@read
+	public boolean isAccountAdmin(unsigned int accountID) {
+		return structurePermissionList.isAccountAdmin(accountID);
+	}
+
+	@read
+	public unsigned int getAccountAdminID(final string characterName) {
+		return structurePermissionList.getAccountAdminID(characterName);
+	}
+
 	public int revokeAllPermissions(final unsigned long objectID) {
 		return structurePermissionList.revokeAllPermissions(objectID);
 	}

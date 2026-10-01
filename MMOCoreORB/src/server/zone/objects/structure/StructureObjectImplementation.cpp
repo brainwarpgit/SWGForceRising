@@ -863,7 +863,8 @@ bool StructureObjectImplementation::isOnAdminList(CreatureObject* player) const 
 
 	if (ghost != nullptr && ghost->isPrivileged())
 		return true;
-	else if (structurePermissionList.isOnPermissionList("ADMIN", player->getObjectID())) {
+	else if (structurePermissionList.isOnPermissionList("ADMIN", player->getObjectID()) ||
+			(ghost != nullptr && structurePermissionList.isAccountAdmin(ghost->getAccountID()) && !isOnBanList(player))) {
 		return true;
 	} else {
 		ManagedReference<GuildObject*> guild = player->getGuildObject().get();
@@ -884,7 +885,8 @@ bool StructureObjectImplementation::isOnEntryList(CreatureObject* player) const 
 
 	if (ghost != nullptr && ghost->hasGodMode())
 		return true;
-	else if (structurePermissionList.isOnPermissionList("ADMIN", player->getObjectID())
+	else if ((ghost != nullptr && structurePermissionList.isAccountAdmin(ghost->getAccountID()) && !isOnBanList(player))
+			|| structurePermissionList.isOnPermissionList("ADMIN", player->getObjectID())
 			|| structurePermissionList.isOnPermissionList("ENTRY", player->getObjectID())
 			|| structurePermissionList.isOnPermissionList("VENDOR", player->getObjectID()))
 		return true;
@@ -928,7 +930,8 @@ bool StructureObjectImplementation::isOnHopperList(CreatureObject* player) const
 
 	if (ghost != nullptr && ghost->isPrivileged())
 		return true;
-	else if (structurePermissionList.isOnPermissionList("HOPPER", player->getObjectID())
+	else if ((ghost != nullptr && structurePermissionList.isAccountAdmin(ghost->getAccountID()) && !isOnBanList(player))
+			|| structurePermissionList.isOnPermissionList("HOPPER", player->getObjectID())
 			|| structurePermissionList.isOnPermissionList("ADMIN", player->getObjectID()))
 		return true;
 	else {
@@ -954,7 +957,8 @@ bool StructureObjectImplementation::isOnPermissionList(const String& listName, C
 			return false;
 		else
 			return true;
-	} else if (structurePermissionList.isOnPermissionList(listName, player->getObjectID()))
+	} else if ((listName == "ADMIN" && ghost != nullptr && structurePermissionList.isAccountAdmin(ghost->getAccountID()) && !isOnBanList(player))
+			|| structurePermissionList.isOnPermissionList(listName, player->getObjectID()))
 		return true;
 	else {
 		ManagedReference<GuildObject*> guild = player->getGuildObject().get();

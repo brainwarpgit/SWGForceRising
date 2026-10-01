@@ -16,6 +16,7 @@
 class StructurePermissionList : public Object {
 	VectorMap<String, SortedVector<String> > permissionLists;
 	VectorMap<String, SortedVector<uint64> > idPermissionLists;
+	VectorMap<uint32, String> accountAdminEntries;
 	String ownerName;
 	uint64 ownerID;
 	mutable ReadWriteLock lock;
@@ -62,6 +63,10 @@ public:
 
 	int grantPermission(const String& listName, const uint64 objectID);
 	int revokePermission(const String& listName, const uint64 objectID);
+	int grantAccountAdmin(uint32 accountID, const String& characterName);
+	int revokeAccountAdmin(uint32 accountID);
+	bool isAccountAdmin(uint32 accountID) const;
+	uint32 getAccountAdminID(const String& characterName) const;
 	int revokeAllPermissions(const uint64 objectID);
 	void revokeAllPermissions();
 
@@ -115,6 +120,8 @@ public:
 		Locker locker(&lock);
 
 		idPermissionLists.drop(listName);
+		if (listName == "ADMIN")
+			accountAdminEntries.removeAll();
 	}
 
 	/**
