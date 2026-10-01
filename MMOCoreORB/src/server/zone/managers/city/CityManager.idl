@@ -251,6 +251,8 @@ class CityManager extends ManagedService implements Logger {
 	public native void castMayoralVote(CityRegion city, CreatureObject creature, unsigned long oid);
 
 	public native void sendStructureReport(CityRegion city, CreatureObject creature, SceneObject terminal = null);
+	public native void sendTrainerList(CityRegion city, CreatureObject creature);
+	public native void promptClearTrainers(CityRegion city, CreatureObject creature);
 
 	public native boolean canSupportMoreDecorations(CityRegion city);
 	public native boolean canSupportMoreTrainers(CityRegion city);

@@ -1,5 +1,11 @@
 # Project Updates
 
+## 2026-10-01
+
+### Committed city trainer management and placement direction
+
+- Mayors and game admins can list a city's recruited trainers from City Management. The list shows each trainer's building when indoors and its world coordinates; selecting one creates a waypoint. **Clear All Trainers** shows a confirmation listing every trainer it will remove, then deletes only those still registered to that city. Newly recruited trainers now face the player's placement direction consistently. Source and whitespace review passed, and the user verified the change in game. No necessary verification remains. The assistant did not build or run Core3.
+
 ## 2026-09-30
 
 ### Committed structure account admin entry

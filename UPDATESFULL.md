@@ -1,5 +1,13 @@
 # Detailed Project Updates
 
+## 2026-10-01
+
+### Committed city trainer management and placement direction
+
+- Added **List Trainers** and **Clear All Trainers** to City Management for the mayor and game admins. The list reads the city's persisted recruited-trainer records, showing each NPC's name, containing building (when indoors), planet, and world X/Y coordinates. Selecting a trainer and pressing OK creates an active datapad waypoint at that world location, so indoor trainers lead to their building. The callback rechecks city authority and trainer membership.
+- Clear All opens a confirmation message containing the full list of trainers to be deleted. Confirming rechecks mayor/admin authority and deletes only trainer IDs captured in that prompt that still belong to the city; cancel leaves everything intact. Trainer removal updates the city's registered list and destroys the NPCs from the world and database. A trainer placed after the prompt opens is not included in that deletion.
+- Placement now uses an absolute direction update from the player's degree heading converted to radians. The previous relative `rotate` call took an integer and could leave the spawned trainer facing another direction. Source and whitespace review passed, and the user verified outdoor/indoor waypoints, clear-all confirmation, and facing in game. No necessary verification remains. The assistant did not build or run Core3.
+
 ## 2026-09-30
 
 ### Committed structure account admin entry

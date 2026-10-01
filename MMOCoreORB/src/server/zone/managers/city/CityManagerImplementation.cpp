@@ -33,6 +33,8 @@
 #include "server/zone/objects/player/sui/callbacks/CityToggleZoningSuiCallback.h"
 #include "server/zone/objects/player/sui/callbacks/CityForceRankSuiCallback.h"
 #include "server/zone/objects/player/sui/callbacks/CityForceUpdateSuiCallback.h"
+#include "server/zone/objects/player/sui/callbacks/CityTrainerListSuiCallback.h"
+#include "server/zone/objects/player/sui/callbacks/CityClearTrainersSuiCallback.h"
 #include "server/zone/objects/region/CitizenList.h"
 #include "server/zone/objects/building/BuildingObject.h"
 #include "TaxPayMailTask.h"
@@ -511,6 +513,76 @@ void CityManagerImplementation::sendStructureReport(CityRegion* city, CreatureOb
 
 	ghost->addSuiBox(maintList);
 	creature->sendMessage(maintList->generateMessage());
+}
+
+namespace {
+String describeCityTrainer(SceneObject* trainer) {
+	StringBuffer line;
+	line << trainer->getDisplayedName();
+	auto root = trainer->getRootParent();
+	if (root != nullptr && root->isBuildingObject())
+		line << " / " << root->getDisplayedName();
+	if (trainer->getZone() != nullptr) {
+		auto world = trainer->getWorldPosition();
+		line << " - " << trainer->getZone()->getZoneName() << " ("
+				<< (int)world.getX() << ", " << (int)world.getY() << ")";
+	} else {
+		line << " - location unavailable";
+	}
+	return line.toString();
+}
+}
+
+void CityManagerImplementation::sendTrainerList(CityRegion* city, CreatureObject* creature) {
+	auto ghost = creature->getPlayerObject();
+	if (city == nullptr || ghost == nullptr || (!city->isMayor(creature->getObjectID()) && !ghost->isAdmin()))
+		return;
+
+	ManagedReference<SuiListBox*> list = new SuiListBox(creature, 0);
+	list->setPromptTitle("City Trainers");
+	list->setPromptText("Select a trainer and press OK to create a waypoint at its world location.");
+	list->setCallback(new CityTrainerListSuiCallback(zoneServer, city));
+	int listed = 0;
+	for (int i = 0; i < city->getSkillTrainerCount(); ++i) {
+		auto trainer = city->getCitySkillTrainer(i);
+		if (trainer != nullptr) {
+			list->addMenuItem(describeCityTrainer(trainer), trainer->getObjectID());
+			++listed;
+		}
+	}
+	if (listed == 0)
+		list->addMenuItem("No recruited trainers in this city.");
+	ghost->addSuiBox(list);
+	creature->sendMessage(list->generateMessage());
+}
+
+void CityManagerImplementation::promptClearTrainers(CityRegion* city, CreatureObject* creature) {
+	auto ghost = creature->getPlayerObject();
+	if (city == nullptr || ghost == nullptr || (!city->isMayor(creature->getObjectID()) && !ghost->isAdmin()))
+		return;
+
+	Vector<uint64> trainerIDs;
+	StringBuffer prompt;
+	prompt << "Delete these city trainers? This cannot be undone.\n\n";
+	for (int i = 0; i < city->getSkillTrainerCount(); ++i) {
+		auto trainer = city->getCitySkillTrainer(i);
+		if (trainer != nullptr) {
+			trainerIDs.add(trainer->getObjectID());
+			prompt << trainerIDs.size() << ". " << describeCityTrainer(trainer) << "\n";
+		}
+	}
+	if (trainerIDs.isEmpty()) {
+		creature->sendSystemMessage("There are no recruited city trainers to remove.");
+		return;
+	}
+
+	ManagedReference<SuiMessageBox*> box = new SuiMessageBox(creature, 0);
+	box->setPromptTitle("Clear All City Trainers");
+	box->setPromptText(prompt.toString());
+	box->setCancelButton(true, "@cancel");
+	box->setCallback(new CityClearTrainersSuiCallback(zoneServer, city, trainerIDs));
+	ghost->addSuiBox(box);
+	creature->sendMessage(box->generateMessage());
 }
 
 void CityManagerImplementation::promptWithdrawCityTreasury(CityRegion* city, CreatureObject* mayor, SceneObject* terminal) {

@@ -242,7 +242,7 @@ public:
 				return;
 			}
 
-			trainer->rotate(player->getDirectionAngle());
+			trainer->updateDirection(Math::deg2rad(player->getDirectionAngle()));
 			city->subtractFromCityTreasury(1000);
 			city->addSkillTrainer(trainer);
 

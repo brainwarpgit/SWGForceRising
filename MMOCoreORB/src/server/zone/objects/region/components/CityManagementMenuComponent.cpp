@@ -85,6 +85,8 @@ void CityManagementMenuComponent::fillObjectMenuResponse(SceneObject* sceneObjec
 	menuResponse->addRadialMenuItemToRadialID(216, 218, 3, "@city/city:city_militia"); //Manage Militia
 
 	menuResponse->addRadialMenuItemToRadialID(216, 225, 3, "@city/city:city_specializations"); //City Specialization
+	menuResponse->addRadialMenuItemToRadialID(216, 232, 3, "List Trainers");
+	menuResponse->addRadialMenuItemToRadialID(216, 233, 3, "Clear All Trainers");
 
 	if (!city->isMayor(player->getObjectID()))
 		return;
@@ -163,6 +165,14 @@ int CityManagementMenuComponent::handleObjectMenuSelect(SceneObject* sceneObject
 		break;
 	case 225: //Set City Specialization
 		cityManager->promptCitySpecialization(city, player, sceneObject);
+		break;
+	case 232: // List Trainers
+		if (city->isMayor(player->getObjectID()) || ghost->isAdmin())
+			cityManager->sendTrainerList(city, player);
+		break;
+	case 233: // Clear All Trainers
+		if (city->isMayor(player->getObjectID()) || ghost->isAdmin())
+			cityManager->promptClearTrainers(city, player);
 		break;
 	case 226: //Toggle Zoning Enabled
 		cityManager->promptToggleZoningEnabled(city, player);
