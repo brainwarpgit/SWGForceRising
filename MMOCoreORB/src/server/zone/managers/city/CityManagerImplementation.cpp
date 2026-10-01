@@ -540,7 +540,8 @@ void CityManagerImplementation::sendTrainerList(CityRegion* city, CreatureObject
 
 	ManagedReference<SuiListBox*> list = new SuiListBox(creature, 0);
 	list->setPromptTitle("City Trainers");
-	list->setPromptText("Select a trainer and press OK to create a waypoint at its world location.");
+	list->setPromptText("Select a trainer. Press OK for a waypoint, or Remove to delete only that trainer.");
+	list->setOtherButton(true, "@city/city:mt_remove");
 	list->setCallback(new CityTrainerListSuiCallback(zoneServer, city));
 	int listed = 0;
 	for (int i = 0; i < city->getSkillTrainerCount(); ++i) {

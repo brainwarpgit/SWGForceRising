@@ -2,6 +2,14 @@
 
 ## 2026-10-01
 
+### Committed city trainer renaming
+
+- Mayors and game admins can rename recruited city trainers, faction recruiters, and SpyNet informants from their radial. Their role stays in parentheses after the personal name, including on repeated renames. SpyNet informants now receive a random personal name with “(a SpyNet operative)” wherever they spawn, including NPC cities. The recruitment list calls these choices **SpyNet operative (Informant)**, **Rebel (Recruiter)**, and **Imperial (Recruiter)**. The rename option is absent from ordinary NPC-city trainers because it requires membership in the city's saved recruited-trainer list. Source and whitespace review passed, and the user verified the behavior in game. No necessary verification remains; the assistant did not build or run Core3.
+
+### Committed single city trainer removal
+
+- The City Management trainer list now has a **Remove** button beside the existing waypoint action. It confirms the selected NPC and deletes only that city's registered trainer from the world and database. Mayor/admin authority and trainer membership are checked again on confirmation. Source and whitespace review passed, and the user verified the behavior in game. No necessary verification remains; the assistant did not build or run Core3.
+
 ### Committed city trainer management and placement direction
 
 - Mayors and game admins can list a city's recruited trainers from City Management. The list shows each trainer's building when indoors and its world coordinates; selecting one creates a waypoint. **Clear All Trainers** shows a confirmation listing every trainer it will remove, then deletes only those still registered to that city. Newly recruited trainers now face the player's placement direction consistently. Source and whitespace review passed, and the user verified the change in game. No necessary verification remains. The assistant did not build or run Core3.

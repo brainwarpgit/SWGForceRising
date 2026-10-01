@@ -11,6 +11,8 @@
 #include "server/zone/packets/object/ObjectMenuResponse.h"
 #include "server/zone/objects/region/CityRegion.h"
 #include "server/zone/managers/city/CityRemoveAmenityTask.h"
+#include "server/zone/objects/player/sui/inputbox/SuiInputBox.h"
+#include "server/zone/objects/player/sui/callbacks/CityTrainerRenameSuiCallback.h"
 
 namespace {
 ManagedReference<CityRegion*> getRecruitedTrainerCity(SceneObject* trainer) {
@@ -30,11 +32,32 @@ void TrainerMenuComponent::fillObjectMenuResponse(SceneObject* sceneObject, Obje
 	ManagedReference<CityRegion*> city = getRecruitedTrainerCity(sceneObject);
 
 	PlayerObject* ghost = player->getPlayerObject();
-	if (city != nullptr && ghost != nullptr && (city->isMayor(player->getObjectID()) || ghost->isAdmin()) && city->isCitySkillTrainer(sceneObject))
+	if (city != nullptr && ghost != nullptr && (city->isMayor(player->getObjectID()) || ghost->isAdmin()) && city->isCitySkillTrainer(sceneObject)) {
+		menuResponse->addRadialMenuItem(249, 3, "Rename City NPC");
 		menuResponse->addRadialMenuItem(72, 3, "@city/city:mt_remove"); // Remove
+	}
 }
 
 int TrainerMenuComponent::handleObjectMenuSelect(SceneObject* sceneObject, CreatureObject* player, byte selectedID) const {
+	if (selectedID == 249) {
+		ManagedReference<CityRegion*> city = getRecruitedTrainerCity(sceneObject);
+		PlayerObject* ghost = player->getPlayerObject();
+		if (city == nullptr || ghost == nullptr || (!city->isMayor(player->getObjectID()) && !ghost->isAdmin()) ||
+				!city->isCitySkillTrainer(sceneObject) || !sceneObject->isInRange(player, 20))
+			return 0;
+
+		ManagedReference<SuiInputBox*> box = new SuiInputBox(player, 0);
+		box->setUsingObject(sceneObject);
+		box->setPromptTitle("Rename City NPC");
+		box->setPromptText("Enter a new personal name. The NPC's role will be kept automatically. Current name: " + sceneObject->getDisplayedName());
+		box->setMaxInputSize(64);
+		box->setForceCloseDistance(20);
+		box->setCallback(new CityTrainerRenameSuiCallback(player->getZoneServer()));
+		ghost->addSuiBox(box);
+		player->sendMessage(box->generateMessage());
+		return 0;
+	}
+
 	if (selectedID == 72) {
 		ManagedReference<CityRegion*> city = getRecruitedTrainerCity(sceneObject);
 

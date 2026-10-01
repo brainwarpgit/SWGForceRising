@@ -83,9 +83,9 @@ public:
 		suiTrainerType->addMenuItem("@city/city:st_tailor", 30);
 		suiTrainerType->addMenuItem("@city/city:st_unarmed", 31);
 		suiTrainerType->addMenuItem("@city/city:st_weaponsmith", 32);
-		suiTrainerType->addMenuItem("SpyNet Informant", 33);
-		suiTrainerType->addMenuItem("Rebel Recruiter", 34);
-		suiTrainerType->addMenuItem("Imperial Recruiter", 35);
+		suiTrainerType->addMenuItem("SpyNet operative (Informant)", 33);
+		suiTrainerType->addMenuItem("Rebel (Recruiter)", 34);
+		suiTrainerType->addMenuItem("Imperial (Recruiter)", 35);
 
 		ghost->addSuiBox(suiTrainerType);
 		creature->sendMessage(suiTrainerType->generateMessage());

@@ -2,6 +2,16 @@
 
 ## 2026-10-01
 
+### Committed city trainer renaming
+
+- Added **Rename City NPC** to the recruited NPC's radial for the city mayor and game admins. It applies to recruited trainers, faction recruiters, and SpyNet informants. The menu option requires membership in the city's persisted trainer set, so NPC-city trainers using the same menu component do not expose it. The SUI shows the current name and accepts a personal name of 1–64 characters; the NPC's template role is appended in parentheses, with “a SpyNet operative” used for recruited informants. Entering the existing suffix does not duplicate it.
+- The level-specific SpyNet informant template now uses generic random names with its existing localized “(a SpyNet operative)” role, matching the other informant template. This includes recruited informants, NPC-city informants at all investigation levels, and other spawns of these templates; no placement-only override is needed. The recruitment window labels its final three choices **SpyNet operative (Informant)**, **Rebel (Recruiter)**, and **Imperial (Recruiter)** without changing their selection IDs. Submission checks range, mayor/admin status, and trainer membership again, then applies the project's naming filter before setting the recruited NPC's persisted custom object name and notifying nearby clients. Source and whitespace review passed, and the user verified the behavior in game. No necessary verification remains; the assistant did not build or run Core3.
+
+### Committed single city trainer removal
+
+- Added **Remove** as a third button in City Management → **List Trainers**. The existing OK button still creates a waypoint. Remove opens a confirmation naming the selected trainer and object ID, then rechecks mayor/admin rights and that this exact object remains registered to the same city. Confirmation drops it from the city trainer set and deletes it from the world and database; cancel leaves it untouched. This provides a route when an individual trainer's radial is unresponsive without using **Clear All Trainers**.
+- Source and whitespace review passed, and the user verified the behavior in game. No necessary verification remains; the assistant did not build or run Core3.
+
 ### Committed city trainer management and placement direction
 
 - Added **List Trainers** and **Clear All Trainers** to City Management for the mayor and game admins. The list reads the city's persisted recruited-trainer records, showing each NPC's name, containing building (when indoors), planet, and world X/Y coordinates. Selecting a trainer and pressing OK creates an active datapad waypoint at that world location, so indoor trainers lead to their building. The callback rechecks city authority and trainer membership.
