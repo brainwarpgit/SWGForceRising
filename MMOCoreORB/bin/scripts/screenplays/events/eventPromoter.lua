@@ -124,7 +124,7 @@ function eventPromoterScreenplay:giveItem(pPlayer, deedData)
 		return
 	end
 
-	if (CreatureObject(pPlayer):getCashCredits() < deedData.cost) then
+	if (not CreatureObject(pPlayer):verifyCredits(deedData.cost)) then
 		CreatureObject(pPlayer):sendSystemMessage("@dispenser:insufficient_funds")
 		return
 	elseif (SceneObject(pInventory):isContainerFullRecursive()) then
@@ -140,7 +140,7 @@ function eventPromoterScreenplay:giveItem(pPlayer, deedData)
 		end
 	end
 
-	CreatureObject(pPlayer):subtractCashCredits(deedData.cost)
+	CreatureObject(pPlayer):subtractCredits(deedData.cost)
 
 	local templatePath
 	if string.find(deedData.template, ".iff") then

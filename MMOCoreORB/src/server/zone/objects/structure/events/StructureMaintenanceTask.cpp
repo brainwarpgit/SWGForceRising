@@ -84,9 +84,9 @@ void StructureMaintenanceTask::run() {
 	if (uncondemnCost > 0)
 		oneWeekMaintenance += uncondemnCost;
 
-	// Check if owner has money in the bank and structure not decaying.
-	if (oneWeekMaintenance > 0 && creditObj->getBankCredits() >= oneWeekMaintenance) {
-		//Withdraw 1 week maintenance from owner bank account and add to the structure
+	// Check the owner's combined balance before paying bank first.
+	if (oneWeekMaintenance > 0 && creditObj->verifyCredits(oneWeekMaintenance)) {
+		// Withdraw one week of maintenance, using cash if the bank is short.
 		//maintenance pool.
 		strongRef->payMaintenance(oneWeekMaintenance, creditObj, false);
 

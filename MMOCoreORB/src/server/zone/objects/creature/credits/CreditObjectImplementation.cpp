@@ -130,7 +130,7 @@ bool CreditObjectImplementation::subtractCredits(int credits, bool notifyClient,
 		return false;
 	}
 
-	if (credits > cashCredits + bankCredits) {
+	if ((int64)credits > (int64)cashCredits + bankCredits) {
 		return false;
 	}
 

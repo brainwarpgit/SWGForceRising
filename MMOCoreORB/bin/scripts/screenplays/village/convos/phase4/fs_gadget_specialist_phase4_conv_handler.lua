@@ -41,7 +41,7 @@ function villageGadgetSpecialistPhase4ConvoHandler:runScreenHandlers(pConvTempla
 	elseif (screenID == "one_other_thing" or screenID == "return_to_buy") then
 		local pInventory = CreatureObject(pPlayer):getSlottedObject("inventory")
 
-		if (CreatureObject(pPlayer):getCashCredits() < 530) then
+		if (not CreatureObject(pPlayer):verifyCredits(530)) then
 			clonedConversation:addOption("@conversation/fs_gadget_specialist:s_a8749106", "not_enough_funds")
 		elseif (pInventory == nil or SceneObject(pInventory):isContainerFullRecursive()) then
 			clonedConversation:addOption("@conversation/fs_gadget_specialist:s_a8749106", "not_enough_space")
@@ -60,7 +60,7 @@ function villageGadgetSpecialistPhase4ConvoHandler:runScreenHandlers(pConvTempla
 				local pItem = giveItem(pInventory, "object/tangible/loot/collectible/kits/fs_tracking_device_kit.iff", -1)
 
 				if (pItem ~= nil) then
-					CreatureObject(pPlayer):subtractCashCredits(530)
+					CreatureObject(pPlayer):subtractCredits(530)
 					QuestManager.completeQuest(pPlayer, QuestManager.quests.FS_CRAFTING4_QUEST_01)
 					QuestManager.activateQuest(pPlayer, QuestManager.quests.FS_CRAFTING4_QUEST_02)
 					deleteData(SceneObject(pPlayer):getObjectID() .. ":returningForCraftingKit")

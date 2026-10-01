@@ -2,6 +2,12 @@
 
 ## 2026-10-01
 
+### Committed combined credit payments
+
+- Added a split-payment API to creature and Lua credit handling, using the existing credit object's atomic deduction routine. Payment callers retain their primary source: bank first for bazaar transactions, vehicle repairs, income tax, vendor and automatic structure maintenance; cash first for structure and city treasury deposits, gambling, ship repairs, fines, lottery entries, faction bribes, and scripted purchases. The other balance supplies any shortfall. Combined-balance checks avoid signed overflow; transfer dialogs cap displayed totals to their integer range.
+- Updated server payment paths for auctions, structures, city treasury, vehicles, ships, lottery droids, gambling, access fees, and reaction fines, plus screenplay costs for bartenders, event perks, recruiters, quests, heralds, museum schematics, and space-station repairs. Corrected vendor maintenance accounting when a payment spans both balances. Existing split-payment flows such as travel, insurance, training, and contraband fines remain in place. Player-to-player trades remain cash-only, and tips retain their existing explicit bank option, as requested.
+- The user's first build stopped at the IDL parser because it does not accept the C++ cast in `CreditObject.idl`. The balance check now compares the cash shortfall with bank credits without summing two signed integers or using a cast. Static caller and whitespace review passed. The assistant did not compile or run Core3 under project guidance. The user verified as much as possible after the first build error was corrected and requested the commit. Full coverage of every payment path was not reported.
+
 ### Committed player-city bank terminals
 
 - Changed the middle child terminal in all three player-city bank Lua templates (Corellia, Naboo, and Tatooine) from a bank terminal to the existing bazaar terminal template. The two outer bank terminal positions and the structure-management terminal remain unchanged. Newly placed city banks therefore have two bank terminals and one bazaar terminal.

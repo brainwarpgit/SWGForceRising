@@ -220,7 +220,7 @@ void LotteryDroidImplementation::sendRegistrationSUI(CreatureObject* player) {
 	if (isCurrentPlayer(player->getObjectID())) {
 		player->sendSystemMessage("@event_perk:lottery_reg_purchase_already");
 		return;
-	} else if (player->getCashCredits() < ticketPrice) {
+	} else if (!player->verifyCredits(ticketPrice)) {
 		player->sendSystemMessage("@event_perk:lottery_add_credits_nsf");
 		return;
 	}

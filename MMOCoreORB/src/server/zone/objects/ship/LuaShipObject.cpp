@@ -156,17 +156,15 @@ int LuaShipObject::repairShip(lua_State* L) {
 	if (player == nullptr)
 		return 0;
 
-	// Lock the ship
 	Locker lock(realObject);
-
-	realObject->repairShip(repairPercent, decay);
-
 	Locker clock(player, realObject);
+	if (!player->verifyCredits(totalCost))
+		return 0;
 
 	TransactionLog logCash(player, realObject, TrxCode::SHIPPINGSYSTEM, totalCost, true);
-
-	// Deduct cost from player
-	player->subtractCashCredits(totalCost);
+	if (!player->subtractCredits(totalCost))
+		return 0;
+	realObject->repairShip(repairPercent, decay);
 
 	return 0;
 }

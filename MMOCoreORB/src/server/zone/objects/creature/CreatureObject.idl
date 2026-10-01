@@ -883,7 +883,7 @@ class CreatureObject extends TangibleObject {
 	public native void subtractCashCredits(int credits);
 
 	@preLocked
-	public native boolean subtractCredits(int credits);
+	public native boolean subtractCredits(int credits, boolean bankFirst = false);
 
 	@dirty
 	public native boolean verifyCashCredits(int credits);

@@ -265,11 +265,13 @@ function DarnDroid1:giveShipTask(pPlayer, taskType)
 	end
 
 	if (taskType == "bribe") then
-		if (CreatureObject(pPlayer):getCashCredits() < 1000) then
+		if (not CreatureObject(pPlayer):verifyCredits(1000)) then
 			return
 		end
 
-		CreatureObject(pPlayer):subtractCashCredits(1000)
+		if (not CreatureObject(pPlayer):subtractCredits(1000)) then
+			return
+		end
 		PlayerObject(pGhost):completeJournalQuestTask(self.questCrc, self.TASK_BRIBEDAMARENT, false)
 	elseif (taskType == "threaten") then
 		PlayerObject(pGhost):decreaseFactionStanding("imperial", 50)

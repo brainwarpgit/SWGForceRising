@@ -859,10 +859,8 @@ bool ShipManager::createDeedFromChassis(CreatureObject* player, ShipChassisCompo
 	if (!certification.isEmpty() && !ghost->hasAbility(certification))
 		shipCost *= NO_CERT_COST_MULTI;
 
-	// Check player has the cash
-	int playerCash = player->getCashCredits();
-
-	if (shipCost > playerCash) {
+	// Check the combined balance before creating the deed.
+	if (!player->verifyCredits(shipCost)) {
 		chatManager->broadcastChatMessage(chassisDealer, "@chassis_npc:no_money", player->getObjectID(), 0, chassisDealer->getMoodID());
 
 		return false;
@@ -949,8 +947,8 @@ bool ShipManager::createDeedFromChassis(CreatureObject* player, ShipChassisCompo
 
 	trx.addState("deedCost", shipCost);
 
-	TransactionLog trxCash(player, chassisDealer, TrxCode::SHIPDEEDPURCHASE, player->getCashCredits(), true);
-	player->subtractCashCredits(shipCost);
+	TransactionLog trxCash(player, chassisDealer, TrxCode::SHIPDEEDPURCHASE, shipCost, true);
+	player->subtractCredits(shipCost);
 
 	trxCash.groupWith(trx);
 

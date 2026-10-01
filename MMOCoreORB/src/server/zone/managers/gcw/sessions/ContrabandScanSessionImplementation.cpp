@@ -758,7 +758,7 @@ void ContrabandScanSessionImplementation::waitForPayFineAnswer(Zone* zone, AiAge
 		player->info("Contraband scan aborted due to player not answering on fine Sui window in time, faction point fine issued.");
 	} else if (fineAnswerGiven) {
 		if (acceptedFine) {
-			if (player->getCashCredits() + player->getBankCredits() >= fineToPay) {
+			if (player->verifyCredits(fineToPay)) {
 				sendScannerChatMessage(zone, scanner, player, "warning_imperial", "warning_rebel");
 
 				scanner->doAnimation("wave_on_directing");

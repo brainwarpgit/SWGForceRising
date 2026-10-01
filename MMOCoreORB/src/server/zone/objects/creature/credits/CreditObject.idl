@@ -80,7 +80,7 @@ class CreditObject extends ManagedObject {
 		if (credits < 0)
 			return false;
 
-		if (getCashCredits() + getBankCredits() < credits)
+		if (getCashCredits() < credits && getBankCredits() < credits - getCashCredits())
 			return false;
 
 		return true;

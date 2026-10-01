@@ -52,7 +52,7 @@ public:
 
 			TransactionLog trx(citizenOID, TrxCode::CITYINCOMETAX, incomeTax, false);
 
-			if (!CreditManager::subtractBankCredits(citizenOID, incomeTax)) {
+			if (!CreditManager::subtractCredits(citizenOID, incomeTax, true)) {
 				// Failed to Pay Income Tax!
 				params.setStringId("city/city", "income_tax_nopay_body");
 				chatManager->sendMail("@city/city:new_city_from", "@city/city:income_tax_nopay_subject", params, name, nullptr);

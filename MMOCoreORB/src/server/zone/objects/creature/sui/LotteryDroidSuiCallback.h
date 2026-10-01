@@ -77,7 +77,7 @@ public:
 			if (arg1 == "" || creditAmt < 1) {
 				player->sendSystemMessage("@event_perk:lottery_add_credits_error");
 				lotteryDroid->sendAddCreditsSUI(player);
-			} else if (creditAmt > player->getCashCredits()) {
+			} else if (!player->verifyCredits(creditAmt)) {
 				player->sendSystemMessage("@event_perk:lottery_add_credits_nsf");
 				lotteryDroid->sendAddCreditsSUI(player);
 			} else {
@@ -107,26 +107,27 @@ public:
 			if (creditAmt < 1) {
 				player->sendSystemMessage("@event_perk:lottery_add_credits_error");
 				lotteryDroid->sendAddCreditsSUI(player);
-			} else if (creditAmt > player->getCashCredits()) {
+			} else if (!player->verifyCredits(creditAmt)) {
 				player->sendSystemMessage("@event_perk:lottery_add_credits_nsf");
 				lotteryDroid->sendAddCreditsSUI(player);
 			} else {
 				TransactionLog trx(player, lotteryDroid, TrxCode::LOTTERYDROID, creditAmt, true);
-				lotteryDroid->addToCreditPool(creditAmt);
-				player->subtractCashCredits(creditAmt);
+				if (player->subtractCredits(creditAmt))
+					lotteryDroid->addToCreditPool(creditAmt);
 			}
 		} else if (windowType == SuiWindowType::LOTTERY_REGISTRATION) {
 			int ticketPrice = lotteryDroid->getTicketPrice();
 			if (lotteryDroid->isCurrentPlayer(player->getObjectID())) {
 				player->sendSystemMessage("@event_perk:lottery_reg_purchase_already");
 				return;
-			} else if (player->getCashCredits() < ticketPrice) {
+			} else if (!player->verifyCredits(ticketPrice)) {
 				player->sendSystemMessage("@event_perk:lottery_add_credits_nsf");
 				return;
 			} else {
 				TransactionLog trx(player, lotteryDroid, TrxCode::LOTTERYDROID, ticketPrice, true);
+				if (!player->subtractCredits(ticketPrice))
+					return;
 				lotteryDroid->addNewPlayer(player->getObjectID());
-				player->subtractCashCredits(ticketPrice);
 				lotteryDroid->addToCreditPool(ticketPrice);
 				player->sendSystemMessage("@event_perk:lottery_reg_purchase_confirm");
 			}

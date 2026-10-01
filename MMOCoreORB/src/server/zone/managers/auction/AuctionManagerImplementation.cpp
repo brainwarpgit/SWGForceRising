@@ -751,12 +751,12 @@ void AuctionManagerImplementation::addSaleItem(CreatureObject* player, uint64 ob
 
 		if (item->isPremiumAuction()) {
 			TransactionLog trx(player, TrxCode::BAZAARSYSTEM, costReduction * (SALESFEE * 5), false);
-			player->subtractBankCredits(costReduction * (SALESFEE * 5));
+			player->subtractCredits(costReduction * (SALESFEE * 5), true);
 			str.setDI(costReduction * (SALESFEE * 5));
 
 		} else {
 			TransactionLog trx(player, TrxCode::BAZAARSYSTEM, costReduction * SALESFEE, false);
-			player->subtractBankCredits(costReduction * SALESFEE);
+			player->subtractCredits(costReduction * SALESFEE, true);
 			str.setDI(costReduction * SALESFEE);
 		}
 
@@ -876,10 +876,10 @@ int AuctionManagerImplementation::checkSaleItem(CreatureObject* player, SceneObj
 		if (price > MAXBAZAARPRICE)
 			return ItemSoldMessage::INVALIDSALEPRICE;
 
-		if (player->getBankCredits() < SALESFEE)
+		if (!player->verifyCredits(SALESFEE))
 			return ItemSoldMessage::NOTENOUGHCREDITS;
 
-		if (premium && player->getBankCredits() < SALESFEE * 5)
+		if (premium && !player->verifyCredits(SALESFEE * 5))
 			return ItemSoldMessage::NOTENOUGHCREDITS;
 	}
 
@@ -998,7 +998,7 @@ int AuctionManagerImplementation::checkBidAuction(CreatureObject* player, Auctio
 		return BidAuctionResponseMessage::INVALIDPRICE;
 	}
 
-	if (player->getBankCredits() < price1) { // Credit Check
+	if (!player->verifyCredits(price1)) { // Credit Check
 		return BidAuctionResponseMessage::NOTENOUGHCREDITS;
 	}
 
@@ -1056,7 +1056,7 @@ void AuctionManagerImplementation::doInstantBuy(CreatureObject* player, AuctionI
 	trx.setAutoCommit(false);
 	trx.addRelatedObject(item->getAuctionedItemObjectID(), true);
 	trx.setExportRelatedObjects(true);
-	player->subtractBankCredits(item->getPrice());
+	player->subtractCredits(item->getPrice(), true);
 
 	BaseMessage* msg = new BidAuctionResponseMessage(item->getAuctionedItemObjectID(), 0);
 	player->sendMessage(msg);
@@ -1241,7 +1241,7 @@ void AuctionManagerImplementation::doAuctionBid(CreatureObject* player, AuctionI
 		int fullPrice = proxyBid + increase - item->getPrice();
 
 		//TODO: prior didnt have enough money -> assert.. fix properly
-		if (priorBidder->getBankCredits() < fullPrice) {
+		if (!priorBidder->verifyCredits(fullPrice)) {
 			BaseMessage* msg = new BidAuctionResponseMessage(item->getAuctionedItemObjectID(), BidAuctionResponseMessage::NOTENOUGHCREDITS);
 			player->sendMessage(msg);
 
@@ -1249,7 +1249,7 @@ void AuctionManagerImplementation::doAuctionBid(CreatureObject* player, AuctionI
 		}
 
 		TransactionLog trx(priorBidder, TrxCode::AUCTIONBID, fullPrice, false);
-		priorBidder->subtractBankCredits(fullPrice);
+		priorBidder->subtractCredits(fullPrice, true);
 		item->setPrice(proxyBid + increase);
 		BaseMessage* msg = new BidAuctionResponseMessage(item->getAuctionedItemObjectID(), BidAuctionResponseMessage::SUCCEDED);
 		player->sendMessage(msg);
@@ -1266,8 +1266,8 @@ void AuctionManagerImplementation::doAuctionBid(CreatureObject* player, AuctionI
 	Locker locker(item);
 	Locker plocker(player);
 
-	if (player->getBankCredits() < price1 ||
-			player->getBankCredits() < item->getPrice()) {
+	if (!player->verifyCredits(price1) ||
+			!player->verifyCredits(item->getPrice())) {
 		BaseMessage* msg = new BidAuctionResponseMessage(item->getAuctionedItemObjectID(), BidAuctionResponseMessage::NOTENOUGHCREDITS);
 		player->sendMessage(msg);
 
@@ -1293,7 +1293,7 @@ void AuctionManagerImplementation::doAuctionBid(CreatureObject* player, AuctionI
 
 		// take money from high bidder
 		TransactionLog trx(player, TrxCode::AUCTIONBID, item->getPrice(), false);
-		player->subtractBankCredits(item->getPrice());
+		player->subtractCredits(item->getPrice(), true);
 
 		if (priorBidder != nullptr) {
 			Locker clocker(priorBidder, player);
@@ -1318,7 +1318,7 @@ void AuctionManagerImplementation::doAuctionBid(CreatureObject* player, AuctionI
 		item->setBidderName(playername);
 
 		TransactionLog trx(player, TrxCode::AUCTIONBID, item->getPrice(), false);
-		player->subtractBankCredits(item->getPrice());
+		player->subtractCredits(item->getPrice(), true);
 	}
 
 	BaseMessage* msg = new BidAuctionResponseMessage(item->getAuctionedItemObjectID(), 0);

@@ -14,6 +14,7 @@ public:
 	static void addBankCredits(uint64 creatureID, int amount, bool notifyClient = true);
 	static void addCashCredits(uint64 creatureID, int amount, bool notifyClient = true);
 	static bool subtractBankCredits(uint64 creatureID, int amount, bool notifyClient = true);
+	static bool subtractCredits(uint64 creatureID, int amount, bool bankFirst = false, bool notifyClient = true);
 	static bool subtractCashCredits(uint64 creatureID, int amount, bool notifyClient = true);
 	static void transferCredits(uint64 creatureID, int cash, int bank, bool notifyClient = true);
 	static bool verifyBankCredits(uint64 creatureID, int amount);

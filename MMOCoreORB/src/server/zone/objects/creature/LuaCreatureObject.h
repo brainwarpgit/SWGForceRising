@@ -84,6 +84,9 @@ namespace creature {
 		int getBankCredits(lua_State *L);
 		int subtractCashCredits(lua_State* L);
 		int subtractBankCredits(lua_State* L);
+		int verifyCredits(lua_State* L);
+		int subtractCredits(lua_State* L);
+		int subtractBankFirstCredits(lua_State* L);
 		int addCashCredits(lua_State* L);
 		int addBankCredits(lua_State* L);
 		int removeScreenPlayState(lua_State* L);

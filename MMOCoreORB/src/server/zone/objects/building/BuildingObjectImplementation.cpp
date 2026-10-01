@@ -1308,7 +1308,7 @@ void BuildingObjectImplementation::payAccessFee(CreatureObject* player) {
 		}
 	}
 
-	if (player->getCashCredits() < accessFee) {
+	if (!player->verifyCredits(accessFee)) {
 		player->sendSystemMessage("@player/player_utility:not_enough_money");
 		return;
 	}
@@ -1318,7 +1318,7 @@ void BuildingObjectImplementation::payAccessFee(CreatureObject* player) {
 	TransactionLog trx(player, owner, TrxCode::ACCESSFEE, accessFee, true);
 	trx.setAutoCommit(false);
 
-	player->subtractCashCredits(accessFee);
+	player->subtractCredits(accessFee);
 
 	if (owner != nullptr) {
 		Locker clocker(owner, player);

@@ -45,6 +45,14 @@ bool CreditManager::subtractBankCredits(uint64 creatureID, int amount, bool noti
 	return true;
 }
 
+bool CreditManager::subtractCredits(uint64 creatureID, int amount, bool bankFirst, bool notifyClient) {
+	auto obj = CreditManager::getCreditObject(creatureID);
+	if (obj == nullptr)
+		return false;
+	Locker locker(obj);
+	return obj->subtractCredits(amount, notifyClient, bankFirst);
+}
+
 bool CreditManager::subtractCashCredits(uint64 creatureID, int amount, bool notifyClient) {
 	auto obj = CreditManager::getCreditObject(creatureID);
 

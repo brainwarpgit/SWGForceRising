@@ -44,7 +44,7 @@ public:
 			return;
 
 		int repairCost = vehicle->calculateRepairCost(player);
-		int totalFunds = player->getBankCredits();
+		int64 totalFunds = (int64)player->getBankCredits() + player->getCashCredits();
 		int tax = 0;
 
 		ManagedReference<CityRegion*> city =vehicle->getCityRegion().get();
@@ -60,7 +60,7 @@ public:
 
 		{
 			TransactionLog trx(player, TrxCode::VEHICLEREPAIRS, repairCost);
-			player->subtractBankCredits(repairCost);
+			player->subtractCredits(repairCost, true);
 		}
 
 		StringIdChatParameter params("@base_player:prose_pay_success_no_target"); //You successfully make a payment of %DI credits.

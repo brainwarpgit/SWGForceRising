@@ -84,13 +84,13 @@ function SpaceStationScreenPlay:hasCreditsForRepair(pPlayer, pShip, repairPercen
 		return false
 	end
 
-	local playerCash = CreatureObject(pPlayer):getCashCredits()
+	local playerCredits = CreatureObject(pPlayer):getCashCredits() + CreatureObject(pPlayer):getBankCredits()
 
 	if (self.DEBUG_STATION_REPAIR) then
-		print("hasCreditsForRepair -- Repair Percentage: " .. repairPercent .. " Total repair cost estimate = " .. totalCost .. " Player Cash Balance: " .. playerCash)
+		print("hasCreditsForRepair -- Repair Percentage: " .. repairPercent .. " Total repair cost estimate = " .. totalCost .. " Player Credits Balance: " .. playerCredits)
 	end
 
-	if (playerCash < totalCost) then
+	if (playerCredits < totalCost) then
 		return false
 	end
 
@@ -135,13 +135,13 @@ function SpaceStationScreenPlay:repairShip(pPlayer, pShip, repairPercent, pSpace
 		return
 	end
 
-	local playerCash = CreatureObject(pPlayer):getCashCredits()
+	local playerCredits = CreatureObject(pPlayer):getCashCredits() + CreatureObject(pPlayer):getBankCredits()
 
 	if (self.DEBUG_STATION_REPAIR) then
-		print("Repairing Ship -- Total Cost: " .. totalCost .. " Repair Percent: " .. repairPercent .. " Player Cash: " .. playerCash)
+		print("Repairing Ship -- Total Cost: " .. totalCost .. " Repair Percent: " .. repairPercent .. " Player Credits: " .. playerCredits)
 	end
 
-	if (playerCash < totalCost) then
+	if (playerCredits < totalCost) then
 		return
 	end
 

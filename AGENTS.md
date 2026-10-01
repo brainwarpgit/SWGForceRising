@@ -46,6 +46,7 @@
 - Update this file when standing project guidance changes.
 - Keep `UPDATES.md` (short, plain-language updates) and `UPDATESFULL.md` (expanded high-level history with context/reasons) current. Update both in the same change as the implementation.
 - Distinguish committed from uncommitted changes. Do not present proposals as completed.
+- User testing / verification / other message should be in `UPDATESFULL.md` never in `UPDATES.md`.
 
 # Porting Rules (MTGServer to SWGForceRising)
 1. Locate implementation in MTGServer.

@@ -28,7 +28,7 @@ function heroOfTatFarmerConvoHandler:runScreenHandlers(pConvTemplate, pPlayer, p
 	if (screenID == "in_your_debt") then
 		CreatureObject(pPlayer):sendSystemMessage("@quest/hero_of_tatooine/system_messages:altruism_quest_fail")
 		writeData(CreatureObject(pNpc):getObjectID() .. ":gaveQuest", 1)
-		CreatureObject(pPlayer):subtractCashCredits(10000)
+		CreatureObject(pPlayer):subtractCredits(10000)
 		HeroOfTatooineScreenPlay:doGiverDespawn(pNpc)
 	elseif (screenID == "sincerest_gratitude") then
 		HeroOfTatooineScreenPlay:giveAltruismWaypoint(pPlayer)
@@ -38,7 +38,7 @@ function heroOfTatFarmerConvoHandler:runScreenHandlers(pConvTemplate, pPlayer, p
 	elseif (screenID == "here_is_loc_again") then
 		HeroOfTatooineScreenPlay:giveAltruismWaypoint(pPlayer)
 	elseif (screenID == "a_lot_of_money") then
-		if(CreatureObject(pPlayer):getCashCredits() >= 10000) then
+		if(CreatureObject(pPlayer):verifyCredits(10000)) then
 			clonedConversation:addOption("@conversation/quest_hero_of_tatooine_farmer:s_5cdaed70", "in_your_debt")
 		else
 			clonedConversation:addOption("@conversation/quest_hero_of_tatooine_farmer:s_2e1d6626", "ill_go_myself")

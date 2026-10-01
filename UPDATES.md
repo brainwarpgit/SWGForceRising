@@ -2,6 +2,10 @@
 
 ## 2026-10-01
 
+### Committed combined credit payments
+
+- Purchases, fees, fines, maintenance, repairs, bets, city tax, and selected scripted payments can now use cash and bank together. Each payment retains its prior primary source and uses the other balance for any shortfall. Player trades and tip choices remain unchanged.
+
 ### Committed player-city bank terminals
 
 - Corellia, Naboo, and Tatooine player-city bank templates now have two outer bank terminals and a middle bazaar terminal. The user verified a newly placed bank in game. Existing banks retain their saved terminals and must be redeeded and placed again for this change to take effect. No automatic conversion remains; no necessary verification is pending.

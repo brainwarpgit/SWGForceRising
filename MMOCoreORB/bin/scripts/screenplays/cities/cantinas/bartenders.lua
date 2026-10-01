@@ -368,7 +368,7 @@ function BartendersScreenPlay:purchaseDrinkCallback(pPlayer, pSui, eventIndex, a
 		return
 	end
 
-	if (CreatureObject(pPlayer):getCashCredits() < drinkCost) then
+	if (not CreatureObject(pPlayer):verifyCredits(drinkCost)) then
 		local noCreditsMsg = LuaStringIdChatParameter("@bartender:prose_buy_fail") --"You were unable to purchase %TO. Perhaps you do not have enough credits?"
 		noCreditsMsg:setTO(messageString)
 
@@ -397,7 +397,7 @@ function BartendersScreenPlay:purchaseDrinkCallback(pPlayer, pSui, eventIndex, a
 	end
 
 	-- Charge for drink
-	CreatureObject(pPlayer):subtractCashCredits(drinkCost)
+	CreatureObject(pPlayer):subtractCredits(drinkCost)
 
 	SceneObject(pItem):setCustomObjectName(getStringId(messageString))
 

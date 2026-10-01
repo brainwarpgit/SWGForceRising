@@ -119,7 +119,7 @@ function MuseumCuratorConvoHandler:runScreenHandlers(pConvTemplate, pPlayer, pNp
 		end
 	end
 	if (screenID == "schematic_cost") then
-		if(CreatureObject(pPlayer):getCashCredits() >= 48000) then
+		if(CreatureObject(pPlayer):verifyCredits(48000)) then
 			local pInventory = SceneObject(pPlayer):getSlottedObject("inventory")
 
 			if (pInventory == nil or SceneObject(pInventory):isContainerFullRecursive()) then

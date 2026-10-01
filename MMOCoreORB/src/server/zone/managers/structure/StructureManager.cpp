@@ -1720,7 +1720,7 @@ void StructureManager::promptPayUncondemnMaintenance(CreatureObject* creature, S
 	ManagedReference<SuiMessageBox*> sui = nullptr;
 	String text;
 
-	if (creature->getBankCredits() >= uncondemnCost) {
+	if (creature->verifyCredits(uncondemnCost)) {
 		// Owner can un-condemn the structure.
 		sui = new SuiMessageBox(creature, SuiWindowType::STRUCTURE_UNCONDEMN_CONFIRM);
 		if (sui == nullptr) {
@@ -1728,8 +1728,9 @@ void StructureManager::promptPayUncondemnMaintenance(CreatureObject* creature, S
 		}
 
 		// TODO: investigate sui packets to see if it is possible to send StringIdChatParameter directly.
-		String textStringId = "@player_structure:structure_condemned_owner_has_credits"; // "This structure has been condemned by the order of the Empire. You are not permitted to enter unless you pay %DI in maintenance costs. This will be automatically deducted from your bank account. Click Okay to confirm this transfer and regain access to this structure."
+		String textStringId = "@player_structure:structure_condemned_owner_has_credits";
 		text = StringIdManager::instance()->getStringId(textStringId.hashCode()).toString();
+		text = text.replaceFirst("your bank account", "your bank and cash balances");
 		text = text.replaceFirst("%DI", String::valueOf(uncondemnCost));
 
 		sui->setCancelButton(true, "@cancel");
@@ -1901,7 +1902,7 @@ void StructureManager::withdrawAllResources(StructureObject* structure, Creature
 }
 
 void StructureManager::promptPayMaintenance(StructureObject* structure, CreatureObject* creature, SceneObject* terminal) {
-	int availableCredits = creature->getCashCredits();
+	int availableCredits = (int)std::min<int64>(std::numeric_limits<int>::max(), (int64)creature->getCashCredits() + creature->getBankCredits());
 
 	if (availableCredits <= 0) {
 		creature->sendSystemMessage("@player_structure:no_money"); // You do not have any money to pay maintenance.
@@ -2058,9 +2059,7 @@ void StructureManager::payMaintenance(StructureObject* structure, CreatureObject
 		return;
 	}
 
-	int cash = creature->getCashCredits();
-
-	if (cash < amount) {
+	if (!creature->verifyCredits(amount)) {
 		creature->sendSystemMessage("@player_structure:insufficient_funds"); // You have insufficient funds to make this deposit.
 		return;
 	}
@@ -2073,7 +2072,7 @@ void StructureManager::payMaintenance(StructureObject* structure, CreatureObject
 
 	{
 		TransactionLog trx(creature, structure, TrxCode::STRUCTUREMAINTANENCE, amount, true);
-		creature->subtractCashCredits(amount);
+		creature->subtractCredits(amount);
 		structure->addMaintenance(amount);
 	}
 

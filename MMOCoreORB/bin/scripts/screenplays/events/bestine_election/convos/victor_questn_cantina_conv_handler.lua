@@ -38,7 +38,7 @@ function victorQuestnCantinaConvoHandler:runScreenHandlers(pConvTemplate, pPlaye
 
 		clonedConversation:addOption("@conversation/victor_questn_cantina:s_62bf3631", "go_away_then") -- No, I haven't made room yet.
 	elseif (screenID == "init_on_rival_quest") then
-		if (CreatureObject(pPlayer):getCashCredits() >= 200) then
+		if (CreatureObject(pPlayer):verifyCredits(200)) then
 			if (BestineElection:hasFullInventory(pPlayer)) then
 				clonedConversation:addOption("@conversation/victor_questn_cantina:s_51ac4991", "inv_full") -- Hmm. Here you go.
 			else
@@ -50,8 +50,8 @@ function victorQuestnCantinaConvoHandler:runScreenHandlers(pConvTemplate, pPlaye
 	elseif (screenID == "inv_full") then
 		BestineElection:setInvFull(pPlayer, BestineElection.SEAN, BestineElection.SEAN_RIVAL_CANTINA_EVIDENCE)
 	elseif (screenID == "give_evidence" or screenID == "was_full_give_evidence") then
-		if (CreatureObject(pPlayer):getCashCredits() >= 200) then
-			CreatureObject(pPlayer):subtractCashCredits(200)
+		if (CreatureObject(pPlayer):verifyCredits(200)) then
+			CreatureObject(pPlayer):subtractCredits(200)
 		end
 
 		BestineElection:clearInvFull(pPlayer, BestineElection.SEAN, BestineElection.SEAN_RIVAL_CANTINA_EVIDENCE)

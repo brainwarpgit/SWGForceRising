@@ -399,7 +399,7 @@ void GamblingManagerImplementation::bet(GamblingTerminal* terminal, CreatureObje
 				body.setDI(terminal->getMaxBet());
 
 				player->sendSystemMessage(body);
-			} else if (player->getCashCredits() < amount) {
+			} else if (!player->verifyCredits(amount)) {
 				player->sendSystemMessage("@gambling/default_interface:player_broke");
 			} else if (!player->isInRange(terminal, 25.0)) {
 				player->sendSystemMessage("@gambling/default_interface:bet_failed_distance");
@@ -417,7 +417,7 @@ void GamblingManagerImplementation::bet(GamblingTerminal* terminal, CreatureObje
 
 				{
 					TransactionLog trx(player, TrxCode::GAMBLINGSLOTSTANDARD, amount, true);
-					player->subtractCashCredits(amount);
+					player->subtractCredits(amount);
 				}
 
 				StringIdChatParameter textPlayer("base_player", "prose_pay_success");
@@ -459,7 +459,7 @@ void GamblingManagerImplementation::bet(GamblingTerminal* terminal, CreatureObje
 				body.setDI(terminal->getMaxBet());
 
 				player->sendSystemMessage(body);
-			} else if (player->getCashCredits() < amount) {
+			} else if (!player->verifyCredits(amount)) {
 				player->sendSystemMessage("@gambling/default_interface:player_broke");
 
 			} else if (!player->isInRange(terminal, 25.0)) {
@@ -475,7 +475,7 @@ void GamblingManagerImplementation::bet(GamblingTerminal* terminal, CreatureObje
 
 				{
 					TransactionLog trx(player, TrxCode::GAMBLINGROULETTE, amount, true);
-					player->subtractCashCredits(amount);
+					player->subtractCredits(amount);
 				}
 
 				terminal->getBets()->add(new GamblingBet(player, amount, roulette.get(target)));

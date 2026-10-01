@@ -1,6 +1,9 @@
 #ifndef REACTIONFINEPAYMENTSUICALLBACK_H_
 #define REACTIONFINEPAYMENTSUICALLBACK_H_
 
+#include <algorithm>
+#include <limits>
+
 #include "server/zone/objects/player/sui/SuiCallback.h"
 #include "server/zone/objects/player/PlayerObject.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
@@ -33,7 +36,7 @@ public:
 		if (emoteTarget == nullptr)
 			return;
 
-		int playerCredits = creature->getCashCredits();
+		int playerCredits = (int)std::min<int64>(std::numeric_limits<int>::max(), (int64)creature->getCashCredits() + creature->getBankCredits());
 		int totalFine = playerObject->getReactionFines();
 
 		ChatManager* chatManager = server->getChatManager();
@@ -51,7 +54,7 @@ public:
 			}
 
 			TransactionLog trx(creature, TrxCode::FINES, playerCredits, true);
-			creature->subtractCashCredits(playerCredits);
+			creature->subtractCredits(playerCredits);
 			playerObject->subtractFromReactionFines(playerCredits);
 
 			emoteTarget->doAnimation("point_accusingly");
@@ -72,8 +75,9 @@ public:
 				tauntMsg = "point_accusingly";
 				randomQuip = 42 + System::random(3);
 			}
+			totalFine = std::min(totalFine, playerCredits);
 			TransactionLog trx(creature, TrxCode::FINES, totalFine, true);
-			creature->subtractCashCredits(totalFine);
+			creature->subtractCredits(totalFine);
 			playerObject->setReactionFines(0);
 
 			emoteTarget->doAnimation(tauntMsg);

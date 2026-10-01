@@ -229,7 +229,7 @@ function NymConvoHandler:runMooreScreenHandlers(pConvTemplate, pPlayer, pNpc, se
 
 	local pConvScreen = screen:cloneScreen()
 	local clonedConversation = LuaConversationScreen(pConvScreen)
-	local playerCredits = CreatureObject(pPlayer):getCashCredits()
+	local playerCredits = CreatureObject(pPlayer):getCashCredits() + CreatureObject(pPlayer):getBankCredits()
 	if (screenID == "leave_me_alone") then
 		if (not CreatureObject(pPlayer):hasScreenPlayState(1, "nym_theme_park_mooreNpc")) then
 			clonedConversation:addOption("@celebrity/imperial_bribe:who_are_you", "nunya")
@@ -249,9 +249,9 @@ function NymConvoHandler:runMooreScreenHandlers(pConvTemplate, pPlayer, pNpc, se
 			clonedConversation:addOption("@celebrity/imperial_bribe:give_100", "you_got_nothing")
 		end
 	elseif (screenID == "medium_info") then
-		CreatureObject(pPlayer):subtractCashCredits(50)
+		CreatureObject(pPlayer):subtractCredits(50)
 	elseif (screenID == "the_good_stuff") then
-		CreatureObject(pPlayer):subtractCashCredits(100)
+		CreatureObject(pPlayer):subtractCredits(100)
 	elseif (screenID == "need_more_cash") then
 		if (playerCredits >= 100) then
 			clonedConversation:addOption("@celebrity/imperial_bribe:add_100_bribe", "end_droideka_info")
@@ -265,7 +265,7 @@ function NymConvoHandler:runMooreScreenHandlers(pConvTemplate, pPlayer, pNpc, se
 			clonedConversation:addOption("@celebrity/imperial_bribe:add_100_bribe", "you_got_nothing")
 		end
 	elseif ((screenID == "end_base_info") or (screenID == "end_droideka_info")) then
-		CreatureObject(pPlayer):subtractCashCredits(100)
+		CreatureObject(pPlayer):subtractCredits(100)
 	end
 	if (screenID ~= "leave_me_alone" and screenID ~= "what_you_got") then
 		clonedConversation:addOption("@celebrity/imperial_bribe:end_convo", "thats_all")
@@ -347,7 +347,7 @@ function NymConvoHandler:runBeremaScreenHandlers(pConvTemplate, pPlayer, pNpc, s
 	local objectID = CreatureObject(pPlayer):getObjectID()
 	local pConvScreen = screen:cloneScreen()
 	local clonedConversation = LuaConversationScreen(pConvScreen)
-	local playerCredits = CreatureObject(pPlayer):getCashCredits()
+	local playerCredits = CreatureObject(pPlayer):getCashCredits() + CreatureObject(pPlayer):getBankCredits()
 	local curBet = self:readObjectData(objectID, "curBet", "nym_gambler")
 	if screenID == "begin_game_5" or screenID == "begin_game_10" or screenID == "begin_game_50" then
 		local pickedCard = getRandomNumber(1,3)
@@ -396,14 +396,20 @@ function NymConvoHandler:runBeremaScreenHandlers(pConvTemplate, pPlayer, pNpc, s
 		clonedConversation:addOption("@celebrity/lok_gambler:leaving", "good_luck")
 	end
 	if screenID == "begin_game_5" then
+		if (not CreatureObject(pPlayer):subtractCredits(5)) then
+			return pConvScreen
+		end
 		self:writeObjectData(objectID, "curBet", 5, "nym_gambler")
-		CreatureObject(pPlayer):subtractCashCredits(5)
 	elseif screenID == "begin_game_10" then
+		if (not CreatureObject(pPlayer):subtractCredits(10)) then
+			return pConvScreen
+		end
 		self:writeObjectData(objectID, "curBet", 10, "nym_gambler")
-		CreatureObject(pPlayer):subtractCashCredits(10)
 	elseif screenID == "begin_game_50" then
+		if (not CreatureObject(pPlayer):subtractCredits(50)) then
+			return pConvScreen
+		end
 		self:writeObjectData(objectID, "curBet", 50, "nym_gambler")
-		CreatureObject(pPlayer):subtractCashCredits(50)
 	elseif screenID == "bet_how_much" then
 		if (playerCredits >= 5) then
 			clonedConversation:addOption("@celebrity/lok_gambler:bet_made_5", "begin_game_5")

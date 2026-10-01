@@ -41,6 +41,8 @@
 #include "templates/tangible/SharedStructureObjectTemplate.h"
 #include "server/zone/objects/player/sui/callbacks/RenameCitySuiCallback.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
+#include <algorithm>
+#include <limits>
 
 #ifndef CITY_DEBUG
 #define CITY_DEBUG
@@ -704,12 +706,12 @@ void CityManagerImplementation::quickDepositCityTreasury(CityRegion* city, Creat
 	int amount = city->getQuickTreasuryAmount();
 	if (amount <= 0)
 		return;
-	int cash = mayor->getCashCredits();
-	if (cash < amount) {
-		mayor->sendSystemMessage("You do not have enough cash for the quick treasury deposit.");
+	int available = (int)std::min<int64>(std::numeric_limits<int>::max(), (int64)mayor->getCashCredits() + mayor->getBankCredits());
+	if (available < amount) {
+		mayor->sendSystemMessage("You do not have enough credits for the quick treasury deposit.");
 		return;
 	}
-	depositToCityTreasury(city, mayor, cash - amount);
+	depositToCityTreasury(city, mayor, available - amount);
 }
 
 void CityManagerImplementation::promptDepositCityTreasury(CityRegion* city, CreatureObject* creature, SceneObject* terminal) {
@@ -721,7 +723,8 @@ void CityManagerImplementation::promptDepositCityTreasury(CityRegion* city, Crea
 	ManagedReference<SuiTransferBox*> transfer = new SuiTransferBox(creature, SuiWindowType::CITY_TREASURY_DEPOSIT);
 	transfer->setPromptTitle("@city/city:treasury_deposit"); //Treasury Deposit
 	transfer->setPromptText("@city/city:treasury_deposit_d"); //Enter the amount you would like to transfer to the city treasury.
-	transfer->addFrom("@city/city:funds", String::valueOf(creature->getCashCredits()), String::valueOf(creature->getCashCredits()), "1");
+	int available = (int)std::min<int64>(std::numeric_limits<int>::max(), (int64)creature->getCashCredits() + creature->getBankCredits());
+	transfer->addFrom("@city/city:funds", String::valueOf(available), String::valueOf(available), "1");
 	transfer->addTo("@city/city:treasury", "0", "0", "1");
 	transfer->setUsingObject(terminal);
 	transfer->setForceCloseDistance(16.f);
@@ -732,11 +735,10 @@ void CityManagerImplementation::promptDepositCityTreasury(CityRegion* city, Crea
 }
 
 void CityManagerImplementation::depositToCityTreasury(CityRegion* city, CreatureObject* creature, int amount) {
-	int cash = creature->getCashCredits();
+	int available = (int)std::min<int64>(std::numeric_limits<int>::max(), (int64)creature->getCashCredits() + creature->getBankCredits());
+	int total = available - amount;
 
-	int total = cash - amount;
-
-	if (total < 1 || total > cash) {
+	if (total < 1 || total > available || !creature->verifyCredits(total)) {
 		creature->sendSystemMessage("@city/city:positive_deposit"); //You must select a positive amount to transfer to the treasury.
 		return;
 	}
@@ -751,7 +753,7 @@ void CityManagerImplementation::depositToCityTreasury(CityRegion* city, Creature
 	{
 		TransactionLog trx(creature, TrxCode::CITYTREASURY, total, true);
 		trx.addState("treasury", city->getCityTreasury());
-		creature->subtractCashCredits(total);
+		creature->subtractCredits(total);
 		city->addToCityTreasury(total);
 	}
 

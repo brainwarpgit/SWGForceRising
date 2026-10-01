@@ -110,15 +110,15 @@ function RecruiterConvoHandler:runScreenHandlers(pConvTemplate, pPlayer, pNpc, s
 			CreatureObject(pPlayer):setFactionRank(rank)
 		end
 
-	elseif screenID == "confirm_bribe" and CreatureObject(pPlayer):hasSkill("combat_smuggler_underworld_04") and (CreatureObject(pPlayer):getCashCredits() >= 100000)
+	elseif screenID == "confirm_bribe" and CreatureObject(pPlayer):hasSkill("combat_smuggler_underworld_04") and (CreatureObject(pPlayer):verifyCredits(100000))
 		and (getFactionPointsCap(CreatureObject(pPlayer):getFactionRank()) >= PlayerObject(pGhost):getFactionStanding(recruiterScreenplay:getRecruiterFaction(pNpc)) + 1250) then
 		self:add100kBribeOption(pNpc, clonedConversation)
 
-	elseif (screenID == "accepted_bribe_20k") and CreatureObject(pPlayer):hasSkill("combat_smuggler_underworld_04") and (CreatureObject(pPlayer):getCashCredits() >= 20000)
+	elseif (screenID == "accepted_bribe_20k") and CreatureObject(pPlayer):hasSkill("combat_smuggler_underworld_04") and (CreatureObject(pPlayer):verifyCredits(20000))
 		and (getFactionPointsCap(CreatureObject(pPlayer):getFactionRank()) >= PlayerObject(pGhost):getFactionStanding(recruiterScreenplay:getRecruiterFaction(pNpc)) + 250) then
 		recruiterScreenplay:grantBribe(pNpc, pPlayer, 20000, 250)
 
-	elseif (screenID == "accepted_bribe_100k") and CreatureObject(pPlayer):hasSkill("combat_smuggler_underworld_04") and (CreatureObject(pPlayer):getCashCredits() >= 100000)
+	elseif (screenID == "accepted_bribe_100k") and CreatureObject(pPlayer):hasSkill("combat_smuggler_underworld_04") and (CreatureObject(pPlayer):verifyCredits(100000))
 		and (getFactionPointsCap(CreatureObject(pPlayer):getFactionRank()) >= PlayerObject(pGhost):getFactionStanding(recruiterScreenplay:getRecruiterFaction(pNpc)) + 1250) then
 		recruiterScreenplay:grantBribe(pNpc, pPlayer, 100000, 1250)
 
@@ -347,7 +347,7 @@ function RecruiterConvoHandler:updateScreenWithBribe(pPlayer, pNpc, pConvTemplat
 
 	local screenObject = LuaConversationScreen(pConvScreen)
 
-	if (CreatureObject(pPlayer):hasSkill("combat_smuggler_underworld_04") and (CreatureObject(pPlayer):getCashCredits() >= 20000)
+	if (CreatureObject(pPlayer):hasSkill("combat_smuggler_underworld_04") and (CreatureObject(pPlayer):verifyCredits(20000))
 		and (getFactionPointsCap(CreatureObject(pPlayer):getFactionRank()) >= PlayerObject(pGhost):getFactionStanding(faction) + 250)) then
 		self:addBribeOption(pNpc, screenObject)
 	end

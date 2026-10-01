@@ -204,12 +204,14 @@ function FsCrafting4:obtainDataCallback(pPlayer, pSui, eventIndex, args)
 		return
 	end
 
-	if (CreatureObject(pPlayer):getCashCredits() < 1100) then
+	if (not CreatureObject(pPlayer):verifyCredits(1100)) then
 		CreatureObject(pPlayer):sendSystemMessage("@quest/force_sensitive/fs_crafting:tracking_data_no_money")
 		return
 	end
 
-	CreatureObject(pPlayer):subtractCashCredits(1100)
+	if (not CreatureObject(pPlayer):subtractCredits(1100)) then
+		return
+	end
 	CreatureObject(pPlayer):sendSystemMessage("@quest/force_sensitive/fs_crafting:tracking_data_purchase_msg_01")
 	createEvent(getRandomNumber(1000, 4000), "FsCrafting4", "doObtainCallbackMessage2", pPlayer, "")
 end

@@ -103,6 +103,9 @@ Luna<LuaCreatureObject>::RegType LuaCreatureObject::Register[] = {
 		{ "getBankCredits", &LuaCreatureObject::getBankCredits },
 		{ "subtractCashCredits", &LuaCreatureObject::subtractCashCredits},
 		{ "subtractBankCredits", &LuaCreatureObject::subtractBankCredits},
+		{ "verifyCredits", &LuaCreatureObject::verifyCredits},
+		{ "subtractCredits", &LuaCreatureObject::subtractCredits},
+		{ "subtractBankFirstCredits", &LuaCreatureObject::subtractBankFirstCredits},
 		{ "addCashCredits", &LuaCreatureObject::addCashCredits},
 		{ "addBankCredits", &LuaCreatureObject::addBankCredits},
 		{ "removeScreenPlayState", &LuaCreatureObject::removeScreenPlayState},
@@ -759,6 +762,37 @@ int LuaCreatureObject::subtractBankCredits(lua_State* L) {
 	realObject->subtractBankCredits(credits);
 
 	return 0;
+}
+
+int LuaCreatureObject::verifyCredits(lua_State* L) {
+	lua_pushboolean(L, realObject->verifyCredits(lua_tointeger(L, -1)));
+	return 1;
+}
+
+int LuaCreatureObject::subtractCredits(lua_State* L) {
+	Locker locker(realObject);
+	int credits = lua_tointeger(L, -1);
+	if (!realObject->verifyCredits(credits)) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+	TransactionLog trx(realObject, TrxCode::LUASCRIPT, credits, true);
+	trx.addContextFromLua(L);
+	lua_pushboolean(L, realObject->subtractCredits(credits));
+	return 1;
+}
+
+int LuaCreatureObject::subtractBankFirstCredits(lua_State* L) {
+	Locker locker(realObject);
+	int credits = lua_tointeger(L, -1);
+	if (!realObject->verifyCredits(credits)) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+	TransactionLog trx(realObject, TrxCode::LUASCRIPT, credits, false);
+	trx.addContextFromLua(L);
+	lua_pushboolean(L, realObject->subtractCredits(credits, true));
+	return 1;
 }
 
 int LuaCreatureObject::addCashCredits(lua_State* L) {
