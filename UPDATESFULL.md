@@ -2,6 +2,10 @@
 
 ## 2026-10-02
 
+### Committed attachment names showing skill mods
+
+- Clothing and armor attachments now use their stored skill modifiers as the displayed name, such as `Rifle Accuracy: +12`. Modifier labels are resolved from `stat_n`, with the internal key as fallback; multiple mods are comma-separated. The attachment icon still identifies its type. Loot generation invokes `updateCraftingValues` after setting the loot base name, so newly looted attachments receive the mod name before being delivered. Older attachments refresh when loaded, including the legacy skill-mod map migration. An unchanged name is not written again on load. The attribute list and modifier effects are unchanged. Source and whitespace validation passed, and the user verified the behavior in game. The assistant did not build or run Core3 under project guidance.
+
 ### Committed ground object visibility range
 
 - Changed `ZoneServer::CLOSEOBJECTRANGE` from 192 to 512 so ground-zone close-object tracking and object visibility use a 512-unit radius. `SPACECLOSEOBJECTRANGE` remains 2048. The ground quadtree's existing 768-unit search window still encloses this radius. A larger close-object set can increase per-player object updates and network traffic, particularly in dense areas. Source and whitespace review passed, and the user verified the change in game. The assistant did not build or run Core3 under project guidance.

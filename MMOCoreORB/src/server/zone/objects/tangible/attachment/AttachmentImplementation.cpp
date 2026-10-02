@@ -12,6 +12,7 @@
 #include "server/zone/objects/creature/CreatureObject.h"
 #include "server/zone/managers/loot/LootManager.h"
 #include "server/zone/managers/loot/LootValues.h"
+#include "server/zone/managers/stringid/StringIdManager.h"
 
 void AttachmentImplementation::initializeMembers() {
 	if (gameObjectType == SceneObjectType::CLOTHINGATTACHMENT) {
@@ -42,6 +43,29 @@ void AttachmentImplementation::initializeTransientMembers() {
 			skillModifiers.put(key, value);
 		}
 	}
+
+	updateSkillModName(false);
+}
+
+void AttachmentImplementation::updateSkillModName(bool notifyClient) {
+	if (skillModifiers.size() == 0)
+		return;
+
+	StringBuffer name;
+	for (int i = 0; i < skillModifiers.size(); ++i) {
+		if (i > 0)
+			name << ", ";
+
+		const auto& mod = skillModifiers.elementAt(i);
+		String label = StringIdManager::instance()->getStringId(String("@stat_n:" + mod.getKey()).hashCode()).toString();
+		if (label.isEmpty())
+			label = mod.getKey();
+
+		name << label << ": " << (mod.getValue() >= 0 ? "+" : "") << mod.getValue();
+	}
+	String modName = name.toString();
+	if (getCustomObjectName().toString() != modName)
+		setCustomObjectName(modName, notifyClient);
 }
 
 void AttachmentImplementation::updateCraftingValues(CraftingValues* values, bool firstUpdate) {
@@ -87,6 +111,8 @@ void AttachmentImplementation::updateCraftingValues(CraftingValues* values, bool
 
 		skillModifiers.put(modName, ((mod <= 0) ? 1 : mod));
 	}
+
+	updateSkillModName(false);
 }
 
 void AttachmentImplementation::fillAttributeList(AttributeListMessage* msg, CreatureObject* object) {

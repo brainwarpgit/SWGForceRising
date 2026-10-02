@@ -38,6 +38,9 @@ class Attachment extends TangibleObject {
 	public native void initializeTransientMembers();
 
 	@local
+	public native void updateSkillModName(boolean notifyClient = false);
+
+	@local
 	public native void updateCraftingValues(CraftingValues values, boolean firstUpdate);
 
 	public native void initializeMembers();

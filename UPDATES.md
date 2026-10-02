@@ -2,6 +2,10 @@
 
 ## 2026-10-02
 
+### Committed attachment names showing skill mods
+
+- Clothing and armor attachment names now show only each skill-mod name and its signed value, such as `Rifle Accuracy: +12`. Existing attachments update when loaded, and new attachments receive the name when their mods are rolled during loot generation. The user verified the behavior in game.
+
 ### Committed ground object visibility range
 
 - Increased the server's ground close-object range from 192 to 512. Space visibility keeps its separate range. The user verified the change in game.
