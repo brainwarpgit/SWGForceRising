@@ -1,5 +1,11 @@
 # Project Updates
 
+## 2026-10-02
+
+### GCW city banner placement corrections
+
+- User-supplied corrections move misplaced Tyrena, Kor Vella, and Mos Eisley banners and fix the cleanup data key. The original GCW startup schedule remains in place.
+
 ## 2026-10-01
 
 ### Default Galaxy Chat and Auction rooms

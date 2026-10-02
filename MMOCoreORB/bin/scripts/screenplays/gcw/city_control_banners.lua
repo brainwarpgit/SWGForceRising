@@ -24,14 +24,14 @@ CityControlBanners = ScreenPlay:new {
 			{-38.48, 28.61, -4404.32, 0, 0},
 		--Tyrena
 			--Starport
-			{-5031.657, 28.759, -4635.953, 0, 44.667},
-			{-5047.141, 20.996, -2287.384, 0, 44.667},
+			{-5031.8, 21.0, -2303.3, 0, 44.667},
+			{-5047.4, 21.0, -2287.6, 0, 44.667},
 			--Shuttleports
 			{-5017.379, 21.614, -2380.858, 0, 4.363},
 			{-5606.011, 21.635, -2803.129, 0, -89.704},
 		--Kor Vella
 			--City Entrance
-			{-3360.386, 55.779, 2936.398, 0, -45.685},
+			{-3360.386, 85.779, 2936.398, 0, -45.685},
 			{-3355.916, 85.779, 2941.185, 0, -45.685},
 			--Shuttleport
 			{-3787.623, 86.614, 3239.500, 0, -0.596},
@@ -109,7 +109,7 @@ CityControlBanners = ScreenPlay:new {
 			{3749.354, 5.000, -4791.782, 0, -80.663},
 			{3358.474, 5.000, -4996.857, 0, 38.747},
 			--Cantina
-			{2114.135, 30.000, 2570.943, 0, -0.619},
+			{3380.7, 5.000, -4801.4, 0, -50},
 			{3465.033, 5.00, -4851.613, 0, -8.728},
 		--Mos Espa
 			--Faction Spawn Area
@@ -154,7 +154,7 @@ function CityControlBanners:manageSceneObjects(location, num, planetName)
 
 	if (despawnBannerObject ~= nil) then
 		SceneObject(despawnBannerObject):destroyObjectFromWorld()
-		deleteData(planetName .. ":control:banner" .. num)
+		deleteData(planetName .. ":control:banner:" .. num)
 	end
 
 	local controllingFaction = getControllingFaction(planetName)

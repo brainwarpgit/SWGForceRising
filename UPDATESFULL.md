@@ -1,5 +1,11 @@
 # Detailed Project Updates
 
+## 2026-10-02
+
+### GCW city banner placement corrections
+
+- The user corrected the Tyrena, Kor Vella, and Mos Eisley banner coordinates and aligned the banner cleanup data key with its read/write key in `city_control_banners.lua`. The user confirmed that banners spawned during a temporary 60-second first-check setting, then requested restoration of the original startup schedule. That temporary setting was reverted; the first check again starts after one-quarter of `gcwCheckTimer` plus up to one-eighth of that timer (about 15–22.5 minutes with the current one-hour setting), and later checks remain hourly. The user verified the banner corrections in game and requested the commit. Static diff and whitespace checks passed; the assistant did not build or run Core3 under project guidance.
+
 ## 2026-10-01
 
 ### Default Galaxy Chat and Auction rooms
