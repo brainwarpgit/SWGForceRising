@@ -26,6 +26,8 @@
 #include "server/zone/objects/manufactureschematic/craftingvalues/CraftingValues.h"
 #include "templates/tangible/tool/RepairToolTemplate.h"
 #include "server/zone/objects/tangible/tool/repair/RepairTool.h"
+#include "server/zone/objects/tangible/tool/CraftingTool.h"
+#include "server/zone/objects/tangible/tool/CraftingStation.h"
 #include "server/zone/managers/player/PlayerManager.h"
 #include "server/zone/managers/creature/PetManager.h"
 #include "server/zone/objects/intangible/PetControlDevice.h"
@@ -1415,11 +1417,27 @@ void TangibleObjectImplementation::repair(CreatureObject* player, RepairTool * r
 	repairChance *= quality;
 
 	ManagedReference<PlayerManager*> playerMan = player->getZoneServer()->getPlayerManager();
+	// A repair uses its own repair tool, but can also benefit from the best
+	// compatible ready crafting tool and a matching nearby station.
+	float craftingEffectiveness = 0.f;
+	int stationType = repairTemplate->getStationType();
+	if (stationType > 0) {
+		ManagedReference<SceneObject*> inventory = player->getSlottedObject("inventory");
+		if (inventory != nullptr) {
+			for (int i = 0; i < inventory->getContainerObjectsSize(); ++i) {
+				Reference<SceneObject*> item = inventory->getContainerObject(i);
+				CraftingTool* tool = cast<CraftingTool*>(item.get());
+				if (tool != nullptr && tool->isReady() &&
+					(tool->getToolType() == stationType || (tool->getToolType() == CraftingTool::JEDI && stationType == CraftingTool::WEAPON)))
+					craftingEffectiveness = Math::max(craftingEffectiveness, tool->getEffectiveness());
+			}
+		}
 
-	/// Increase if near station
-	if (playerMan->getNearbyCraftingStation(player, repairTemplate->getStationType()) != nullptr) {
-		repairChance += 15;
+		CraftingStation* station = playerMan->getNearbyCraftingStation(player, stationType);
+		if (station != nullptr)
+			craftingEffectiveness += station->getEffectiveness();
 	}
+	repairChance *= Math::max(0.f, 1.f + craftingEffectiveness / 100.f);
 
 	/// Subtract battle fatigue
 	repairChance -= (player->getShockWounds() / 2);

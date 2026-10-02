@@ -82,6 +82,11 @@ class CraftingStation extends ToolTangibleObject {
 		return type;
 	}
 
+	@dirty
+	public float getEffectiveness() {
+		return effectiveness;
+	}
+
 	public void setComplexityLevel(int level) {
 		complexityLevel = level;
 	}

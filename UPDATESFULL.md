@@ -2,6 +2,12 @@
 
 ## 2026-10-02
 
+### Committed crafting and repair effectiveness
+
+- Added an effectiveness getter to crafting stations and passed tool effectiveness plus the selected station's effectiveness into the existing assembly and experimentation outcome formulas. Experimentation previously passed its failure-rate value into the effectiveness argument; that value remains available for the experimental-attribute calculation but no longer acts as a tool modifier. Without a station, the selected tool's value still applies.
+- Item repair through a repair tool now uses the strongest compatible ready crafting tool in the player's immediate inventory and the effectiveness of a matching nearby station. Their combined effectiveness multiplies the repair chance by `max(0, 1 + effectiveness / 100)` after the existing repair-tool quality adjustment. The old flat 15-point station bonus is replaced by the station's actual value; no station and no compatible crafting tool leave this new modifier neutral. Existing skill, battle-fatigue, complexity, and random-failure rules remain. This covers wearable and weapon repairs through `TangibleObject::repair`; ship docking, ship component kits, and other repairs that do not use crafting tools or stations retain their own rules.
+- Source and caller review and whitespace checks passed. The user's first build found an invalid cast from an inventory `Reference<SceneObject*>` to `CraftingTool*`; the repair path now casts the referenced raw pointer. The user subsequently verified the change. The assistant did not build or run Core3 under project guidance.
+
 ### Committed skill refresh command
 
 - Added the self-service `/regrantSkills` command. It snapshots a character's learned skills, verifies that each definition is available, then removes and re-adds the skill-list entries so the client sees the updated set. The refresh reapplies current skill-box modifiers and abilities, rebuilds skill and rewarded schematics, and updates experience limits, Force power, skill points, level, and movement values. It bypasses surrender and training side effects, preserving experience, missions, pilot and Jedi progression, and badges. Regranting novice boxes also suppresses helper-droid training events. Abilities that were removed from a changed skill definition are not automatically deleted, because abilities may also be granted independently of skills.

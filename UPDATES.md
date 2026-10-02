@@ -2,6 +2,10 @@
 
 ## 2026-10-02
 
+### Committed crafting and repair effectiveness
+
+- Assembly and experimentation now use the combined effectiveness of the selected crafting tool and station. Experimentation no longer mistakes its failure-rate value for effectiveness. Repair-tool item repairs use the best compatible ready crafting tool in inventory and a nearby matching station; repair-tool quality remains a separate factor. The user verified the change.
+
 ### Committed skill refresh command
 
 - Added `/regrantSkills` for players to refresh their learned skills against the server's current skill data after a TRE update and server restart. It preserves experience and progression while refreshing skill modifiers, abilities, schematics, points, and movement values. A confirmation window precedes the refresh. A successful use starts a persistent 12-hour cooldown for players; game admins are exempt. The user verified the behavior. The command and its name and description are staged for the next update TRE.
