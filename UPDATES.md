@@ -2,6 +2,10 @@
 
 ## 2026-10-02
 
+### Committed skill refresh command
+
+- Added `/regrantSkills` for players to refresh their learned skills against the server's current skill data after a TRE update and server restart. It preserves experience and progression while refreshing skill modifiers, abilities, schematics, points, and movement values. A confirmation window precedes the refresh. A successful use starts a persistent 12-hour cooldown for players; game admins are exempt. The user verified the behavior. The command and its name and description are staged for the next update TRE.
+
 ### GCW city banner placement corrections
 
 - User-supplied corrections move misplaced Tyrena, Kor Vella, and Mos Eisley banners and fix the cleanup data key. The original GCW startup schedule remains in place.

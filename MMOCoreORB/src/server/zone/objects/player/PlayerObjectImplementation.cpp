@@ -1322,6 +1322,10 @@ void PlayerObjectImplementation::removeSchematics(Vector<ManagedReference<DraftS
 	if (schematics.size() == 0)
 		return;
 
+	refreshSkillSchematics(notifyClient);
+}
+
+void PlayerObjectImplementation::refreshSkillSchematics(bool notifyClient) {
 	if (notifyClient) {
 		PlayerObjectDeltaMessage9* msg = new PlayerObjectDeltaMessage9(asPlayerObject());
 		msg->startUpdate(4);

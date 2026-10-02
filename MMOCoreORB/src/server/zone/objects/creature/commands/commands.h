@@ -559,6 +559,7 @@
 #include "RevivePlayerCommand.h"
 #include "RevokeBadgeCommand.h"
 #include "RevokeSkillCommand.h"
+#include "RegrantSkillsCommand.h"
 #include "RolePlayCommand.h"
 #include "RollShotCommand.h"
 #include "RotateFurnitureCommand.h"

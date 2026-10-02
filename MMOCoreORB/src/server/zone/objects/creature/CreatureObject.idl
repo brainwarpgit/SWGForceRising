@@ -935,7 +935,7 @@ class CreatureObject extends TangibleObject {
 	 */
 	@preLocked
 	@local
-	public native void addSkill(Skill skill, boolean notifyClient = true);
+	public native void addSkill(Skill skill, boolean notifyClient = true, boolean notifyHelperDroid = true);
 
 	/**
 	 * Adds the specified skillbox to this object

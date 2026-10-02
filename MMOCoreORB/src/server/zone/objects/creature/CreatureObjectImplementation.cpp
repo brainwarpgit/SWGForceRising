@@ -1513,7 +1513,7 @@ void CreatureObjectImplementation::addEncumbrance(int type, int value,
 	setEncumbrance(type, newValue, notifyClient);
 }
 
-void CreatureObjectImplementation::addSkill(Skill* skill, bool notifyClient) {
+void CreatureObjectImplementation::addSkill(Skill* skill, bool notifyClient, bool notifyHelperDroid) {
 	if (skillList.contains(skill))
 		return;
 
@@ -1529,7 +1529,7 @@ void CreatureObjectImplementation::addSkill(Skill* skill, bool notifyClient) {
 		skillList.add(skill, nullptr);
 	}
 
-	if (isPlayerCreature()) {
+	if (notifyHelperDroid && isPlayerCreature()) {
 		String baseSkill[6] = {"combat_brawler_novice", "combat_marksman_novice", "outdoors_scout_novice", "science_medic_novice", "crafting_artisan_novice", "social_entertainer_novice"};
 		bool shouldSpawnHelper = false;
 

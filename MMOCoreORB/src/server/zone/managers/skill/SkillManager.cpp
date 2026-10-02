@@ -544,6 +544,63 @@ bool SkillManager::awardSkill(const String& skillName, CreatureObject* creature,
 	return true;
 }
 
+bool SkillManager::regrantSkills(CreatureObject* creature) {
+	if (creature == nullptr || !creature->isPlayerCreature())
+		return false;
+
+	Locker locker(creature);
+	PlayerObject* ghost = creature->getPlayerObject();
+	if (ghost == nullptr)
+		return false;
+
+	Vector<String> names;
+	creature->getSkillList()->getStringList(names);
+	Vector<Reference<Skill*>> skills;
+	for (int i = 0; i < names.size(); ++i) {
+		Skill* skill = getSkill(names.get(i));
+		if (skill == nullptr)
+			return false;
+		skills.add(skill);
+	}
+
+	// Refresh the client skill list without surrender side effects such as lost
+	// missions, pilot progress, Force progression, experience, or badges.
+	for (int i = 0; i < skills.size(); ++i)
+		creature->removeSkill(skills.get(i), true);
+	for (int i = 0; i < skills.size(); ++i)
+		creature->addSkill(skills.get(i), true, false);
+
+	SkillModManager::instance()->verifySkillBoxSkillMods(creature);
+	for (int i = 0; i < skills.size(); ++i)
+		addAbilities(ghost, *skills.get(i)->getAbilities(), true);
+	ghost->refreshSkillSchematics();
+	updateXpLimits(ghost);
+	ghost->recalculateForcePower();
+
+	int skillPoints = 250;
+	for (int i = 0; i < skills.size(); ++i)
+		skillPoints -= skills.get(i)->getSkillPointsRequired();
+	ghost->setSkillPoints(skillPoints);
+
+	PlayerManager* playerManager = creature->getZoneServer()->getPlayerManager();
+	if (playerManager != nullptr)
+		creature->setLevel(playerManager->calculatePlayerLevel(creature));
+
+	CreatureObjectDeltaMessage4* movement = new CreatureObjectDeltaMessage4(creature);
+	movement->updateAccelerationMultiplierBase();
+	movement->updateAccelerationMultiplierMod();
+	movement->updateSpeedMultiplierBase();
+	movement->updateSpeedMultiplierMod();
+	movement->updateRunSpeed();
+	movement->updateWalkSpeed();
+	movement->updateSlopeModAngle();
+	movement->updateSlopeModPercent();
+	movement->updateWaterModPercent();
+	movement->close();
+	creature->sendMessage(movement);
+	return true;
+}
+
 void SkillManager::removeSkillRelatedMissions(CreatureObject* creature, Skill* skill) {
 	if(skill->getSkillName().hashCode() == STRING_HASHCODE("combat_bountyhunter_investigation_03")) {
 		ManagedReference<ZoneServer*> zoneServer = creature->getZoneServer();

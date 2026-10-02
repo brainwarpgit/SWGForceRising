@@ -191,6 +191,7 @@
 #include "server/zone/objects/creature/commands/RetreatCommand.h"
 #include "server/zone/objects/creature/commands/RevivePlayerCommand.h"
 #include "server/zone/objects/creature/commands/RevokeBadgeCommand.h"
+#include "server/zone/objects/creature/commands/RegrantSkillsCommand.h"
 #include "server/zone/objects/creature/commands/RevokeSkillCommand.h"
 #include "server/zone/objects/creature/commands/RolePlayCommand.h"
 #include "server/zone/objects/creature/commands/RollShotCommand.h"
@@ -491,6 +492,7 @@ void CommandConfigManager::registerCommands3() {
 	commandFactory.registerCommand<RetreatCommand>(String("retreat").toLowerCase());
 	commandFactory.registerCommand<RevivePlayerCommand>(String("revivePlayer").toLowerCase());
 	commandFactory.registerCommand<RevokeBadgeCommand>(String("revokeBadge").toLowerCase());
+	commandFactory.registerCommand<RegrantSkillsCommand>(String("regrantSkills").toLowerCase());
 	commandFactory.registerCommand<RevokeSkillCommand>(String("revokeSkill").toLowerCase());
 	commandFactory.registerCommand<RolePlayCommand>(String("rolePlay").toLowerCase());
 	commandFactory.registerCommand<RollShotCommand>(String("rollShot").toLowerCase());
