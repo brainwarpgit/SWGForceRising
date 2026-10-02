@@ -2,6 +2,10 @@
 
 ## 2026-10-02
 
+### Committed baby creature highlighting in Area Track
+
+- The Area Track task now checks the creature's actual `isBaby()` state when listing animals. Baby entries use gold text for the entire row, including the displayed name and direction/distance details, then reset the text color so later rows remain normal. All Area Track result lists are sorted by distance, nearest first; babies keep their place in that order. NPC and player row styling is unaffected; range, skill gates, and tracking delay are unchanged. Source review and whitespace validation passed, and the user verified the result list in game. The assistant did not build or run Core3 under project guidance.
+
 ### Committed crafting and repair effectiveness
 
 - Added an effectiveness getter to crafting stations and passed tool effectiveness plus the selected station's effectiveness into the existing assembly and experimentation outcome formulas. Experimentation previously passed its failure-rate value into the effectiveness argument; that value remains available for the experimental-attribute calculation but no longer acts as a tool modifier. Without a station, the selected tool's value still applies.

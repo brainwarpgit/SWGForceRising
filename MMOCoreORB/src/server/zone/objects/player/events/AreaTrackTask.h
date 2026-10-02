@@ -13,6 +13,11 @@
 #ifndef AREATRACKTASK_H_
 #define AREATRACKTASK_H_
 
+#include "server/zone/objects/creature/ai/Creature.h"
+#include <algorithm>
+#include <utility>
+#include <vector>
+
 class AreaTrackTask: public Task {
 	ManagedReference<CreatureObject*> player;
 	int type;
@@ -70,6 +75,7 @@ public:
 		    bool canGetDistance = player->hasSkill("outdoors_ranger_harvest_03");
 
 			SortedVector<ManagedReference<TreeEntry*> > objects(512, 512);
+			std::vector<std::pair<float, String>> sortedResults;
 			zone->getInRangeObjects(player->getPositionX(), player->getPositionZ(), player->getPositionY(), 512, &objects, true);
 
 			for (int i = 0; i < objects.size(); ++i) {
@@ -101,6 +107,10 @@ public:
 					continue;
 				}
 
+				Creature* animal = type == 0 ? cast<Creature*>(creature) : nullptr;
+				bool isBaby = animal != nullptr && animal->isBaby();
+				if (isBaby)
+					results << "\\#FFD700";
 				results << creature->getDisplayedName();
 
 				String direction = "", distance = "";
@@ -114,8 +124,15 @@ public:
 					results << " (" << direction << distance << ")";
 				}
 
-				rangerTrackResults->addMenuItem(results.toString());
+				if (isBaby)
+					results << "\\#.";
+				sortedResults.emplace_back(player->getDistanceTo(creature), results.toString());
 			}
+
+			std::stable_sort(sortedResults.begin(), sortedResults.end(),
+				[](const std::pair<float, String>& a, const std::pair<float, String>& b) { return a.first < b.first; });
+			for (const auto& result : sortedResults)
+				rangerTrackResults->addMenuItem(result.second);
 
 			if(rangerTrackResults->getMenuSize() == 0) {
 				player->sendSystemMessage("@skl_use:sys_scan_nothing"); // You aren't able to determine anything from the tracks in the area.

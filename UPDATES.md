@@ -2,6 +2,10 @@
 
 ## 2026-10-02
 
+### Committed baby creature highlighting in Area Track
+
+- `/areatrack` results are listed nearest first. Baby creatures in the animal list display in gold while retaining their names and direction/distance details. The user verified the behavior in game.
+
 ### Committed crafting and repair effectiveness
 
 - Assembly and experimentation now use the combined effectiveness of the selected crafting tool and station. Experimentation no longer mistakes its failure-rate value for effectiveness. Repair-tool item repairs use the best compatible ready crafting tool in inventory and a nearby matching station; repair-tool quality remains a separate factor. The user verified the change.
