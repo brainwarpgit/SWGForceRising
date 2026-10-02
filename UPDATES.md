@@ -2,6 +2,10 @@
 
 ## 2026-10-01
 
+### Default Galaxy Chat and Auction rooms
+
+- New characters join Galaxy Chat and Auction. Both rooms are restored on every login, including for existing characters whose saved room IDs are missing or stale.
+
 ### Structure maintenance and power withdrawals
 
 - Owning-account characters and game admins can withdraw maintenance from non-civic buildings and installations through Structure Management, directly below Pay Maintenance. Powered installations also offer Withdraw Power beside Deposit Power. Both use sliders. Power returns as a generic Stored Power resource container that can be deposited again at one unit per power point; its displayed resource name and class use readable labels.

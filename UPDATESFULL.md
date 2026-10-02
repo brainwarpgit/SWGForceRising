@@ -2,6 +2,12 @@
 
 ## 2026-10-01
 
+### Default Galaxy Chat and Auction rooms
+
+- Added a server-wide public `GalaxyChat` room with the title **Galaxy Chat**. Its space-free room path follows the chat-room naming rules. New characters save membership in it and in the existing Auction room.
+- On every login, the current Galaxy Chat and Auction room IDs are added to the player's membership list before the existing rejoin pass sends room details and join responses. This also repairs missing membership for existing characters and replaces stale IDs after server restarts. The player's chat-room list rejects duplicate IDs.
+- Source and whitespace review passed. The user verified the rooms working in game on October 2. The assistant did not build or run Core3 under project guidance.
+
 ### Structure maintenance and power withdrawals
 
 - Extended the existing guild-hall maintenance withdrawal action to non-civic player buildings and installations. It now appears immediately below Pay Maintenance for owning-account characters and level-15 game admins, including on guild halls. Ordinary structure administrators cannot withdraw. The prompt and callback recheck authority, range, the current maintenance pool after status updates, a positive amount, and room across the player's cash and bank balances before returning credits. Civic structures have no player maintenance withdrawal.

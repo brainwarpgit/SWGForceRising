@@ -620,8 +620,9 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 		jtlMailTask->schedule(10000);
 	}
 
-	//Join auction chat room
+	// Join the default galaxy-wide chat rooms on first login.
 	ghost->addChatRoom(chatManager->getAuctionRoom()->getRoomID());
+	ghost->addChatRoom(chatManager->getGalaxyChatRoom()->getRoomID());
 
 	ManagedReference<SuiMessageBox*> box = new SuiMessageBox(playerCreature, SuiWindowType::NONE);
 	box->setPromptTitle("PLEASE NOTE");

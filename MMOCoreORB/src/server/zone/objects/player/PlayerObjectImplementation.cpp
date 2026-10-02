@@ -592,6 +592,12 @@ void PlayerObjectImplementation::notifySceneReady() {
 		}
 	}
 
+	// Default rooms are recreated at startup, so restore their current IDs on every login.
+	if (chatManager->getAuctionRoom() != nullptr)
+		addChatRoom(chatManager->getAuctionRoom()->getRoomID());
+	if (chatManager->getGalaxyChatRoom() != nullptr)
+		addChatRoom(chatManager->getGalaxyChatRoom()->getRoomID());
+
 	//Re-join chat rooms player was a member of before disconnecting.
 	for (int i = chatRooms.size() - 1; i >= 0; i--) {
 		ChatRoom* room = chatManager->getChatRoom(chatRooms.get(i));
