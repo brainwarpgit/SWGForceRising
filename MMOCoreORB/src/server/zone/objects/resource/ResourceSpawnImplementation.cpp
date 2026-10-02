@@ -12,7 +12,8 @@
 void ResourceSpawnImplementation::fillAttributeList(AttributeListMessage* alm,
 		CreatureObject* object) {
 
-		alm->insertAttribute("resource_class", getFinalClass());
+		String resourceClass = spawnName == "swgfr_stored_power" ? String("Stored Power (Energy)") : getFinalClass();
+		alm->insertAttribute("resource_class", resourceClass);
 
 		for (int i = 0; i < spawnAttributes.size(); ++i) {
 			String attrib;
@@ -242,7 +243,7 @@ Reference<ResourceContainer*> ResourceSpawnImplementation::createResource(int un
    	if (units != 0)
    		newResource->setQuantity(units);
 
-   	newResource->setCustomObjectName(getFamilyName(), false);
+	newResource->setCustomObjectName(spawnName == "swgfr_stored_power" ? String("Stored Power") : getFamilyName(), false);
 
    	++containerReferenceCount;
 

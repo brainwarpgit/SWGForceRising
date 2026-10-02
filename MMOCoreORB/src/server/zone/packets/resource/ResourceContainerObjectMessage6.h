@@ -19,7 +19,10 @@ public:
 		insertUnicode(u_str); // Container Name
 		insertInt(ResourceContainer::MAXSIZE); // Max stack size
 		insertAscii(rcno->getSpawnType()); // Resource Type: planet specific
-		insertUnicode(rcno->getSpawnName());  // Resource name.
+		String resourceName = rcno->getSpawnName();
+		if (resourceName == "swgfr_stored_power")
+			resourceName = "Stored Power";
+		insertUnicode(resourceName); // Resource name.
 		setSize();
 	}
 };

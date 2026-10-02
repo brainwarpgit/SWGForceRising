@@ -16,10 +16,10 @@ public:
 	void run(CreatureObject* creature, SuiBox* sui, uint32 eventIndex, Vector<UnicodeString>* args) {
 		bool cancelPressed = (eventIndex == 1);
 
-		if (!sui->isInputBox() || cancelPressed || args->size() < 1)
+		if (!sui->isTransferBox() || cancelPressed || args->size() < 2)
 			return;
 
-		int amount = Integer::valueOf(args->get(0).toString());
+		int amount = Integer::valueOf(args->get(1).toString());
 
 		if (amount < 0)
 			return;

@@ -10,6 +10,7 @@
 #include "server/zone/packets/resource/ResourceContainerObjectDeltaMessage3.h"
 #include "server/zone/objects/player/sui/listbox/SuiListBox.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
+#include "server/zone/managers/object/ObjectManager.h"
 
 void ResourceManagerImplementation::initialize() {
 	if (!loadConfigData()) {
@@ -375,6 +376,63 @@ void ResourceManagerImplementation::removePowerFromPlayer(CreatureObject* player
 		power -= containerPower;
 	}
 }
+
+bool ResourceManagerImplementation::giveStoredPowerToPlayer(CreatureObject* player, int power) {
+	if (player == nullptr || power <= 0 || power > ResourceContainer::MAXSIZE)
+		return false;
+
+	SceneObject* inventory = player->getSlottedObject("inventory");
+	if (inventory == nullptr || inventory->isContainerFullRecursive())
+		return false;
+
+	Locker managerLocker(_this.getReferenceUnsafeStaticCast());
+	ResourceMap* resourceMap = resourceSpawner->getResourceMap();
+	if (resourceMap == nullptr)
+		return false;
+
+	ResourceSpawn* spawn = resourceMap->get("swgfr_stored_power");
+	if (spawn == nullptr) {
+		ObjectManager* objectManager = zoneServer->getObjectManager();
+		if (objectManager == nullptr)
+			return false;
+		spawn = dynamic_cast<ResourceSpawn*>(objectManager->createObject(0xb2825c5a, 1, "resourcespawns"));
+		if (spawn == nullptr)
+			return false;
+		Locker spawnLocker(spawn);
+		spawn->setName("swgfr_stored_power");
+		spawn->setType("energy_renewable_unlimited_solar");
+		spawn->addClass("energy");
+		spawn->addClass("energy_renewable");
+		spawn->addClass("energy_renewable_unlimited");
+		spawn->addClass("energy_renewable_unlimited_solar");
+		spawn->addStfClass("energy");
+		spawn->addStfClass("energy_renewable");
+		spawn->addStfClass("energy_renewable_unlimited");
+		spawn->addStfClass("energy_renewable_unlimited_solar");
+		spawn->addAttribute("res_potential_energy", 500);
+		spawn->setIsEnergy(true);
+		String containerTemplate = "object/resource_container/energy_solid.iff";
+		spawn->setContainerCRC(containerTemplate.hashCode());
+		resourceMap->add(spawn->getName(), spawn);
+	}
+	if (!spawn->isEnergy() || spawn->getValueOf(CraftingManager::PE) != 500)
+		return false;
+
+	Locker spawnLocker(spawn);
+	Reference<ResourceContainer*> container = spawn->createResource(power);
+	if (container == nullptr)
+		return false;
+	Locker containerLocker(container);
+	container->setCustomObjectName("Stored Power", false);
+	if (!inventory->transferObject(container, -1, true)) {
+		container->destroyObjectFromDatabase(true);
+		return false;
+	}
+	spawn->extractResource("", power);
+	inventory->broadcastObject(container, true);
+	return true;
+}
+
 void ResourceManagerImplementation::givePlayerResource(CreatureObject* playerCreature, const String& restype, const int quantity) {
 	ManagedReference<ResourceSpawn* > spawn = getResourceSpawn(restype);
 

@@ -10,6 +10,7 @@
 #include "server/zone/objects/scene/SceneObject.h"
 #include "server/zone/packets/object/ObjectMenuResponse.h"
 #include "server/zone/objects/creature/CreatureObject.h"
+#include "server/zone/objects/player/PlayerObject.h"
 #include "server/zone/objects/installation/InstallationObject.h"
 #include "server/zone/managers/structure/StructureManager.h"
 #include "server/zone/objects/intangible/PetControlDevice.h"
@@ -41,6 +42,15 @@ void InstallationObjectMenuComponent::fillObjectMenuResponse(SceneObject* sceneO
 	menuResponse->addRadialMenuItemToRadialID(118, 128, 3, "@player_structure:permission_destroy"); //Destroy Structure
 	menuResponse->addRadialMenuItemToRadialID(118, 124, 3, "@player_structure:management_status"); //Status
 	menuResponse->addRadialMenuItemToRadialID(118, 129, 3, "@player_structure:management_pay"); //Pay Maintenance
+	PlayerObject* ghost = player->getPlayerObject();
+	bool canWithdraw = installation->isOwnedByAccount(player) || (ghost != nullptr && ghost->isAdmin());
+	if (canWithdraw)
+		menuResponse->addRadialMenuItemToRadialID(118, 70, 3, "@player_structure:take_maintenance"); // Withdraw Maintenance
+	if (!installation->isGeneratorObject()) {
+		menuResponse->addRadialMenuItemToRadialID(118, 51, 3, "@player_structure:management_power"); // Deposit Power
+		if (canWithdraw)
+			menuResponse->addRadialMenuItemToRadialID(118, 71, 3, "Withdraw Power");
+	}
 	if (installation->isOwnedByAccount(player)) {
 		menuResponse->addRadialMenuItemToRadialID(118, 247, 3, "Set Quick Maintenance Amount");
 		if (!installation->isGeneratorObject())
@@ -66,10 +76,6 @@ void InstallationObjectMenuComponent::fillObjectMenuResponse(SceneObject* sceneO
 		}
 	}
 	menuResponse->addRadialMenuItemToRadialID(118, 50, 3, "@base_player:set_name"); //Set Name
-
-	if (!installation->isGeneratorObject()) {
-		menuResponse->addRadialMenuItemToRadialID(118, 51, 3, "@player_structure:management_power"); //Deposit Power
-	}
 
 	menuResponse->addRadialMenuItem(117, 3, "@player_structure:permissions"); //Structure Permissions
 	menuResponse->addRadialMenuItemToRadialID(117, 121, 3, "@player_structure:permission_admin"); //Administrator List
@@ -120,6 +126,16 @@ int InstallationObjectMenuComponent::handleObjectMenuSelect(SceneObject* sceneOb
 	case 129:
 		player->executeObjectControllerAction(0xE7E35B30, installation->getObjectID(), ""); //payMaintenance
 		break;
+	case 70: {
+		Locker locker(installation, player);
+		structureManager->promptWithdrawMaintenance(installation, player);
+		break;
+	}
+	case 71: {
+		Locker locker(installation, player);
+		structureManager->promptWithdrawPower(installation, player);
+		break;
+	}
 
 	case 128:
 		player->executeObjectControllerAction(0x18FC1726, installation->getObjectID(), ""); //destroyStructure command

@@ -15,7 +15,10 @@ void ResourceContainerImplementation::fillAttributeList(AttributeListMessage* al
 	StringBuffer ssQuantity;
 	ssQuantity << stackQuantity << "/" << ResourceContainer::MAXSIZE;
 
-	alm->insertAttribute("resource_name", getSpawnName());
+	String resourceName = getSpawnName();
+	if (resourceName == "swgfr_stored_power")
+		resourceName = "Stored Power";
+	alm->insertAttribute("resource_name", resourceName);
 	alm->insertAttribute("resource_contents", ssQuantity);
 
 	if (spawnObject != nullptr)

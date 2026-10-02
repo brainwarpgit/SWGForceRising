@@ -212,6 +212,8 @@ public:
 	 * @param creature The creature attempting to withdraw maintenance.
 	 */
 	void promptWithdrawMaintenance(StructureObject* structure, CreatureObject* creature);
+	void promptWithdrawPower(StructureObject* structure, CreatureObject* creature);
+	void withdrawPower(StructureObject* structure, CreatureObject* creature, int amount);
 
 	/**
 	 * Sends the transfer box prompting for selection of sign

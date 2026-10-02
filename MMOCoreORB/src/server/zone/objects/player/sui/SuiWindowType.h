@@ -114,6 +114,7 @@ public:
 		STRUCTURE_VENDOR_WITHDRAW          = 156,
 		STRUCTURE_SELECT_SIGN              = 157,
 		STRUCTURE_ASSIGN_DROID             = 158,
+		STRUCTURE_WITHDRAW_POWER           = 159,
 
 		//Admin 171 - 220
 		ADMIN_COMMANDS                     = 171,

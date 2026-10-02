@@ -2,6 +2,10 @@
 
 ## 2026-10-01
 
+### Structure maintenance and power withdrawals
+
+- Owning-account characters and game admins can withdraw maintenance from non-civic buildings and installations through Structure Management, directly below Pay Maintenance. Powered installations also offer Withdraw Power beside Deposit Power. Both use sliders. Power returns as a generic Stored Power resource container that can be deposited again at one unit per power point; its displayed resource name and class use readable labels.
+
 ### Committed combined credit payments
 
 - Purchases, fees, fines, maintenance, repairs, bets, city tax, and selected scripted payments can now use cash and bank together. Each payment retains its prior primary source and uses the other balance for any shortfall. Player trades and tip choices remain unchanged.

@@ -67,6 +67,7 @@ class ResourceManager extends Observer implements Logger {
 	
 	public native unsigned int getAvailablePowerFromPlayer(CreatureObject player);
 	public native void removePowerFromPlayer(CreatureObject player, unsigned int power);
+	public native boolean giveStoredPowerToPlayer(CreatureObject player, int power);
 	
 	@local
 	public native void getResourceListByType(@dereferenced Vector<ResourceSpawn> list, int type, final string zoneName);

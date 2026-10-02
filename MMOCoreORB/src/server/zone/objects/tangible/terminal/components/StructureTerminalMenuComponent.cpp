@@ -84,16 +84,14 @@ void StructureTerminalMenuComponent::fillObjectMenuResponse(SceneObject* sceneOb
 		menuResponse->addRadialMenuItemToRadialID(118, 128, 3, "@player_structure:permission_destroy"); //Destroy Structure
 		menuResponse->addRadialMenuItemToRadialID(118, 124, 3, "@player_structure:management_status"); //Status
 		menuResponse->addRadialMenuItemToRadialID(118, 129, 3, "@player_structure:management_pay"); //Pay Maintenance
+		if (structureObject->isOwnedByAccount(creature) || ghost->isAdmin())
+			menuResponse->addRadialMenuItemToRadialID(118, 70, 3, "@player_structure:take_maintenance"); //Withdraw Maintenance
 		if (structureObject->isOwnedByAccount(creature))
 			menuResponse->addRadialMenuItemToRadialID(118, 247, 3, "Set Quick Maintenance Amount");
 
 		if (StructureManager::instance()->canTakeOwnership(creature, structureObject.get()))
 			menuResponse->addRadialMenuItemToRadialID(118, 240, 3, "Take Ownership");
 		addStorageLotMenus(menuResponse, creature, structureObject);
-
-		if (structureObject->isGuildHall()) {
-			menuResponse->addRadialMenuItemToRadialID(118, 70, 3, "@player_structure:take_maintenance"); // Withdraw Maintenance
-		}
 
 		menuResponse->addRadialMenuItemToRadialID(118, 50, 3, "@player_structure:management_name_structure"); //Name Structure
 

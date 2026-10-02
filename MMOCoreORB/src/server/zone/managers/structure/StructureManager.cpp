@@ -41,6 +41,7 @@
 #include "server/zone/objects/player/sui/callbacks/StructurePayMaintenanceSuiCallback.h"
 #include "server/zone/objects/player/sui/callbacks/StructureQuickAmountSuiCallback.h"
 #include "server/zone/objects/player/sui/callbacks/StructureWithdrawMaintenanceSuiCallback.h"
+#include "server/zone/objects/player/sui/callbacks/StructureWithdrawPowerSuiCallback.h"
 #include "server/zone/objects/player/sui/callbacks/StructureSelectSignSuiCallback.h"
 #include "server/zone/objects/player/sui/callbacks/StructureLotAdjustmentSuiCallback.h"
 #include "server/zone/managers/stringid/StringIdManager.h"
@@ -53,6 +54,7 @@
 #include "server/zone/managers/resource/resourcespawner/ResourceSpawner.h"
 #include "server/zone/objects/resource/ResourceContainer.h"
 #include "server/zone/objects/resource/ResourceSpawn.h"
+#include "server/zone/objects/creature/credits/CreditObject.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
 #include "templates/faction/Factions.h"
 #include "server/zone/objects/player/FactionStatus.h"
@@ -1932,12 +1934,17 @@ void StructureManager::promptPayMaintenance(StructureObject* structure, Creature
 }
 
 void StructureManager::promptWithdrawMaintenance(StructureObject* structure, CreatureObject* creature) {
-	if (!structure->isGuildHall()) {
+	if (structure == nullptr || creature == nullptr || structure->isCivicStructure()) {
 		return;
 	}
 
-	if (!structure->isOnAdminList(creature)) {
-		creature->sendSystemMessage("@player_structure:withdraw_admin_only"); // You must be an administrator to remove credits from the treasury.
+	PlayerObject* ghost = creature->getPlayerObject();
+	if (ghost == nullptr || (!structure->isOwnedByAccount(creature) && !ghost->isAdmin())) {
+		creature->sendSystemMessage("Only the owning account or a game admin can withdraw maintenance.");
+		return;
+	}
+	if (creature->getRootParent() != structure && !creature->isInRange(structure, 30.f)) {
+		creature->sendSystemMessage("@player_structure:pay_out_of_range");
 		return;
 	}
 
@@ -1951,17 +1958,54 @@ void StructureManager::promptWithdrawMaintenance(StructureObject* structure, Cre
 		return;
 	}
 
-	ManagedReference<PlayerObject*> ghost = creature->getPlayerObject();
-
-	if (ghost == nullptr)
+	int64 walletRoom = (int64)CreditObject::CREDITCAP - creature->getCashCredits()
+			+ CreditObject::CREDITCAP - creature->getBankCredits();
+	int maximum = (int)std::min<int64>(surplusMaintenance, walletRoom);
+	if (maximum <= 0) {
+		creature->sendSystemMessage("Your cash and bank balances are too full for this withdrawal.");
 		return;
-
-	ManagedReference<SuiInputBox*> sui = new SuiInputBox(creature, SuiWindowType::STRUCTURE_MANAGE_MAINTENANCE);
+	}
+	ManagedReference<SuiTransferBox*> sui = new SuiTransferBox(creature, SuiWindowType::STRUCTURE_MANAGE_MAINTENANCE);
 	sui->setCallback(new StructureWithdrawMaintenanceSuiCallback(server));
-	sui->setPromptTitle("@player_structure:withdraw_maintenance"); // Withdraw From Treasury
+	sui->setPromptTitle("Withdraw Maintenance");
 	sui->setUsingObject(structure);
-	sui->setPromptText("@player_structure:treasury_prompt " + String::valueOf(surplusMaintenance)); // Treasury:
+	sui->setPromptText("Maintenance available: " + String::valueOf(surplusMaintenance));
+	sui->setCancelButton(true, "@cancel");
+	sui->addFrom("Available to Withdraw", String::valueOf(maximum), String::valueOf(maximum), "1");
+	sui->addTo("Withdrawal", "0", "0", "1");
 
+	ghost->addSuiBox(sui);
+	creature->sendMessage(sui->generateMessage());
+}
+
+void StructureManager::promptWithdrawPower(StructureObject* structure, CreatureObject* creature) {
+	if (structure == nullptr || creature == nullptr || !structure->isInstallationObject() || structure->isGeneratorObject())
+		return;
+	PlayerObject* ghost = creature->getPlayerObject();
+	if (ghost == nullptr || (!structure->isOwnedByAccount(creature) && !ghost->isAdmin())) {
+		creature->sendSystemMessage("Only the owning account or a game admin can withdraw power.");
+		return;
+	}
+	if (!creature->isInRange(structure, 20.f)) {
+		creature->sendSystemMessage("You are too far away.");
+		return;
+	}
+	structure->updateStructureStatus();
+	int available = structure->getSurplusPower();
+	if (available <= 0) {
+		creature->sendSystemMessage("This structure has no power to withdraw.");
+		return;
+	}
+	int maximum = std::min(available, ResourceContainer::MAXSIZE);
+	ManagedReference<SuiTransferBox*> sui = new SuiTransferBox(creature, SuiWindowType::STRUCTURE_WITHDRAW_POWER);
+	sui->setCallback(new StructureWithdrawPowerSuiCallback(server));
+	sui->setUsingObject(structure);
+	sui->setPromptTitle("Withdraw Power");
+	sui->setPromptText("Power available: " + String::valueOf(available)
+			+ "\nWithdraw up to " + String::valueOf(maximum) + " units into one Stored Power resource container.");
+	sui->setCancelButton(true, "@cancel");
+	sui->addFrom("Available to Withdraw", String::valueOf(maximum), String::valueOf(maximum), "1");
+	sui->addTo("Withdrawal", "0", "0", "1");
 	ghost->addSuiBox(sui);
 	creature->sendMessage(sui->generateMessage());
 }
@@ -2090,35 +2134,70 @@ void StructureManager::payMaintenance(StructureObject* structure, CreatureObject
 }
 
 void StructureManager::withdrawMaintenance(StructureObject* structure, CreatureObject* creature, int amount) {
-	if (!structure->isGuildHall()) {
+	if (structure == nullptr || creature == nullptr || structure->isCivicStructure()) {
 		return;
 	}
 
-	if (!structure->isOnAdminList(creature)) {
-		creature->sendSystemMessage("@player_structure:withdraw_admin_only"); // You must be an administrator to remove credits from the treasury.
+	PlayerObject* ghost = creature->getPlayerObject();
+	if (ghost == nullptr || (!structure->isOwnedByAccount(creature) && !ghost->isAdmin())) {
+		creature->sendSystemMessage("Only the owning account or a game admin can withdraw maintenance.");
 		return;
 	}
 
-	if (amount < 0)
+	if (amount <= 0)
 		return;
+	if (creature->getRootParent() != structure && !creature->isInRange(structure, 30.f)) {
+		creature->sendSystemMessage("@player_structure:pay_out_of_range");
+		return;
+	}
+	structure->updateStructureStatus();
 
 	int currentMaint = structure->getSurplusMaintenance();
 
-	if (currentMaint - amount < 0 || currentMaint - amount > currentMaint) {
+	if (currentMaint < amount) {
 		creature->sendSystemMessage("@player_structure:insufficient_funds_withdrawal"); // Insufficent funds for withdrawal.
 		return;
 	}
-
-	StringIdChatParameter params("player_structure", "withdraw_credits"); // You withdraw %DI credits from the treasury.
-	params.setDI(amount);
-
-	creature->sendSystemMessage(params);
+	int64 availableWalletRoom = (int64)CreditObject::CREDITCAP - creature->getCashCredits()
+			+ CreditObject::CREDITCAP - creature->getBankCredits();
+	if (availableWalletRoom < amount) {
+		creature->sendSystemMessage("Your cash and bank balances are too full for this withdrawal.");
+		return;
+	}
 
 	{
 		TransactionLog trx(structure, creature, TrxCode::STRUCTUREMAINTANENCE, amount, true);
 		creature->addCashCredits(amount);
 		structure->subtractMaintenance(amount);
 	}
+	creature->sendSystemMessage("Withdrew " + String::valueOf(amount) + " maintenance credits.");
+}
+
+void StructureManager::withdrawPower(StructureObject* structure, CreatureObject* creature, int amount) {
+	if (structure == nullptr || creature == nullptr || !structure->isInstallationObject() || structure->isGeneratorObject())
+		return;
+	PlayerObject* ghost = creature->getPlayerObject();
+	if (ghost == nullptr || (!structure->isOwnedByAccount(creature) && !ghost->isAdmin())) {
+		creature->sendSystemMessage("Only the owning account or a game admin can withdraw power.");
+		return;
+	}
+	if (!creature->isInRange(structure, 20.f)) {
+		creature->sendSystemMessage("You are too far away.");
+		return;
+	}
+	structure->updateStructureStatus();
+	if (amount <= 0 || amount > ResourceContainer::MAXSIZE || amount > structure->getSurplusPower()) {
+		creature->sendSystemMessage("Enter an amount within the structure's available power, up to 100,000 units.");
+		return;
+	}
+	ResourceManager* manager = server->getResourceManager();
+	if (manager == nullptr || !manager->giveStoredPowerToPlayer(creature, amount)) {
+		creature->sendSystemMessage("Could not place Stored Power in your inventory. Check that it has room.");
+		return;
+	}
+	structure->addPower(-amount);
+	structure->updateToDatabase();
+	creature->sendSystemMessage("Withdrew " + String::valueOf(amount) + " power units as Stored Power.");
 }
 
 bool StructureManager::isInStructureFootprint(StructureObject* structure, float positionX, float positionY, int extraFootprintMargin) {

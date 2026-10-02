@@ -41,6 +41,7 @@
 - You are strictly forbidden from creating test files unless the user explicitly uses the phrase "write a test script for this".
 - Do not compile Core3, link/install a rebuilt executable, or run `core3` (including GDB/`runUnitTests`) unless explicitly requested.
 - Perform maximum validation within allowed folders before that point: check diffs, whitespace, and use static syntax checks.
+- Prefer TRE edits when they can provide the needed behavior; use code where TRE strings cannot.
 
 ## Maintaining History & Guidance
 - Update this file when standing project guidance changes.
