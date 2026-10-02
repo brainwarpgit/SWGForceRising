@@ -2,6 +2,10 @@
 
 ## 2026-10-02
 
+### Committed ground object visibility range
+
+- Changed `ZoneServer::CLOSEOBJECTRANGE` from 192 to 512 so ground-zone close-object tracking and object visibility use a 512-unit radius. `SPACECLOSEOBJECTRANGE` remains 2048. The ground quadtree's existing 768-unit search window still encloses this radius. A larger close-object set can increase per-player object updates and network traffic, particularly in dense areas. Source and whitespace review passed, and the user verified the change in game. The assistant did not build or run Core3 under project guidance.
+
 ### Committed baby creature highlighting in Area Track
 
 - The Area Track task now checks the creature's actual `isBaby()` state when listing animals. Baby entries use gold text for the entire row, including the displayed name and direction/distance details, then reset the text color so later rows remain normal. All Area Track result lists are sorted by distance, nearest first; babies keep their place in that order. NPC and player row styling is unaffected; range, skill gates, and tracking delay are unchanged. Source review and whitespace validation passed, and the user verified the result list in game. The assistant did not build or run Core3 under project guidance.

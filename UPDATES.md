@@ -2,6 +2,10 @@
 
 ## 2026-10-02
 
+### Committed ground object visibility range
+
+- Increased the server's ground close-object range from 192 to 512. Space visibility keeps its separate range. The user verified the change in game.
+
 ### Committed baby creature highlighting in Area Track
 
 - `/areatrack` results are listed nearest first. Baby creatures in the animal list display in gold while retaining their names and direction/distance details. The user verified the behavior in game.
