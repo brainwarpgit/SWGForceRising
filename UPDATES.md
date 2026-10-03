@@ -1,5 +1,11 @@
 # Project Updates
 
+## 2026-10-03
+
+### Committed weapon insurance
+
+- Eligible weapons can now be insured through the insurance terminal, individually or with Insure All. Insured weapons receive the existing reduced condition decay on death. The default weapon and other existing exclusions remain excluded. The user verified the behavior in game.
+
 ## 2026-10-02
 
 ### Committed attachment names showing skill mods

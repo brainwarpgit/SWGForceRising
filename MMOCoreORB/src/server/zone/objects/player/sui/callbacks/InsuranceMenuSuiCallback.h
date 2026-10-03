@@ -93,7 +93,9 @@ public:
 
 				Locker locker(item, player);
 
-				if (!(item->getOptionsBitmask() & OptionBitmask::INSURED) && (item->isArmorObject() || item->isWearableObject())) {
+				if (!(item->getOptionsBitmask() & OptionBitmask::INSURED) && item->isASubChildOf(player) &&
+					item->isInsurable() && !item->hasAntiDecayKit() && !item->isJediRobe() && !item->isUnionRing() &&
+					(item->isArmorObject() || item->isWearableObject() || item->isWeaponObject())) {
 
 					if (bank < cost) {
 						int diff = cost - bank;

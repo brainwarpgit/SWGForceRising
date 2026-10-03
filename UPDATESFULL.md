@@ -1,5 +1,12 @@
 # Detailed Project Updates
 
+## 2026-10-03
+
+### Committed weapon insurance
+
+- Added weapon objects to the existing insurance eligibility scan for inventory contents and equipped items. This makes eligible weapons appear in the terminal list and Insure All, with the same 100-credit cost per item. The default weapon, bank/datapad contents, items marked noninsurable, items with anti-decay kits, Jedi robes, and the Union Ring remain excluded.
+- The single-item confirmation now accepts eligible weapons and rechecks ownership and existing exclusions before charging. The death-decay path already uses the same eligibility scan, so an insured weapon takes the existing 1% condition loss and has insurance cleared after death; an uninsured weapon takes 5%. Source and whitespace review passed, and the user verified the behavior in game. The assistant did not build or run Core3 under project guidance.
+
 ## 2026-10-02
 
 ### Committed attachment names showing skill mods
