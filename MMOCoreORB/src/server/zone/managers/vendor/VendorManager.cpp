@@ -111,6 +111,7 @@ void VendorManager::handleDisplayStatus(CreatureObject* player, TangibleObject* 
 			               String::valueOf(vendorData->getMaint()) +
 			               "cr " + getTimeString( (uint32)secsRemaining ) );
 	statusBox->addMenuItem("Maintenance Rate: " + String::valueOf((int)vendorData->getMaintenanceRate()) + " cr/hr");
+	statusBox->addMenuItem("Sale Skim: " + String::valueOf(vendorData->getSkimPercent(owner)) + "% (after city tax)");
 
 	ManagedReference<AuctionManager*> auctionManager = server->getZoneServer()->getAuctionManager();
 	if(auctionManager == nullptr) {

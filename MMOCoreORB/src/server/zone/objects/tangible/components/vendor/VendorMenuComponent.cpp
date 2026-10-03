@@ -77,6 +77,8 @@ void VendorMenuComponent::fillObjectMenuResponse(SceneObject* sceneObject, Objec
 
 		menuResponse->addRadialMenuItemToRadialID(70, 73, 3, "@player_structure:pay_vendor_t");
 		menuResponse->addRadialMenuItemToRadialID(70, 74, 3, "@player_structure:withdraw_vendor_t");
+		if (player->hasSkill("crafting_merchant_master"))
+			menuResponse->addRadialMenuItemToRadialID(70, 80, 3, "Vendor Skimming");
 
 		if (vendorData->isVendorSearchEnabled()) {
 			menuResponse->addRadialMenuItemToRadialID(70, 75, 3, "@player_structure:disable_vendor_search");
@@ -153,6 +155,11 @@ int VendorMenuComponent::handleObjectMenuSelect(SceneObject* sceneObject,
 
 	case 74: {
 		vendorData->withdrawMaintanence();
+		return 0;
+	}
+
+	case 80: {
+		vendorData->promptSkimPercent(player);
 		return 0;
 	}
 

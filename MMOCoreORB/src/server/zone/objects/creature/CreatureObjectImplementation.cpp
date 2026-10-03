@@ -6,6 +6,9 @@
 #include "server/zone/objects/creature/CreatureObject.h"
 #include "server/zone/objects/creature/ai/AiAgent.h"
 #include "server/zone/objects/creature/ai/HelperDroidObject.h"
+#include "server/zone/objects/player/PlayerObject.h"
+#include "server/zone/objects/tangible/components/vendor/VendorDataComponent.h"
+#include "server/zone/objects/scene/components/DataObjectComponentReference.h"
 #include "templates/params/creature/CreatureState.h"
 #include "templates/params/creature/ObjectFlag.h"
 
@@ -1614,6 +1617,25 @@ void CreatureObjectImplementation::addSkill(Skill* skill, bool notifyClient, boo
 void CreatureObjectImplementation::removeSkill(Skill* skill, bool notifyClient) {
 	if (!skillList.contains(skill))
 		return;
+
+	if (skill->getSkillName() == "crafting_merchant_master") {
+		PlayerObject* ghost = getPlayerObject();
+		if (ghost != nullptr) {
+			const auto* vendors = ghost->getOwnedVendors();
+			for (int i = 0; i < vendors->size(); ++i) {
+				ManagedReference<SceneObject*> vendor = server->getZoneServer()->getObject(vendors->get(i));
+				if (vendor == nullptr)
+					continue;
+				DataObjectComponentReference* data = vendor->getDataObjectComponent();
+				if (data == nullptr || data->get() == nullptr || !data->get()->isVendorData())
+					continue;
+				Locker vlocker(vendor);
+				VendorDataComponent* vendorData = cast<VendorDataComponent*>(data->get());
+				if (vendorData != nullptr && vendorData->getOwnerId() == getObjectID())
+					vendorData->setSkimPercent(0);
+			}
+		}
+	}
 
 	if (notifyClient) {
 		CreatureObjectDeltaMessage1* msg =

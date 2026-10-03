@@ -20,6 +20,7 @@
 #include "server/zone/objects/transaction/TransactionLog.h"
 #include "server/zone/CloseObjectsVector.h"
 #include "server/zone/Zone.h"
+#include <climits>
 
 VendorDataComponent::VendorDataComponent() : AuctionTerminalDataComponent(), adBarkingMutex() {
 	ownerId = 0;
@@ -29,6 +30,7 @@ VendorDataComponent::VendorDataComponent() : AuctionTerminalDataComponent(), adB
 	disabled = false;
 	registered = false;
 	maintAmount = 0;
+	skimPercent = 0;
 	awardUsageXP = 0;
 	adBarking = false;
 	mail1Sent = false;
@@ -46,6 +48,7 @@ void VendorDataComponent::addSerializableVariables() {
 	addSerializableVariable("disabled", &disabled);
 	addSerializableVariable("registered", &registered);
 	addSerializableVariable("maintAmount", &maintAmount);
+	addSerializableVariable("skimPercent", &skimPercent);
 	addSerializableVariable("lastXpAward", &lastXpAward);
 	addSerializableVariable("awardUsageXP", &awardUsageXP);
 	addSerializableVariable("lastSuccessfulUpdate", &lastSuccessfulUpdate);
@@ -68,6 +71,7 @@ void VendorDataComponent::writeJSON(nlohmann::json& j) const {
 	SERIALIZE_JSON_MEMBER(disabled);
 	SERIALIZE_JSON_MEMBER(registered);
 	SERIALIZE_JSON_MEMBER(maintAmount);
+	SERIALIZE_JSON_MEMBER(skimPercent);
 	SERIALIZE_JSON_MEMBER(lastXpAward);
 	SERIALIZE_JSON_MEMBER(awardUsageXP);
 	SERIALIZE_JSON_MEMBER(lastSuccessfulUpdate);
@@ -344,6 +348,7 @@ void VendorDataComponent::runVendorUpdate() {
 
 	/// parent salaries
 	Locker vlocker(owner, vendor);
+	getSkimPercent(owner);
 	maintAmount -= getMaintenanceRate() * hoursSinceLastUpdate;
 
 	if (maintAmount < 0) {
@@ -448,6 +453,45 @@ float VendorDataComponent::getMaintenanceRate() {
 		maintRate += 6.f;
 
 	return maintRate;
+}
+
+int VendorDataComponent::getSkimPercent(CreatureObject* owner) {
+	if (owner == nullptr || owner->getObjectID() != ownerId || !owner->hasSkill("crafting_merchant_master")) {
+		skimPercent = 0;
+		return 0;
+	}
+
+	if (skimPercent < 0 || skimPercent > 100)
+		skimPercent = 0;
+
+	return skimPercent;
+}
+
+int VendorDataComponent::addSaleSkim(int amount) {
+	if (amount <= 0)
+		return maintAmount;
+
+	// Vendor maintenance is stored as an int; never overflow it on a large sale.
+	const int64 balance = (int64)maintAmount + amount;
+	maintAmount = balance > INT_MAX ? INT_MAX : (int)balance;
+	return maintAmount;
+}
+
+void VendorDataComponent::promptSkimPercent(CreatureObject* owner) {
+	ManagedReference<SceneObject*> strongParent = parent.get();
+	if (owner == nullptr || strongParent == nullptr || !isVendorOwner(owner) || !owner->hasSkill("crafting_merchant_master"))
+		return;
+
+	ManagedReference<SuiInputBox*> input = new SuiInputBox(owner, SuiWindowType::STRUCTURE_VENDOR_SKIM);
+	input->setPromptTitle("Vendor Skimming");
+	input->setPromptText("Set the percentage of each sale remaining after city tax to deposit into this vendor's maintenance. Enter 0 to disable skimming (0-100).");
+	input->setDefaultInput(String::valueOf(getSkimPercent(owner)));
+	input->setMaxInputSize(3);
+	input->setUsingObject(strongParent);
+	input->setForceCloseDistance(5.f);
+	input->setCallback(new VendorMaintSuiCallback(strongParent->getZoneServer()));
+	owner->getPlayerObject()->addSuiBox(input);
+	owner->sendMessage(input->generateMessage());
 }
 
 void VendorDataComponent::payMaintanence() {

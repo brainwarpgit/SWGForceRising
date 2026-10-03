@@ -43,9 +43,23 @@ public:
 				return;
 			}
 
-			if(sui->getWindowType() == SuiWindowType::STRUCTURE_VENDOR_PAY) {
+			if (vendorData->getOwnerId() != creature->getObjectID())
+				return;
+
+			if (sui->getWindowType() == SuiWindowType::STRUCTURE_VENDOR_SKIM) {
+				if (!creature->hasSkill("crafting_merchant_master")) {
+					vendorData->setSkimPercent(0);
+					return;
+				}
+				if (value < 0 || value > 100) {
+					creature->sendSystemMessage("Vendor skim must be between 0 and 100 percent.");
+					return;
+				}
+				vendorData->setSkimPercent(value);
+				creature->sendSystemMessage("Vendor skim set to " + String::valueOf(value) + "%.");
+			} else if(sui->getWindowType() == SuiWindowType::STRUCTURE_VENDOR_PAY) {
 				vendorData->handlePayMaintanence(value);
-			} else {
+			} else if (sui->getWindowType() == SuiWindowType::STRUCTURE_VENDOR_WITHDRAW) {
 				vendorData->handleWithdrawMaintanence(value);
 			}
 

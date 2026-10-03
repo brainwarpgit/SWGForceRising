@@ -2,6 +2,10 @@
 
 ## 2026-10-03
 
+### Committed vendor skimming
+
+- Master Merchants can set a separate 0–100% sale skim on each vendor. The skim goes into vendor maintenance after city sales tax is deducted; the rest is deposited into the seller's bank account. Vendor sale mail shows tax, skim, updated maintenance, and the bank deposit. A vendor's skim resets to zero when its owner loses Master Merchant. The update TRE stages a display-only Vendor Skimming ability in the Master Merchant skill box. Source and client asset format checks passed, and the user verified the behavior in game.
+
 ### Committed weapon insurance
 
 - Eligible weapons can now be insured through the insurance terminal, individually or with Insure All. Insured weapons receive the existing reduced condition decay on death. The default weapon and other existing exclusions remain excluded. The user verified the behavior in game.

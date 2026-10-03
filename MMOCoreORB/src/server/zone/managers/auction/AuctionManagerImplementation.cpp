@@ -35,6 +35,7 @@
 #include "AuctionSearchTask.h"
 #include "server/zone/objects/factorycrate/FactoryCrate.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
+#include <climits>
 
 void AuctionManagerImplementation::initialize() {
 	Locker locker(_this.getReferenceUnsafeStaticCast());
@@ -1028,6 +1029,20 @@ void AuctionManagerImplementation::doInstantBuy(CreatureObject* player, AuctionI
 	ManagedReference<ChatManager*> cman = zoneServer->getChatManager();
 	ManagedReference<PlayerManager*> pman = zoneServer->getPlayerManager();
 	ManagedReference<CreatureObject*> seller = pman->getPlayer(item->getOwnerName());
+	if (seller == nullptr) {
+		error() << "doInstantBuy: seller not found for " << item->getOwnerName();
+		return;
+	}
+
+	int skim = 0;
+	int maintenanceAfterSale = 0;
+	int skimPercent = 0;
+	VendorDataComponent* vendorData = nullptr;
+	if (!item->isOnBazaar()) {
+		DataObjectComponentReference* data = vendor->getDataObjectComponent();
+		if (data != nullptr && data->get() != nullptr && data->get()->isVendorData())
+			vendorData = cast<VendorDataComponent*>(data->get());
+	}
 
 	String sender = "auctioner";
 	String sellerName = item->getOwnerName();
@@ -1057,6 +1072,37 @@ void AuctionManagerImplementation::doInstantBuy(CreatureObject* player, AuctionI
 	trx.addRelatedObject(item->getAuctionedItemObjectID(), true);
 	trx.setExportRelatedObjects(true);
 	player->subtractCredits(item->getPrice(), true);
+
+	// The listed price includes city tax. Skim only the remainder and deposit
+	// the rest into the seller's bank account.
+	const int afterTax = item->getPrice() - tax;
+	if (vendorData != nullptr) {
+		Locker vlocker(vendor);
+		skimPercent = vendorData->getSkimPercent(seller);
+		if (skimPercent > 0 && afterTax > 0) {
+			const int wantedSkim = (int)((int64)afterTax * skimPercent / 100);
+			const int balance = vendorData->getMaint() > 0 ? vendorData->getMaint() : 0;
+			const int room = INT_MAX - balance;
+			skim = wantedSkim < room ? wantedSkim : room;
+			maintenanceAfterSale = vendorData->addSaleSkim(skim);
+		} else {
+			maintenanceAfterSale = vendorData->getMaint();
+		}
+	}
+	const int sellerDeposit = afterTax - skim;
+	{
+		Locker slocker(seller);
+		seller->addBankCredits(sellerDeposit);
+	}
+	trx.addState("vendorSkimPercent", skimPercent);
+	trx.addState("vendorSkimCredits", skim);
+	trx.addState("sellerBankDeposit", sellerDeposit);
+	trx.commit();
+	if (city != nullptr && tax > 0) {
+		TransactionLog trxFee(seller, TrxCode::CITYSALESTAX, tax, false);
+		trxFee.groupWith(trx);
+		trxFee.addState("cityRegionID", city->getObjectID());
+	}
 
 	BaseMessage* msg = new BidAuctionResponseMessage(item->getAuctionedItemObjectID(), 0);
 	player->sendMessage(msg);
@@ -1122,8 +1168,9 @@ void AuctionManagerImplementation::doInstantBuy(CreatureObject* player, AuctionI
 
 		//Send the Mail
 		locker.release();
+		UnicodeString sellerAccounting("City sales tax: " + String::valueOf(tax) + " credits.\nVendor skim: " + String::valueOf(skim) + " credits (" + String::valueOf(skimPercent) + "% of the price after tax).\nVendor maintenance after sale: " + String::valueOf(maintenanceAfterSale) + " credits.\nDeposited into your bank account: " + String::valueOf(sellerDeposit) + " credits.");
 		UnicodeString blankBody;
-		cman->sendMail(sender, sellerSubject, blankBody, sellerName, &sellerBodyVector, &sellerWaypointVector);
+		cman->sendMail(sender, sellerSubject, sellerAccounting, sellerName, &sellerBodyVector, &sellerWaypointVector);
 		cman->sendMail(sender, buyerSubject, blankBody, item->getBidderName(), &buyerBodyVector, &buyerWaypointVector);
 
 		if(auctionMap->getVendorItemCount(vendor, true) == 0)
@@ -1178,29 +1225,7 @@ void AuctionManagerImplementation::doInstantBuy(CreatureObject* player, AuctionI
 
 	}
 
-	if (seller == nullptr) {
-		// doInstantBuy(CreatureObject* player, AuctionItem* item)
-		trx.errorMessage() << "Null Seller: " + item->getOwnerName();
-		trx.commit();
-		error("seller null for name " + item->getOwnerName());
-
-		error() << "doInstantBuy(player=" << player->getObjectID() << ", item=" << item->getObjectID() << "): Seller not found [" << item->getOwnerName() << "], auctionItem: " << *item;
-		return;
-	}
-
 	locker.release();
-
-	Locker slocker(seller);
-	seller->addBankCredits(item->getPrice());
-	trx.commit();
-
-	if (city != nullptr && tax > 0) {
-		TransactionLog trxFee(seller, TrxCode::CITYSALESTAX, tax, false);
-		trxFee.groupWith(trx);
-		trxFee.addState("cityRegionID", city->getObjectID());
-		seller->subtractBankCredits(tax);
-	}
-	slocker.release();
 
 	if(city != nullptr && !city->isClientRegion() && tax){
 		Locker clock(city);

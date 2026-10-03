@@ -26,6 +26,7 @@ protected:
 	SerializableTime lastSuccessfulUpdate;
 
 	int maintAmount;
+	int skimPercent;
 
 	SerializableTime lastXpAward;
 	int awardUsageXP;
@@ -208,6 +209,11 @@ public:
 	inline int getMaint() {
 		return maintAmount;
 	}
+
+	int getSkimPercent(CreatureObject* owner);
+	void setSkimPercent(int percent) { skimPercent = percent; }
+	int addSaleSkim(int amount);
+	void promptSkimPercent(CreatureObject* owner);
 
 	// Days this vendor has had nothing for sale, drives EMPTYWARNING and EMPTYDELETE
 	inline int getEmptyDays() {

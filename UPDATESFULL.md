@@ -2,6 +2,12 @@
 
 ## 2026-10-03
 
+### Committed vendor skimming
+
+- Added a persistent skim percentage to each vendor, defaulting to zero. The vendor owner can set 0–100% from Vendor Control after learning Master Merchant; zero disables it. The vendor status window shows the current rate. Skill and ownership checks run again when the setting is submitted. Losing Master Merchant immediately resets the owner's vendors to zero; periodic vendor updates and sale/status access also clear stale saved rates.
+- Instant vendor sales now calculate the city's existing inclusive sales tax first, then skim the configured percentage of the post-tax price into that vendor's maintenance, and deposit the remainder into the seller's bank. The skim is capped by the vendor maintenance field's integer capacity. The seller's sale mail includes city tax, actual skim, updated maintenance balance, and bank deposit; bazaar and player-to-player payments are unaffected. The Master Merchant skill's client table and `cmd_n`/`cmd_d` strings are staged in `SWGFR_update_01` to show a Vendor Skimming ability without adding an executable command.
+- Source/diff checks and standalone client IFF/STF structure checks passed. The user verified the behavior in game. The assistant did not build or run Core3 under project guidance.
+
 ### Committed weapon insurance
 
 - Added weapon objects to the existing insurance eligibility scan for inventory contents and equipped items. This makes eligible weapons appear in the terminal list and Insure All, with the same 100-credit cost per item. The default weapon, bank/datapad contents, items marked noninsurable, items with anti-decay kits, Jedi robes, and the Union Ring remain excluded.
