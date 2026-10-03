@@ -13,6 +13,7 @@
 #include "server/zone/objects/player/sui/inputbox/SuiInputBox.h"
 #include "server/zone/objects/player/sui/transferbox/SuiTransferBox.h"
 #include "server/chat/ChatManager.h"
+#include "server/chat/WaypointChatParameter.h"
 #include "server/zone/objects/auction/events/UpdateVendorTask.h"
 #include "server/zone/managers/auction/AuctionManager.h"
 #include "server/zone/managers/player/PlayerManager.h"
@@ -35,6 +36,8 @@ VendorDataComponent::VendorDataComponent() : AuctionTerminalDataComponent(), adB
 	awardUsageXP = 0;
 	adBarking = false;
 	mail1Sent = false;
+	lowMaintenanceMailSent = false;
+	disabledMaintenanceMailSent = false;
 	barkMessage = "";
 	lastBark = 0;
 	originalDirection = 1000;
@@ -55,6 +58,8 @@ void VendorDataComponent::addSerializableVariables() {
 	addSerializableVariable("lastSuccessfulUpdate", &lastSuccessfulUpdate);
 	addSerializableVariable("adBarking", &adBarking);
 	addSerializableVariable("mail1Sent", &mail1Sent);
+	addSerializableVariable("lowMaintenanceMailSent", &lowMaintenanceMailSent);
+	addSerializableVariable("disabledMaintenanceMailSent", &disabledMaintenanceMailSent);
 	addSerializableVariable("emptyTimer", &emptyTimer);
 	addSerializableVariable("inactiveTimer", &inactiveTimer);
 	addSerializableVariable("barkMessage", &barkMessage);
@@ -78,6 +83,8 @@ void VendorDataComponent::writeJSON(nlohmann::json& j) const {
 	SERIALIZE_JSON_MEMBER(lastSuccessfulUpdate);
 	SERIALIZE_JSON_MEMBER(adBarking);
 	SERIALIZE_JSON_MEMBER(mail1Sent);
+	SERIALIZE_JSON_MEMBER(lowMaintenanceMailSent);
+	SERIALIZE_JSON_MEMBER(disabledMaintenanceMailSent);
 	SERIALIZE_JSON_MEMBER(emptyTimer);
 	SERIALIZE_JSON_MEMBER(inactiveTimer);
 	SERIALIZE_JSON_MEMBER(barkMessage);
@@ -359,6 +366,8 @@ void VendorDataComponent::runVendorUpdate() {
 		vendor->setMaxCondition(1000, true);
 	}
 
+	updateMaintenanceMail(owner);
+
 	if (isEmpty()) {
 		ManagedReference<ChatManager*> cman = strongParent->getZoneServer()->getChatManager();
 
@@ -432,6 +441,45 @@ void VendorDataComponent::runVendorUpdate() {
 	lastSuccessfulUpdate.updateToCurrentTime();
 }
 
+void VendorDataComponent::updateMaintenanceMail(CreatureObject* owner) {
+	if (maintAmount > LOWMAINTENANCE)
+		lowMaintenanceMailSent = false;
+	if (maintAmount > 0)
+		disabledMaintenanceMailSent = false;
+
+	const bool sendDisabled = maintAmount <= 0 && !disabledMaintenanceMailSent;
+	const bool sendLow = maintAmount > 0 && maintAmount <= LOWMAINTENANCE && !lowMaintenanceMailSent;
+	if (!sendDisabled && !sendLow)
+		return;
+
+	ManagedReference<SceneObject*> vendor = parent.get();
+	if (owner == nullptr || vendor == nullptr || vendor->getZone() == nullptr || vendor->getZoneServer() == nullptr)
+		return;
+
+	ManagedReference<ChatManager*> chatManager = vendor->getZoneServer()->getChatManager();
+	if (chatManager == nullptr)
+		return;
+
+	const String vendorName = vendor->getDisplayedName();
+	const String planetName = vendor->getZone()->getZoneName();
+	const String balance = String::valueOf(maintAmount);
+	UnicodeString subject(sendDisabled ? "Vendor Disabled: Maintenance Exhausted" : "Vendor Maintenance Low");
+	UnicodeString body(sendDisabled
+		? "Your vendor " + vendorName + " on " + planetName + " is disabled because its maintenance balance has reached zero or below. Current balance: " + balance + " credits. Pay maintenance to clear any debt and restore sales. Planetary search and registration may need to be re-enabled. Its location is attached as a waypoint."
+		: "Your vendor " + vendorName + " on " + planetName + " has low maintenance. Current balance: " + balance + " credits. Pay maintenance before it reaches zero. Its location is attached as a waypoint.");
+	WaypointChatParameter waypoint;
+	waypoint.set(vendorName, vendor->getWorldPositionX(), 0, vendor->getWorldPositionY(), vendor->getPlanetCRC());
+	WaypointChatParameterVector waypoints;
+	waypoints.add(waypoint);
+	StringIdChatParameterVector stringParameters;
+	if (chatManager->sendMail(vendorName, subject, body, owner->getFirstName(), &stringParameters, &waypoints) == ChatManager::IM_SUCCESS) {
+		if (sendDisabled)
+			disabledMaintenanceMailSent = true;
+		else
+			lowMaintenanceMailSent = true;
+	}
+}
+
 float VendorDataComponent::getMaintenanceRate() {
 	ManagedReference<SceneObject*> strongParent = parent.get();
 	if (strongParent == nullptr || strongParent->getZoneServer() == nullptr)
@@ -475,6 +523,10 @@ int VendorDataComponent::addSaleSkim(int amount) {
 	// Vendor maintenance is stored as an int; never overflow it on a large sale.
 	const int64 balance = (int64)maintAmount + amount;
 	maintAmount = balance > INT_MAX ? INT_MAX : (int)balance;
+	if (maintAmount > LOWMAINTENANCE)
+		lowMaintenanceMailSent = false;
+	if (maintAmount > 0)
+		disabledMaintenanceMailSent = false;
 	return maintAmount;
 }
 
@@ -555,6 +607,7 @@ void VendorDataComponent::handlePayMaintanence(int value) {
 		if (!owner->subtractCredits(value, true))
 			return;
 		maintAmount += value;
+		updateMaintenanceMail(owner);
 
 		StringIdChatParameter message("@player_structure:vendor_maint_accepted");
 		message.setDI(maintAmount);
@@ -618,6 +671,7 @@ void VendorDataComponent::handleWithdrawMaintanence(int value) {
 		TransactionLog trx(strongParent, owner, TrxCode::VENDORMAINTANENCE, value, true);
 		maintAmount -= value;
 		owner->addBankCredits(value, true);
+		updateMaintenanceMail(owner);
 	}
 
 	StringIdChatParameter message("@player_structure:vendor_withdraw"); // You successfully withdraw %DI credits from the maintenance pool.

@@ -2,6 +2,11 @@
 
 ## 2026-10-03
 
+### Committed vendor maintenance notices
+
+- Added persistent per-vendor flags for low-maintenance and disabled notices. The hourly vendor update sends a low warning when maintenance first falls to 300 credits or less while still positive, and a disabled notice when it reaches zero or below. Payments and withdrawals also check the thresholds immediately. Replenishing above 300 resets the low warning; restoring a positive balance resets the disabled notice. Sale skims that replenish maintenance reset the flags as appropriate. Mail submission failures leave the flag unset so a later update can retry. The temporary 60-second testing interval was restored to the original staggered startup and hourly timing before commit.
+- Both notices include the displayed vendor name, planet, current balance, and an attached world waypoint. The disabled notice explains that any negative balance must be paid off before sales resume and that planetary search or registration may need to be re-enabled. Existing strike, condition-damage, and lifecycle rules are unchanged. Source review and whitespace checks passed, and the user verified the behavior in game. The assistant did not build or run Core3 under project guidance.
+
 ### Committed vendor maintenance sliders
 
 - Replaced the vendor maintenance input boxes with transfer slider windows. Payment offers up to the lesser of available cash plus bank credits, the existing 100,000-credit per-payment cap, and remaining maintenance capacity. Withdrawal offers up to the vendor's current positive maintenance balance. The callback reads the selected transfer amount from the slider response and leaves the Vendor Skimming percentage as an input box. Existing owner, payment, and withdrawal validations remain active when the window is submitted.

@@ -37,6 +37,8 @@ protected:
 	SerializableTime inactiveTimer;
 
 	bool mail1Sent;
+	bool lowMaintenanceMailSent;
+	bool disabledMaintenanceMailSent;
 
 	Vector<uint64> vendorBarks;
 	uint64 lastBark;
@@ -65,6 +67,7 @@ public:
 		EMPTYDELETE         = 60 * 60 * 24 * 28, // 28 days
 
 		DELETEWARNING       = 60 * 60 * 24 * 100, // 100 days
+		LOWMAINTENANCE      = 300, // Credits remaining
 
 		BARKRANGE           = 15, // 15 Meters
 		BARKINTERVAL        = 60 * 2, // 2 Minutes
@@ -92,6 +95,7 @@ public:
 	}
 
 	void runVendorUpdate();
+	void updateMaintenanceMail(CreatureObject* owner);
 
 	void writeJSON(nlohmann::json& j) const;
 
