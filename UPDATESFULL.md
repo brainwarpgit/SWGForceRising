@@ -2,6 +2,11 @@
 
 ## 2026-10-03
 
+### Committed vendor maintenance sliders
+
+- Replaced the vendor maintenance input boxes with transfer slider windows. Payment offers up to the lesser of available cash plus bank credits, the existing 100,000-credit per-payment cap, and remaining maintenance capacity. Withdrawal offers up to the vendor's current positive maintenance balance. The callback reads the selected transfer amount from the slider response and leaves the Vendor Skimming percentage as an input box. Existing owner, payment, and withdrawal validations remain active when the window is submitted.
+- Source and whitespace checks passed, and the user verified paying and withdrawing vendor maintenance in game. The assistant did not build or run Core3 under project guidance.
+
 ### Committed vendor skimming
 
 - Added a persistent skim percentage to each vendor, defaulting to zero. The vendor owner can set 0–100% from Vendor Control after learning Master Merchant; zero disables it. The vendor status window shows the current rate. Skill and ownership checks run again when the setting is submitted. Losing Master Merchant immediately resets the owner's vendors to zero; periodic vendor updates and sale/status access also clear stale saved rates.

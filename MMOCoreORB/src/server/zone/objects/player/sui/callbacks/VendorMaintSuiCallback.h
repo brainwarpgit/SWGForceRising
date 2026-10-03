@@ -21,12 +21,17 @@ public:
 	void run(CreatureObject* creature, SuiBox* sui, uint32 eventIndex, Vector<UnicodeString>* args) {
 		bool cancelPressed = (eventIndex == 1);
 
-		if (!sui->isInputBox() || creature == nullptr || cancelPressed || args->size() <= 0) {
+		if (creature == nullptr || sui == nullptr || cancelPressed || args == nullptr) {
 			return;
 		}
 
+		const bool skimInput = sui->getWindowType() == SuiWindowType::STRUCTURE_VENDOR_SKIM;
+		if ((skimInput && (!sui->isInputBox() || args->size() < 1)) ||
+			(!skimInput && (!sui->isTransferBox() || args->size() < 2)))
+			return;
+
 		try {
-			int value = Integer::valueOf(args->get(0).toString());
+			int value = Integer::valueOf(args->get(skimInput ? 0 : 1).toString());
 
 			ManagedReference<SceneObject*> vendor = sui->getUsingObject().get();
 

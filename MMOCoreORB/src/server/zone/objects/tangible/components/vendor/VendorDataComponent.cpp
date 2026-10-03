@@ -11,6 +11,7 @@
 #include "server/zone/objects/player/PlayerObject.h"
 #include "server/zone/objects/player/sui/callbacks/VendorMaintSuiCallback.h"
 #include "server/zone/objects/player/sui/inputbox/SuiInputBox.h"
+#include "server/zone/objects/player/sui/transferbox/SuiTransferBox.h"
 #include "server/chat/ChatManager.h"
 #include "server/zone/objects/auction/events/UpdateVendorTask.h"
 #include "server/zone/managers/auction/AuctionManager.h"
@@ -503,15 +504,27 @@ void VendorDataComponent::payMaintanence() {
 	if(owner == nullptr)
 		return;
 
-	ManagedReference<SuiInputBox*> input = new SuiInputBox(owner, SuiWindowType::STRUCTURE_VENDOR_PAY);
-	input->setPromptTitle("@player_structure:pay_vendor_t"); //Add Militia Member
-	input->setPromptText("@player_structure:pay_vendor_d");
-	input->setUsingObject(strongParent);
-	input->setForceCloseDistance(5.f);
-	input->setCallback(new VendorMaintSuiCallback(strongParent->getZoneServer()));
+	const int64 availableCredits = (int64)owner->getCashCredits() + owner->getBankCredits();
+	const int64 maintenanceRoom = (int64)INT_MAX - maintAmount;
+	int maximum = (int)(availableCredits < 100000 ? availableCredits : 100000);
+	if (maintenanceRoom < maximum)
+		maximum = (int)maintenanceRoom;
+	if (maximum <= 0) {
+		owner->sendSystemMessage("No credits can be added to this vendor's maintenance right now.");
+		return;
+	}
 
-	owner->getPlayerObject()->addSuiBox(input);
-	owner->sendMessage(input->generateMessage());
+	ManagedReference<SuiTransferBox*> transfer = new SuiTransferBox(owner, SuiWindowType::STRUCTURE_VENDOR_PAY);
+	transfer->setPromptTitle("@player_structure:pay_vendor_t");
+	transfer->setPromptText("Select the amount to pay into vendor maintenance. Current pool: " + String::valueOf(maintAmount));
+	transfer->setUsingObject(strongParent);
+	transfer->setForceCloseDistance(5.f);
+	transfer->setCallback(new VendorMaintSuiCallback(strongParent->getZoneServer()));
+	transfer->addFrom("Maximum Payment", String::valueOf(maximum), String::valueOf(maximum), "1");
+	transfer->addTo("Maintenance Payment", "0", "0", "1");
+
+	owner->getPlayerObject()->addSuiBox(transfer);
+	owner->sendMessage(transfer->generateMessage());
 
 }
 
@@ -528,9 +541,12 @@ void VendorDataComponent::handlePayMaintanence(int value) {
 		owner->sendSystemMessage("@player_structure:vendor_maint_invalid");
 		return;
 	}
-
 	if(value <= 0) {
 		owner->sendSystemMessage("@player_structure:amt_greater_than_zero");
+		return;
+	}
+	if ((int64)maintAmount + value > INT_MAX) {
+		owner->sendSystemMessage("This payment would exceed the vendor maintenance limit.");
 		return;
 	}
 
@@ -558,15 +574,22 @@ void VendorDataComponent::withdrawMaintanence() {
 	if(owner == nullptr)
 		return;
 
-	ManagedReference<SuiInputBox*> input = new SuiInputBox(owner, SuiWindowType::STRUCTURE_VENDOR_WITHDRAW);
-	input->setPromptTitle("@player_structure:withdraw_vendor_t"); //Add Militia Member
-	input->setPromptText("@player_structure:withdraw_vendor_d");
-	input->setUsingObject(strongParent);
-	input->setForceCloseDistance(5.f);
-	input->setCallback(new VendorMaintSuiCallback(strongParent->getZoneServer()));
+	if (maintAmount <= 0) {
+		owner->sendSystemMessage("This vendor has no maintenance credits to withdraw.");
+		return;
+	}
 
-	owner->getPlayerObject()->addSuiBox(input);
-	owner->sendMessage(input->generateMessage());
+	ManagedReference<SuiTransferBox*> transfer = new SuiTransferBox(owner, SuiWindowType::STRUCTURE_VENDOR_WITHDRAW);
+	transfer->setPromptTitle("@player_structure:withdraw_vendor_t");
+	transfer->setPromptText("Select the amount to withdraw from vendor maintenance.");
+	transfer->setUsingObject(strongParent);
+	transfer->setForceCloseDistance(5.f);
+	transfer->setCallback(new VendorMaintSuiCallback(strongParent->getZoneServer()));
+	transfer->addFrom("Maintenance Pool", String::valueOf(maintAmount), String::valueOf(maintAmount), "1");
+	transfer->addTo("Withdrawal", "0", "0", "1");
+
+	owner->getPlayerObject()->addSuiBox(transfer);
+	owner->sendMessage(transfer->generateMessage());
 
 }
 

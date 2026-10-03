@@ -2,6 +2,10 @@
 
 ## 2026-10-03
 
+### Committed vendor maintenance sliders
+
+- Vendor Pay Maintenance and Withdraw Maintenance now use slider windows showing the available amount and selected payment or withdrawal. The existing payment cap and balance checks remain in place. Source and whitespace checks passed, and the user verified the behavior in game.
+
 ### Committed vendor skimming
 
 - Master Merchants can set a separate 0–100% sale skim on each vendor. The skim goes into vendor maintenance after city sales tax is deducted; the rest is deposited into the seller's bank account. Vendor sale mail shows tax, skim, updated maintenance, and the bank deposit. A vendor's skim resets to zero when its owner loses Master Merchant. The update TRE stages a display-only Vendor Skimming ability in the Master Merchant skill box. Source and client asset format checks passed, and the user verified the behavior in game.
