@@ -10,6 +10,7 @@
 #include "server/zone/managers/vendor/VendorManager.h"
 #include "server/zone/objects/player/PlayerObject.h"
 #include "server/zone/objects/player/sui/callbacks/VendorMaintSuiCallback.h"
+#include "server/zone/objects/player/sui/callbacks/VendorQuickMaintenanceSuiCallback.h"
 #include "server/zone/objects/player/sui/inputbox/SuiInputBox.h"
 #include "server/zone/objects/player/sui/transferbox/SuiTransferBox.h"
 #include "server/chat/ChatManager.h"
@@ -33,6 +34,7 @@ VendorDataComponent::VendorDataComponent() : AuctionTerminalDataComponent(), adB
 	registered = false;
 	maintAmount = 0;
 	skimPercent = 0;
+	quickMaintenanceAmount = 10000;
 	awardUsageXP = 0;
 	adBarking = false;
 	mail1Sent = false;
@@ -53,6 +55,7 @@ void VendorDataComponent::addSerializableVariables() {
 	addSerializableVariable("registered", &registered);
 	addSerializableVariable("maintAmount", &maintAmount);
 	addSerializableVariable("skimPercent", &skimPercent);
+	addSerializableVariable("quickMaintenanceAmount", &quickMaintenanceAmount);
 	addSerializableVariable("lastXpAward", &lastXpAward);
 	addSerializableVariable("awardUsageXP", &awardUsageXP);
 	addSerializableVariable("lastSuccessfulUpdate", &lastSuccessfulUpdate);
@@ -78,6 +81,7 @@ void VendorDataComponent::writeJSON(nlohmann::json& j) const {
 	SERIALIZE_JSON_MEMBER(registered);
 	SERIALIZE_JSON_MEMBER(maintAmount);
 	SERIALIZE_JSON_MEMBER(skimPercent);
+	SERIALIZE_JSON_MEMBER(quickMaintenanceAmount);
 	SERIALIZE_JSON_MEMBER(lastXpAward);
 	SERIALIZE_JSON_MEMBER(awardUsageXP);
 	SERIALIZE_JSON_MEMBER(lastSuccessfulUpdate);
@@ -543,6 +547,24 @@ void VendorDataComponent::promptSkimPercent(CreatureObject* owner) {
 	input->setUsingObject(strongParent);
 	input->setForceCloseDistance(5.f);
 	input->setCallback(new VendorMaintSuiCallback(strongParent->getZoneServer()));
+	owner->getPlayerObject()->addSuiBox(input);
+	owner->sendMessage(input->generateMessage());
+}
+
+void VendorDataComponent::promptQuickMaintenance(CreatureObject* owner) {
+	ManagedReference<SceneObject*> vendor = parent.get();
+	if (owner == nullptr || vendor == nullptr || vendor->getZoneServer() == nullptr || !isInitialized() || !isVendorOwner(owner) || owner->getPlayerObject() == nullptr)
+		return;
+
+	ManagedReference<SuiInputBox*> input = new SuiInputBox(owner, SuiWindowType::STRUCTURE_VENDOR_QUICK_MAINTENANCE);
+	input->setPromptTitle("Set Quick Maintenance");
+	input->setPromptText("Current amount: " + String::valueOf(quickMaintenanceAmount)
+			+ "\nEnter the credits to pay each time (0-100,000). Setting this to 0 hides the Quick Maintenance option.");
+	input->setDefaultInput(String::valueOf(quickMaintenanceAmount));
+	input->setMaxInputSize(6);
+	input->setUsingObject(vendor);
+	input->setForceCloseDistance(5.f);
+	input->setCallback(new VendorQuickMaintenanceSuiCallback(vendor->getZoneServer()));
 	owner->getPlayerObject()->addSuiBox(input);
 	owner->sendMessage(input->generateMessage());
 }

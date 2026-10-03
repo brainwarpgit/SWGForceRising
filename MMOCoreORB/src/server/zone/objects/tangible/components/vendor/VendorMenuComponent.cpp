@@ -13,6 +13,7 @@
 #include "server/zone/packets/object/ObjectMenuResponse.h"
 #include "server/zone/objects/player/sessions/vendor/VendorAdBarkingSession.h"
 #include "server/zone/managers/vendor/VendorManager.h"
+#include "server/zone/managers/structure/StructureManager.h"
 #include "server/zone/ZoneProcessServer.h"
 
 void VendorMenuComponent::fillObjectMenuResponse(SceneObject* sceneObject, ObjectMenuResponse* menuResponse, CreatureObject* player) const {
@@ -50,6 +51,12 @@ void VendorMenuComponent::fillObjectMenuResponse(SceneObject* sceneObject, Objec
 		return;
 	}
 
+	if (playerIsOwner && vendorData->isInitialized() && vendorData->getQuickMaintenanceAmount() > 0) {
+		menuResponse->addRadialMenuItem(243, 3, "Quick Options");
+		menuResponse->addRadialMenuItemToRadialID(243, 244, 3,
+				StructureManager::formatQuickAmount(vendorData->getQuickMaintenanceAmount()) + " Maintenance");
+	}
+
 	menuResponse->addRadialMenuItem(70, 3, "@player_structure:vendor_control");
 
 	// Privileged access
@@ -77,6 +84,7 @@ void VendorMenuComponent::fillObjectMenuResponse(SceneObject* sceneObject, Objec
 
 		menuResponse->addRadialMenuItemToRadialID(70, 73, 3, "@player_structure:pay_vendor_t");
 		menuResponse->addRadialMenuItemToRadialID(70, 74, 3, "@player_structure:withdraw_vendor_t");
+		menuResponse->addRadialMenuItemToRadialID(70, 247, 3, "Set Quick Maintenance Amount");
 		if (player->hasSkill("crafting_merchant_master"))
 			menuResponse->addRadialMenuItemToRadialID(70, 80, 3, "Vendor Skimming");
 
@@ -143,6 +151,17 @@ int VendorMenuComponent::handleObjectMenuSelect(SceneObject* sceneObject,
 	}
 
 	switch (selectedID) {
+	case 244: {
+		if (vendorData->isInitialized() && vendorData->getQuickMaintenanceAmount() > 0 && vendor->isInRange(player, 8.f))
+			vendorData->handlePayMaintanence(vendorData->getQuickMaintenanceAmount());
+		return 0;
+	}
+
+	case 247: {
+		vendorData->promptQuickMaintenance(player);
+		return 0;
+	}
+
 	case 71: {
 		VendorManager::instance()->handleDisplayStatus(player, vendor);
 		return 0;

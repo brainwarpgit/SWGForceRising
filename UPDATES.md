@@ -2,6 +2,10 @@
 
 ## 2026-10-03
 
+### Committed per-vendor Quick Maintenance
+
+- Each vendor now has its own Quick Maintenance amount, defaulting to 10,000 credits. The owner can pay it from Quick Options or change it under Vendor Control; setting it to zero hides the shortcut. The regular vendor payment limit and credit checks apply. The user verified the behavior in game.
+
 ### Committed vendor maintenance notices
 
 - Vendors send the owner a low-maintenance email when the balance reaches 300 credits or less, then a disabled email when it reaches zero or below. Each includes the vendor name, planet, current balance, and a waypoint. Notices are sent once per threshold crossing and reset when maintenance is replenished. The user verified the behavior in game.

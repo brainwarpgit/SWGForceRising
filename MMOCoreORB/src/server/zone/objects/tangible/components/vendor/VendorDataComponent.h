@@ -27,6 +27,7 @@ protected:
 
 	int maintAmount;
 	int skimPercent;
+	int quickMaintenanceAmount;
 
 	SerializableTime lastXpAward;
 	int awardUsageXP;
@@ -213,6 +214,10 @@ public:
 	inline int getMaint() {
 		return maintAmount;
 	}
+
+	int getQuickMaintenanceAmount() const { return quickMaintenanceAmount; }
+	void setQuickMaintenanceAmount(int amount) { quickMaintenanceAmount = amount; }
+	void promptQuickMaintenance(CreatureObject* owner);
 
 	int getSkimPercent(CreatureObject* owner);
 	void setSkimPercent(int percent) { skimPercent = percent; }

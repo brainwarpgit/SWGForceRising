@@ -2,6 +2,11 @@
 
 ## 2026-10-03
 
+### Committed per-vendor Quick Maintenance
+
+- Added a persistent quick maintenance amount to vendor data, defaulting to 10,000 credits for new and existing vendors. Initialized vendor owners see a Quick Options radial with a compact amount label and a single-click maintenance payment. Vendor Control contains a setting window for 0–100,000 credits per payment; setting zero hides Quick Options. The shortcut uses the existing vendor maintenance payment path, including credit availability, per-payment limit, maintenance capacity, transaction logging, and low-maintenance mail state updates. Owner and proximity checks run again on use, and the setting is persisted when submitted.
+- Source and whitespace checks passed, and the user verified the behavior in game. The assistant did not build or run Core3 under project guidance.
+
 ### Committed vendor maintenance notices
 
 - Added persistent per-vendor flags for low-maintenance and disabled notices. The hourly vendor update sends a low warning when maintenance first falls to 300 credits or less while still positive, and a disabled notice when it reaches zero or below. Payments and withdrawals also check the thresholds immediately. Replenishing above 300 resets the low warning; restoring a positive balance resets the disabled notice. Sale skims that replenish maintenance reset the flags as appropriate. Mail submission failures leave the flag unset so a later update can retry. The temporary 60-second testing interval was restored to the original staggered startup and hourly timing before commit.
