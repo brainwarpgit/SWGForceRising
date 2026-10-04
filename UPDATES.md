@@ -2,6 +2,10 @@
 
 ## 2026-10-04
 
+### Committed luck-based credit loot
+
+- Luck and Force Luck now combine to increase credits looted from creatures. A random roll from their total adds effective creature levels to the existing credit roll. In groups, the looter's bonus increases the amount shared among eligible members.
+
 ### Committed luck attachments and skill names
 
 - Luck can now roll on looted clothing and armor attachments and on looted clothing. The update TRE source adds separate Luck and Force Luck names and general descriptions; Force Luck keeps a Jedi theme.

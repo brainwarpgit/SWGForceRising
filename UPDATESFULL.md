@@ -2,6 +2,10 @@
 
 ## 2026-10-04
 
+### Committed luck-based credit loot
+
+- Solo and group creature-credit claims now roll from the looter's combined `luck` and `force_luck` skill modifiers, clamped at zero. The result adds effective creature levels to the credit calculation. The existing corpse credit roll is scaled by the ratio of expected credits at the boosted and original levels, so a zero roll leaves the original award intact and event or custom credit amounts are preserved proportionally. In groups, the looter's combined luck affects the total before it is divided among nearby eligible members, matching the previous group bonus ownership. The former fixed Force Luck-only bonus is replaced, not stacked. Source and whitespace review passed, and the user verified the behavior in game. The assistant did not build or run Core3.
+
 ### Committed luck attachments and skill names
 
 - Added `luck` to both random clothing and armor attachment modifier lists and to `lootableClothingStatMods`, so looted clothing can also roll it. The attachments use the existing attachment stat-roll path; the modifier can also be selected by the previously added `/object createattachment` admin option.

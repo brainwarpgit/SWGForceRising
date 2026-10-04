@@ -13,6 +13,7 @@
 #include "server/zone/managers/group/GroupManager.h"
 #include "server/zone/objects/player/sessions/LootLotterySession.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
+#include "server/zone/managers/loot/LootCreditBonus.h"
 
 class GroupLootTask : public Task {
 	ManagedReference<GroupObject*> group;
@@ -132,10 +133,7 @@ public:
 		if (lootCredits < 1)
 			return;
 
-		int luck = player->getSkillMod("force_luck");
-
-		if (luck > 0)
-			lootCredits += (lootCredits * luck) / 20;
+		lootCredits = LootCreditBonus::apply(lootCredits, corpse->getLevel(), player);
 
 		Locker clocker(group, corpse);
 

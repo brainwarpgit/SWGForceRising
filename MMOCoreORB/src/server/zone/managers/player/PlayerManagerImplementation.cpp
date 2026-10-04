@@ -61,6 +61,7 @@
 #include "server/zone/objects/player/sui/listbox/SuiListBox.h"
 #include "server/zone/objects/cell/CellObject.h"
 #include "server/zone/managers/skill/SkillManager.h"
+#include "server/zone/managers/loot/LootCreditBonus.h"
 #include "server/zone/objects/player/FactionStatus.h"
 #include "server/zone/managers/planet/PlanetManager.h"
 
@@ -4234,10 +4235,7 @@ void PlayerManagerImplementation::lootAll(CreatureObject* player, CreatureObject
 	int cashCredits = ai->getCashCredits();
 
 	if (cashCredits > 0) {
-		int luck = player->getSkillMod("force_luck");
-
-		if (luck > 0)
-			cashCredits += (cashCredits * luck) / 20;
+		cashCredits = LootCreditBonus::apply(cashCredits, ai->getLevel(), player);
 
 		{
 			TransactionLog trx(ai, player, TrxCode::NPCLOOTCLAIM, cashCredits, true);
