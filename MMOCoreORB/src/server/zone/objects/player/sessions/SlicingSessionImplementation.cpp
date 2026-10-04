@@ -707,9 +707,15 @@ void SlicingSessionImplementation::handleContainerSlice() {
 	Locker inventoryLocker(inventory);
 
 	LootManager* lootManager = player->getZoneServer()->getLootManager();
+	bool isLockedBriefcase = tangibleObject->getGameObjectType() == SceneObjectType::PLAYERLOOTCRATE &&
+			tangibleObject->getObjectTemplate() != nullptr &&
+			tangibleObject->getObjectTemplate()->getFullTemplateString() == "object/tangible/loot/misc/briefcase_s01.iff";
 
 	if (tangibleObject->getGameObjectType() == SceneObjectType::PLAYERLOOTCRATE) {
-		Reference<SceneObject*> containerSceno = player->getZoneServer()->createObject(STRING_HASHCODE("object/tangible/container/loot/loot_crate.iff"), 1);
+		uint32 containerTemplate = isLockedBriefcase ?
+				STRING_HASHCODE("object/tangible/container/loot/unlocked_briefcase.iff") :
+				STRING_HASHCODE("object/tangible/container/loot/loot_crate.iff");
+		Reference<SceneObject*> containerSceno = player->getZoneServer()->createObject(containerTemplate, 1);
 
 		if (containerSceno == nullptr)
 			return;
@@ -722,6 +728,8 @@ void SlicingSessionImplementation::handleContainerSlice() {
 			containerSceno->destroyObjectFromDatabase(true);
 			return;
 		}
+		if (isLockedBriefcase)
+			container->setCustomObjectName(UnicodeString("Unlocked Briefcase"), false);
 
 		TransactionLog trx(TrxCode::SLICECONTAINER, player, container);
 
@@ -729,7 +737,11 @@ void SlicingSessionImplementation::handleContainerSlice() {
 			lootManager->createLoot(trx, container, "looted_container");
 		}
 
-		inventory->transferObject(container, -1);
+		if (!inventory->transferObject(container, -1) || !inventory->hasObjectInContainer(container->getObjectID())) {
+			container->destroyObjectFromDatabase(true);
+			player->sendSystemMessage("The sliced container could not be placed in your inventory. The locked item was preserved.");
+			return;
+		}
 		container->sendTo(player, true);
 
 		trx.commit();

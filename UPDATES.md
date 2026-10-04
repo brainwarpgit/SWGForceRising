@@ -2,6 +2,10 @@
 
 ## 2026-10-04
 
+### Committed locked briefcase slicing
+
+- Newly looted locked briefcases can be sliced like locked loot crates. Slicing replaces one with an openable “Unlocked Briefcase” holding the same loot roll and keeping the briefcase appearance. The update TRE stages the new container template and its object-template CRC table entry. Quest briefcases keep their existing behavior.
+
 ### Committed luck-based credit loot
 
 - Luck and Force Luck now combine to increase credits looted from creatures. A random roll from their total adds effective creature levels to the existing credit roll. In groups, the looter's bonus increases the amount shared among eligible members.

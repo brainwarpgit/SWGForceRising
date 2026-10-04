@@ -277,6 +277,12 @@ object_tangible_container_loot_shared_loot_crate = SharedTangibleObjectTemplate:
 
 ObjectTemplates:addClientTemplate(object_tangible_container_loot_shared_loot_crate, "object/tangible/container/loot/shared_loot_crate.iff")
 
+object_tangible_container_loot_shared_unlocked_briefcase = SharedTangibleObjectTemplate:new {
+	clientTemplateFileName = "object/tangible/container/loot/shared_unlocked_briefcase.iff"
+}
+
+ObjectTemplates:addClientTemplate(object_tangible_container_loot_shared_unlocked_briefcase, "object/tangible/container/loot/shared_unlocked_briefcase.iff")
+
 object_tangible_container_loot_shared_placable_loot_crate = SharedTangibleObjectTemplate:new {
 	clientTemplateFileName = "object/tangible/container/loot/shared_placable_loot_crate.iff"
 	--Data below here is deprecated and loaded from the tres, keeping for easy lookups

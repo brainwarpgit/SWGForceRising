@@ -2,6 +2,11 @@
 
 ## 2026-10-04
 
+### Committed locked briefcase slicing
+
+- Newly generated `locked_briefcase` loot retains `briefcase_s01.iff` and gains the locked-crate slicing behavior. A successful slice replaces it with an openable container named “Unlocked Briefcase”; the usual `looted_container` reward roll stays inside. Quest briefcases sharing the original asset remain unsliceable, and previously looted briefcases retain their old object type. The replacement uses the normal loot-container component, and a failed inventory transfer preserves the locked item instead of destroying it.
+- Staged `object/tangible/container/loot/shared_unlocked_briefcase.iff` with the existing briefcase appearance and added its path to `misc/object_template_crc_string_table.iff`. The temporary success message, client-visibility check, and duplicate Lua template fields used during diagnosis were removed; the transfer safety check remains. Static IFF structure, all CRC-table entries, source references, and whitespace checks passed. The user verified the final behavior in game; the assistant did not build or run Core3.
+
 ### Committed luck-based credit loot
 
 - Solo and group creature-credit claims now roll from the looter's combined `luck` and `force_luck` skill modifiers, clamped at zero. The result adds effective creature levels to the credit calculation. The existing corpse credit roll is scaled by the ratio of expected credits at the boosted and original levels, so a zero roll leaves the original award intact and event or custom credit amounts are preserved proportionally. In groups, the looter's combined luck affects the total before it is divided among nearby eligible members, matching the previous group bonus ownership. The former fixed Force Luck-only bonus is replaced, not stacked. Source and whitespace review passed, and the user verified the behavior in game. The assistant did not build or run Core3.
