@@ -2,6 +2,10 @@
 
 ## 2026-10-04
 
+### Committed looted wearable sockets
+
+- Added `Core3.LootManager.LootedWearableSockets` to the main and local Lua configurations. The tracked configuration is disabled and the ignored local configuration is enabled; the code fallback is disabled if the setting is absent. The loot creation path uses `LootValues::getDistributedValue` to roll 0–4 sockets for new wearable objects, including armor and wearable containers. This is the existing creature-level-weighted loot distribution, so low-level creatures are more likely to yield zero sockets and higher-level creatures tend toward more sockets. Any nonzero socket count already supplied by an object template is preserved. The template loader still skips the `sockets` experimental attribute: merely removing that skip would invoke the crafter-based generation path without a crafter, while most wearable templates specify a 0–0 socket range. This does not modify crafted socket generation or existing items. Turning the switch off stops socket assignment on subsequently generated loot. Source and whitespace review passed, and the user verified the behavior. The assistant did not build or run Core3.
+
 ### Committed quick-option visibility
 
 - Installation Quick Maintenance and Quick Power appear independently when their own amounts are positive; setting either to zero hides only that shortcut. Withdraw All Resources appears on harvesters and generators only when the hopper contains at least one positive-quantity resource entry with a valid spawn. Quick Options appears when any of these shortcuts is available and hides when none are. Building terminals and vendors already hide their Quick Options radial when Quick Maintenance is zero, and the city shortcut continues to hide when Quick Treasury is zero. Source and whitespace review passed, and the user verified the behavior in game. The assistant did not build or run Core3.

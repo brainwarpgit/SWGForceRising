@@ -2,6 +2,10 @@
 
 ## 2026-10-04
 
+### Committed looted wearable sockets
+
+- Newly looted clothing, armor, and wearable containers can roll 0–4 sockets using the creature-level-weighted loot distribution. `Core3.LootManager.LootedWearableSockets` enables or disables this without changing crafted wearables or existing items. The tracked configuration is disabled; the local configuration is enabled.
+
 ### Committed quick-option visibility
 
 - Installation Quick Maintenance and Quick Power appear independently when their own amounts are enabled. Withdraw All Resources appears only when a harvester or generator has retrievable resources in its hopper; Quick Options hides when no shortcuts remain. Building, vendor, and city shortcuts continue to hide when their configured quick amount is zero.

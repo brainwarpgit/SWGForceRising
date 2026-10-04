@@ -6,9 +6,12 @@
  */
 
 #include "server/zone/managers/loot/LootManager.h"
+#include "conf/ConfigManager.h"
 #include "server/zone/objects/scene/SceneObject.h"
 #include "server/zone/objects/creature/ai/AiAgent.h"
 #include "server/zone/objects/tangible/weapon/WeaponObject.h"
+#include "server/zone/objects/tangible/wearables/WearableObject.h"
+#include "server/zone/objects/tangible/wearables/WearableContainerObject.h"
 #include "server/zone/managers/crafting/CraftingManager.h"
 #include "templates/LootItemTemplate.h"
 #include "templates/LootGroupTemplate.h"
@@ -424,6 +427,18 @@ TangibleObject* LootManagerImplementation::createLootObject(TransactionLog& trx,
 	// Chance to add skill modifiers to weapons and wearable objects (clothing, armor)
 	if (prototype->isWeaponObject() || prototype->isWearableObject()) {
 		setSkillMods(prototype, templateObject, level, excMod);
+	}
+
+	if (ConfigManager::instance()->getLootedWearableSockets()) {
+		if (prototype->isWearableObject()) {
+			WearableObject* wearable = cast<WearableObject*>(prototype.get());
+			if (wearable != nullptr && wearable->getMaxSockets() == 0)
+				wearable->setMaxSockets(LootValues::getDistributedValue(0, WearableObject::MAXSOCKETS, level));
+		} else if (prototype->isWearableContainerObject()) {
+			WearableContainerObject* wearable = cast<WearableContainerObject*>(prototype.get());
+			if (wearable != nullptr && wearable->getRemainingSockets() == 0)
+				wearable->setMaxSockets(LootValues::getDistributedValue(0, WearableContainerObject::MAXSOCKETS, level));
+		}
 	}
 
 	// Add static DoT's to weapons and check for chance to add random DoTs

@@ -325,6 +325,7 @@ Core3 = {
 	},
 	LootManager = {
 		DebugAttributes = false,
+		LootedWearableSockets = false,
 	},
 	TangibleObject = {
 		ForceNoTradeADKMessage = "",
