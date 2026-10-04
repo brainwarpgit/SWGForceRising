@@ -211,6 +211,11 @@ public:
 		emptyTimer.updateToCurrentTime();
 	}
 
+	inline void markListed() {
+		mail1Sent = false;
+		emptyTimer.updateToCurrentTime();
+	}
+
 	inline int getMaint() {
 		return maintAmount;
 	}

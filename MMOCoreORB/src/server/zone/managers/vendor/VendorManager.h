@@ -45,6 +45,8 @@ public:
 	bool isValidVendorName(const String& name);
 
 	void handleDisplayStatus(CreatureObject* player, TangibleObject* vendor);
+	Vector<uint64> getRelistableVendorItemIDs(CreatureObject* player, TangibleObject* vendor, bool expireDue = false);
+	void relistAllExpiredVendorItems(CreatureObject* player, TangibleObject* vendor);
 
 	String getTimeString(uint32 timestamp);
 

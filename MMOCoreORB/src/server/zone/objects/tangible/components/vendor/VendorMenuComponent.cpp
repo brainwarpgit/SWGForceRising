@@ -85,6 +85,9 @@ void VendorMenuComponent::fillObjectMenuResponse(SceneObject* sceneObject, Objec
 		menuResponse->addRadialMenuItemToRadialID(70, 73, 3, "@player_structure:pay_vendor_t");
 		menuResponse->addRadialMenuItemToRadialID(70, 74, 3, "@player_structure:withdraw_vendor_t");
 		menuResponse->addRadialMenuItemToRadialID(70, 247, 3, "Set Quick Maintenance Amount");
+		if (!VendorManager::instance()->getRelistableVendorItemIDs(player, sceneObject->asTangibleObject()).isEmpty()) {
+			menuResponse->addRadialMenuItemToRadialID(70, 82, 3, "Relist All Expired Items");
+		}
 		if (player->hasSkill("crafting_merchant_master"))
 			menuResponse->addRadialMenuItemToRadialID(70, 80, 3, "Vendor Skimming");
 
@@ -159,6 +162,11 @@ int VendorMenuComponent::handleObjectMenuSelect(SceneObject* sceneObject,
 
 	case 247: {
 		vendorData->promptQuickMaintenance(player);
+		return 0;
+	}
+
+	case 82: {
+		VendorManager::instance()->relistAllExpiredVendorItems(player, vendor);
 		return 0;
 	}
 

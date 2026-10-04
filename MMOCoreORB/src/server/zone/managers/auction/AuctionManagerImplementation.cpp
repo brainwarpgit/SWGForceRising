@@ -2112,8 +2112,64 @@ void AuctionManagerImplementation::cancelItem(CreatureObject* player, uint64 obj
 	}
 }
 
-void AuctionManagerImplementation::expireSale(AuctionItem* item) {
+bool AuctionManagerImplementation::relistVendorItem(CreatureObject* player, SceneObject* vendor, uint64 objectID) {
+	if (player == nullptr || vendor == nullptr || !vendor->isVendor() || vendor->getZone() == nullptr || !vendor->isInRange(player, 8.f))
+		return false;
+
+	DataObjectComponentReference* data = vendor->getDataObjectComponent();
+	if (data == nullptr || data->get() == nullptr || !data->get()->isVendorData())
+		return false;
+	VendorDataComponent* vendorData = cast<VendorDataComponent*>(data->get());
+	if (vendorData == nullptr || !vendorData->isInitialized() || !vendorData->isVendorOwner(player) || vendorData->isOnStrike())
+		return false;
+
+	ManagedReference<AuctionItem*> item = auctionMap->getItem(objectID);
+	ManagedReference<SceneObject*> saleObject = zoneServer->getObject(objectID);
+	if (item == nullptr || saleObject == nullptr || saleObject->isNoTrade() || saleObject->containsNoTradeObjectRecursive())
+		return false;
+	bool firstAvailableListing = auctionMap->getVendorItemCount(vendor, true) == 0;
+
 	Locker locker(item);
+	if (item->getVendorID() != vendor->getObjectID() || item->getOwnerID() != player->getObjectID() ||
+			item->isOnBazaar() || item->getStatus() != AuctionItem::EXPIRED || item->getExpireTime() <= time(0))
+		return false;
+
+	item->setStatus(AuctionItem::FORSALE);
+	item->setBuyerID(0);
+	item->setBidderName("");
+	item->setProxy(0);
+	item->clearAuctionWithdraw();
+	item->setExpireTime(time(0) + AuctionManager::VENDOREXPIREPERIOD);
+
+	if (item->isAuction()) {
+		Reference<Task*> task = new ExpireAuctionTask(_this.getReferenceUnsafeStaticCast(), item);
+		Locker eventsLock(&auctionEvents);
+		Reference<Task*> previousTask = auctionEvents.get(item->getAuctionedItemObjectID());
+		if (previousTask != nullptr)
+			previousTask->cancel();
+		auctionEvents.drop(item->getAuctionedItemObjectID());
+		task->schedule((item->getExpireTime() - time(0)) * 1000);
+		auctionEvents.put(item->getAuctionedItemObjectID(), task);
+	}
+
+	TransactionLog trx(player, vendor, saleObject, TrxCode::AUCTIONADDSALE);
+	trx.addState("action", "relist_expired_vendor_item");
+	locker.release();
+	{
+		Locker vendorLock(vendor, player);
+		vendorData->markListed();
+	}
+	if (firstAvailableListing)
+		sendVendorUpdateMail(vendor, false);
+	return true;
+}
+
+void AuctionManagerImplementation::expireSale(AuctionItem* item, bool onlyIfDue) {
+	Locker locker(item);
+	if (onlyIfDue && (item->getStatus() != AuctionItem::FORSALE || item->getExpireTime() > time(0)))
+		return;
+	if (item->getStatus() != AuctionItem::FORSALE && item->getStatus() != AuctionItem::EXPIRED)
+		return;
 
 	if(item->getStatus() == AuctionItem::EXPIRED) {
 		deleteExpiredSale(item);

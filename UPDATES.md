@@ -2,6 +2,10 @@
 
 ## 2026-10-03
 
+### Committed vendor relisting
+
+- Vendor owners see a Relist All Expired Items radial only when that vendor has expired items, including fixed-price listings whose deadline has passed. It relists all eligible items at their existing prices for the normal vendor listing duration.
+
 ### Committed per-vendor Quick Maintenance
 
 - Each vendor now has its own Quick Maintenance amount, defaulting to 10,000 credits. The owner can pay it from Quick Options or change it under Vendor Control; setting it to zero hides the shortcut. The regular vendor payment limit and credit checks apply. The user verified the behavior in game.

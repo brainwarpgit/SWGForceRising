@@ -2,6 +2,11 @@
 
 ## 2026-10-03
 
+### Committed vendor relisting
+
+- Added an owner-only Relist All Expired Items radial under Vendor Control. It appears only while that vendor has eligible expired items, including fixed-price listings whose deadline has passed but whose status has not yet updated. It relists every eligible item at its existing price and reports the number completed. The server rechecks owner, vendor, item state, maintenance, proximity, and item validity for each relist. The first relisted item restores the vendor's active-listing state, and auction listings receive a new expiry task. Expired items past their existing cleanup deadline cannot be relisted.
+- New and relisted vendor listings use the normal 30-day listing duration. The temporary two-minute test duration has been removed; the existing 30-day expired-item retention remains unchanged. Fixed-price listings become expired when their auction data or the relist radial is opened after the deadline. Source/diff review and whitespace checks passed, and the user verified the behavior in game. The assistant did not build or run Core3.
+
 ### Committed per-vendor Quick Maintenance
 
 - Added a persistent quick maintenance amount to vendor data, defaulting to 10,000 credits for new and existing vendors. Initialized vendor owners see a Quick Options radial with a compact amount label and a single-click maintenance payment. Vendor Control contains a setting window for 0–100,000 credits per payment; setting zero hides Quick Options. The shortcut uses the existing vendor maintenance payment path, including credit availability, per-payment limit, maintenance capacity, transaction logging, and low-maintenance mail state updates. Owner and proximity checks run again on use, and the setting is persisted when submitted.

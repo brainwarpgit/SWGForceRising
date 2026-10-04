@@ -176,6 +176,71 @@ void VendorManager::handleDisplayStatus(CreatureObject* player, TangibleObject* 
 
 }
 
+Vector<uint64> VendorManager::getRelistableVendorItemIDs(CreatureObject* player, TangibleObject* vendor, bool expireDue) {
+	Vector<uint64> itemIDs;
+	if (player == nullptr || vendor == nullptr || vendor->getZone() == nullptr || player->getPlayerObject() == nullptr || !vendor->isInRange(player, 8.f))
+		return itemIDs;
+
+	DataObjectComponentReference* data = vendor->getDataObjectComponent();
+	if (data == nullptr || data->get() == nullptr || !data->get()->isVendorData())
+		return itemIDs;
+	VendorDataComponent* vendorData = cast<VendorDataComponent*>(data->get());
+	if (vendorData == nullptr || !vendorData->isInitialized() || !vendorData->isVendorOwner(player))
+		return itemIDs;
+
+	ManagedReference<AuctionManager*> auctionManager = server->getZoneServer()->getAuctionManager();
+	if (auctionManager == nullptr || auctionManager->getAuctionMap() == nullptr)
+		return itemIDs;
+	String planet = vendor->getZone()->getZoneName();
+	String region = "@planet_n:" + planet;
+	ManagedReference<CityRegion*> city = vendor->getCityRegion().get();
+	if (city != nullptr)
+		region = city->getCityRegionName();
+	TerminalListVector vendorLists = auctionManager->getAuctionMap()->getVendorTerminalData(planet, region, vendor);
+	Vector<ManagedReference<AuctionItem*> > overdue;
+	uint64 now = time(0);
+	for (int i = 0; i < vendorLists.size(); ++i) {
+		Reference<TerminalItemList*> list = vendorLists.get(i);
+		if (list == nullptr)
+			continue;
+		ReadLocker locker(list);
+		for (int j = 0; j < list->size(); ++j) {
+			ManagedReference<AuctionItem*> item = list->get(j);
+			if (item == nullptr || item->getVendorID() != vendor->getObjectID() || item->getOwnerID() != player->getObjectID())
+				continue;
+			if (item->getStatus() == AuctionItem::EXPIRED && item->getExpireTime() > now)
+				itemIDs.add(item->getAuctionedItemObjectID());
+			else if (!item->isAuction() && item->getStatus() == AuctionItem::FORSALE && item->getExpireTime() <= now)
+				overdue.add(item);
+		}
+	}
+	for (int i = 0; i < overdue.size(); ++i) {
+		ManagedReference<AuctionItem*> item = overdue.get(i);
+		if (expireDue)
+			auctionManager->expireSale(item, true);
+		if (item->getStatus() == AuctionItem::EXPIRED && item->getExpireTime() > time(0))
+			itemIDs.add(item->getAuctionedItemObjectID());
+		else if (!expireDue && item->getStatus() == AuctionItem::FORSALE && item->getExpireTime() <= time(0))
+			itemIDs.add(item->getAuctionedItemObjectID());
+	}
+	return itemIDs;
+}
+
+void VendorManager::relistAllExpiredVendorItems(CreatureObject* player, TangibleObject* vendor) {
+	if (player == nullptr || vendor == nullptr)
+		return;
+	Vector<uint64> itemIDs = getRelistableVendorItemIDs(player, vendor, true);
+	ManagedReference<AuctionManager*> auctionManager = server->getZoneServer()->getAuctionManager();
+	if (auctionManager == nullptr)
+		return;
+	int relisted = 0;
+	for (int i = 0; i < itemIDs.size(); ++i) {
+		if (auctionManager->relistVendorItem(player, vendor, itemIDs.get(i)))
+			++relisted;
+	}
+	player->sendSystemMessage("Relisted " + String::valueOf(relisted) + " of " + String::valueOf(itemIDs.size()) + " expired vendor items.");
+}
+
 String VendorManager::getTimeString(uint32 timestamp) {
 
 	if( timestamp == 0 ){

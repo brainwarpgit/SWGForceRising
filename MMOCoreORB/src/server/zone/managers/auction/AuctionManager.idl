@@ -106,6 +106,8 @@ class AuctionManager extends ManagedService implements Logger {
 	public native int checkBidAuction(CreatureObject player, AuctionItem item, int price1, int price2);
 
 	public native void cancelItem(CreatureObject player, unsigned long objectID);
+	@local
+	public native boolean relistVendorItem(CreatureObject player, SceneObject vendor, unsigned long objectID);
 
 	@local
 	public native AuctionQueryHeadersResponseMessage fillAuctionQueryHeadersResponseMessage(CreatureObject player, SceneObject vendor, TerminalListVector terminalList, int screen, unsigned int category, final unicode filterText, int minPrice, int maxPrice, boolean includeEntranceFee, int count, int offset);
@@ -141,7 +143,7 @@ class AuctionManager extends ManagedService implements Logger {
 		auctionMap.updateVendorSearch(vendor, enabled);
 	}
 
-	public native void expireSale(AuctionItem item);
+	public native void expireSale(AuctionItem item, boolean onlyIfDue = false);
 	public native void expireBidAuction(AuctionItem item);
 
 	public native void expireAuction(AuctionItem item);
@@ -171,4 +173,3 @@ class AuctionManager extends ManagedService implements Logger {
 		return zoneServer;
 	}
 }
-
