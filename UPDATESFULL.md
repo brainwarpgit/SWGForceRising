@@ -1,5 +1,11 @@
 # Detailed Project Updates
 
+## 2026-10-04
+
+### Committed quick-option visibility
+
+- Installation Quick Maintenance and Quick Power appear independently when their own amounts are positive; setting either to zero hides only that shortcut. Withdraw All Resources appears on harvesters and generators only when the hopper contains at least one positive-quantity resource entry with a valid spawn. Quick Options appears when any of these shortcuts is available and hides when none are. Building terminals and vendors already hide their Quick Options radial when Quick Maintenance is zero, and the city shortcut continues to hide when Quick Treasury is zero. Source and whitespace review passed, and the user verified the behavior in game. The assistant did not build or run Core3.
+
 ## 2026-10-03
 
 ### Committed vendor relisting

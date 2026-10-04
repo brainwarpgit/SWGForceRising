@@ -26,7 +26,17 @@ void InstallationObjectMenuComponent::fillObjectMenuResponse(SceneObject* sceneO
 		return;
 
 	if (installation->isOwnedByAccount(player)) {
-		bool canWithdrawResources = installation->isHarvesterObject() || installation->isGeneratorObject();
+		bool canWithdrawResources = false;
+		if (installation->isHarvesterObject() || installation->isGeneratorObject()) {
+			HopperList* hopper = installation->getHopperList();
+			for (int i = 0; i < hopper->size(); ++i) {
+				ResourceContainer* container = hopper->get(i);
+				if (container != nullptr && container->getQuantity() > 0 && container->getSpawnObject() != nullptr) {
+					canWithdrawResources = true;
+					break;
+				}
+			}
+		}
 		bool showMaintenance = installation->getQuickMaintenanceAmount() > 0;
 		bool showPower = !installation->isGeneratorObject() && installation->getQuickPowerAmount() > 0;
 		if (showMaintenance || showPower || canWithdrawResources)

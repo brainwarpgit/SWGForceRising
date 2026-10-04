@@ -1,5 +1,11 @@
 # Project Updates
 
+## 2026-10-04
+
+### Committed quick-option visibility
+
+- Installation Quick Maintenance and Quick Power appear independently when their own amounts are enabled. Withdraw All Resources appears only when a harvester or generator has retrievable resources in its hopper; Quick Options hides when no shortcuts remain. Building, vendor, and city shortcuts continue to hide when their configured quick amount is zero.
+
 ## 2026-10-03
 
 ### Committed vendor relisting
