@@ -2,6 +2,10 @@
 
 ## 2026-10-04
 
+### Committed attachment creation command
+
+- Admins can use `/object createattachment clothing luck 25` or `/object createattachment armor luck 23` to create a named, single-mod attachment in their inventory. The command accepts skill-mod values from 1 to 25.
+
 ### Committed looted wearable sockets
 
 - Newly looted clothing, armor, and wearable containers can roll 0–4 sockets using the creature-level-weighted loot distribution. `Core3.LootManager.LootedWearableSockets` enables or disables this without changing crafted wearables or existing items. The tracked configuration is disabled; the local configuration is enabled.

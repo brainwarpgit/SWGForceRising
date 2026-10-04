@@ -10,6 +10,7 @@
 #include "server/zone/managers/crafting/CraftingManager.h"
 #include "server/zone/managers/crafting/ComponentMap.h"
 #include "server/zone/objects/tangible/terminal/characterbuilder/CharacterBuilderTerminal.h"
+#include "server/zone/objects/tangible/attachment/Attachment.h"
 
 
 class ObjectCommand : public QueueCommand {
@@ -34,7 +35,59 @@ public:
 			String commandType;
 			args.getStringToken(commandType);
 
-			if (commandType.beginsWith("createitem")) {
+			if (commandType == "createattachment") {
+				String type;
+				String modName;
+				args.getStringToken(type);
+				args.getStringToken(modName);
+				int modValue = args.getIntToken();
+
+				if ((type != "clothing" && type != "armor") || modValue < 1 || modValue > 25 ||
+						modName.isEmpty() || modName.length() > 64 || args.hasMoreTokens()) {
+					creature->sendSystemMessage("SYNTAX: /object createattachment <clothing|armor> <skill_mod> <value 1-25>");
+					return INVALIDPARAMETERS;
+				}
+
+				for (int i = 0; i < modName.length(); ++i) {
+					char c = modName.charAt(i);
+					if ((c < 'a' || c > 'z') && (c < '0' || c > '9') && c != '_') {
+						creature->sendSystemMessage("Skill mod names may contain only lowercase letters, numbers, and underscores.");
+						return INVALIDPARAMETERS;
+					}
+				}
+
+				ManagedReference<SceneObject*> inventory = creature->getSlottedObject("inventory");
+				if (inventory == nullptr || inventory->isContainerFullRecursive()) {
+					creature->sendSystemMessage("Your inventory is full, so the attachment could not be created.");
+					return INVALIDPARAMETERS;
+				}
+
+				String templatePath = type == "clothing" ? "object/tangible/gem/clothing.iff" : "object/tangible/gem/armor.iff";
+				ManagedReference<Attachment*> attachment = server->getZoneServer()->createObject(templatePath.hashCode(), 1).castTo<Attachment*>();
+				if (attachment == nullptr) {
+					creature->sendSystemMessage("Could not create the attachment.");
+					return GENERALERROR;
+				}
+
+				Locker locker(attachment);
+				attachment->getSkillMods()->put(modName, modValue);
+				attachment->updateSkillModName(false);
+
+				ManagedReference<CraftingManager*> craftingManager = creature->getZoneServer()->getCraftingManager();
+				if (craftingManager != nullptr)
+					attachment->setSerialNumber(craftingManager->generateSerial());
+
+				if (!inventory->transferObject(attachment, -1, true)) {
+					attachment->destroyObjectFromDatabase(true);
+					creature->sendSystemMessage("Error transferring attachment to inventory.");
+					return GENERALERROR;
+				}
+
+				inventory->broadcastObject(attachment, true);
+				creature->sendSystemMessage("Created " + type + " attachment: " + modName + " +" + String::valueOf(modValue) + ".");
+				creature->info(true) << "/object createattachment " << type << " " << modName << " " << modValue
+						<< " created oid: " << attachment->getObjectID();
+			} else if (commandType.beginsWith("createitem")) {
 				String objectTemplate;
 				args.getStringToken(objectTemplate);
 
@@ -250,6 +303,7 @@ public:
 			}
 
 		} catch (Exception& e) {
+			creature->sendSystemMessage("SYNTAX: /object createattachment <clothing|armor> <skill_mod> <value 1-25>");
 			creature->sendSystemMessage("SYNTAX: /object createitem <objectTemplatePath> [<quantity>]");
 			creature->sendSystemMessage("SYNTAX: /object createresource <resourceName> [<quantity>]");
 			creature->sendSystemMessage("SYNTAX: /object createloot <loottemplate> [<level>]");
