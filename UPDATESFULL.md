@@ -2,6 +2,11 @@
 
 ## 2026-10-04
 
+### Committed luck attachments and skill names
+
+- Added `luck` to both random clothing and armor attachment modifier lists and to `lootableClothingStatMods`, so looted clothing can also roll it. The attachments use the existing attachment stat-roll path; the modifier can also be selected by the previously added `/object createattachment` admin option.
+- Staged `string/en/stat_n.stf` and `string/en/stat_d.stf` in `SWGFR_update_01`, based on the existing SWGFR client files. The name table changes only the `force_luck` entry from “Luck” to “Force Luck” and adds a new `luck` entry labeled “Luck.” The description table gives Force Luck a general Jedi-themed description and adds a separate general Luck description; neither lists specific gameplay effects. The update TRE must be rebuilt and installed on clients for the names and descriptions to appear; the server also reads the name table for attachment naming. Static STF structure checks confirmed all other entries and IDs are unchanged, whitespace review passed, and the user verified the behavior. The assistant did not build or run Core3.
+
 ### Committed attachment creation command
 
 - Added `/object createattachment <clothing|armor> <skill_mod> <value 1-25>` to the existing admin object command. It creates the corresponding clothing or armor attachment template, stores the requested modifier, updates the attachment's visible name, assigns a serial number when the crafting manager is available, and transfers it to the admin's inventory. Invalid types, malformed modifier names, out-of-range values, extra arguments, and full inventories are rejected. Source and whitespace review passed, and the user verified the behavior in game. The assistant did not build or run Core3.

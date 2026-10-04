@@ -2,6 +2,10 @@
 
 ## 2026-10-04
 
+### Committed luck attachments and skill names
+
+- Luck can now roll on looted clothing and armor attachments and on looted clothing. The update TRE source adds separate Luck and Force Luck names and general descriptions; Force Luck keeps a Jedi theme.
+
 ### Committed attachment creation command
 
 - Admins can use `/object createattachment clothing luck 25` or `/object createattachment armor luck 23` to create a named, single-mod attachment in their inventory. The command accepts skill-mod values from 1 to 25.
