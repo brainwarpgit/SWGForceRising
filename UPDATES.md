@@ -1,5 +1,11 @@
 # Project Updates
 
+## 2026-10-05
+
+### Committed regrantSkills skill-mod refresh fix
+
+- `/regrantSkills` now reconciles skill-box modifiers newly added to or removed from learned skills and notifies the client when a value changes. The temporary Force Luck test bonus was removed from Master Smuggler, and the user verified that the refreshed value is correct. Successful reconciliation no longer emits a misleading skill-box mismatch warning.
+
 ## 2026-10-04
 
 ### Committed Slicing skill modifier

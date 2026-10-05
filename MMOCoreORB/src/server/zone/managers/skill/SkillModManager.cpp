@@ -413,9 +413,8 @@ void SkillModManager::verifySkillBoxSkillMods(CreatureObject* creature) {
 		}
 	}
 
-	if (!compareMods(mods, creature, SkillModManager::SKILLBOX)) {
-		warning() << "SkillBox mods don't match for " << creature->getFirstName() << " ID: " << creature->getObjectID();
-	}
+	// A false result means the verifier corrected stored modifiers; it is not an unresolved warning.
+	compareMods(mods, creature, SkillModManager::SKILLBOX);
 }
 
 void SkillModManager::verifyBuffSkillMods(CreatureObject* creature) {
@@ -489,8 +488,7 @@ bool SkillModManager::compareMods(VectorMap<String, int>& mods, CreatureObject* 
 
 			// If the mod values are different, adjust to proper value
 			if (value != properValue) {
-				creature->removeSkillMod(type, key, value, false);
-				creature->addSkillMod(type, key, properValue, true);
+				creature->addSkillMod(type, key, properValue - value, true);
 
 				match = false;
 			}
@@ -526,16 +524,17 @@ bool SkillModManager::compareMods(VectorMap<String, int>& mods, CreatureObject* 
 		}
 	}
 
-	// Playery current has more modifiers then their equipped items should allow for
+	// Apply skill-box modifiers introduced after a character learned the skill.
 	if (!mods.isEmpty()) {
 		match = false;
 
-		// Player has improper mods on them, remove the remaining
 		for (int i = 0; i < mods.size(); i++) {
 			String key = mods.elementAt(i).getKey();
 			int value = mods.elementAt(i).getValue();
 
-			compare << "Excess Modifier: " << key << " Value: " << value << "\n";
+			compare << "Missing Modifier: " << key << " Value: " << value << "\n";
+			if (type == SkillModManager::SKILLBOX)
+				creature->addSkillMod(type, key, value, true);
 		}
 	}
 
