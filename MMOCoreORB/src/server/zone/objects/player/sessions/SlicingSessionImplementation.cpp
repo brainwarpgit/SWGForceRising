@@ -517,12 +517,14 @@ void SlicingSessionImplementation::handleWeaponSlice() {
 
 	switch (sliceSkill) {
 	case 5:
-		min += 5;
+		min += 10;
 		max += 5;
 	case 4:
-		min += 5;
+		min += 10;
 		max += 5;
 	case 3:
+		min += 5;
+		max += 5;
 	case 2:
 		min += 10;
 		max += 25;
@@ -530,6 +532,15 @@ void SlicingSessionImplementation::handleWeaponSlice() {
 	default:
 		return;
 
+	}
+
+	int slicingSkill = player->getSkillMod("slicing");
+
+	if (sliceSkill == 5 && slicingSkill > 100) {
+		long long rawBonus = ((long long)slicingSkill - 100) * 10 / 25;
+		int bonus = rawBonus > 100 - max ? 100 - max : (int)rawBonus;
+		min += bonus;
+		max += bonus;
 	}
 
 	uint8 percentage = System::random(max - min) + min;
@@ -625,17 +636,30 @@ void SlicingSessionImplementation::handleArmorSlice() {
 
 	switch (sliceSkill) {
 	case 5:
-		min += (sliceType == 0) ? 6 : 5;
+		min += 10;
 		max += 5;
 	case 4:
-		min += (sliceType == 0) ? 0 : 10;
-		max += 10;
+		min += 10;
+		max += 5;
 	case 3:
 		min += 5;
-		max += (sliceType == 0) ? 20 : 30;
+		max += 5;
+	case 2:
+		min += 10;
+		max += 25;
 		break;
 	default:
 		return;
+
+	}
+
+	int slicingSkill = player->getSkillMod("slicing");
+
+	if (sliceSkill == 5 && slicingSkill > 100) {
+		long long rawBonus = ((long long)slicingSkill - 100) * 10 / 25;
+		int bonus = rawBonus > 100 - max ? 100 - max : (int)rawBonus;
+		min += bonus;
+		max += bonus;
 	}
 
 	uint8 percent = System::random(max - min) + min;

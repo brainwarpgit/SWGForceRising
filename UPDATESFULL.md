@@ -2,6 +2,11 @@
 
 ## 2026-10-04
 
+### Committed Slicing skill modifier
+
+- Added `slicing` to the clothing and armor attachment loot rolls and to `lootableClothingStatMods` for looted clothing. The skill table now grants `slicing=10` from Novice Smuggler, `10/15/15/25` from Slicing I–IV, and `25` from Master Smuggler, totaling +100 for a master with the full line. The update TRE's `stat_n.stf` and `stat_d.stf` add the displayed name “Slicing” and a description of its effects. Existing characters need `/regrantSkills` after the server loads the updated skill table to receive the new box modifiers.
+- The user revised the weapon and armor slice ranges to 10–25 at Slicing II, 15–30 at III, 25–35 at IV, and 35–40 at Master. A Master Smuggler with more than 100 total `slicing` gains 10 percentage points per 25 points above 100, subject to a 100% maximum slice value. The review corrected the over-100 bonus to require Master, prevented `uint8` overflow on very high modifiers, and fixed the `slicingSkill` spelling and line endings. The earlier assistant changes to flow analyzers and container loot chances were reverted by the user. The client description now reflects the actual weapon and armor effect. Static checks confirmed that only the six requested skill-mod cells changed, all existing STF strings remained unchanged, and the source diff has no whitespace errors. The assistant did not build or run Core3; the user verified the behavior in game before the commit.
+
 ### Committed locked briefcase slicing
 
 - Newly generated `locked_briefcase` loot retains `briefcase_s01.iff` and gains the locked-crate slicing behavior. A successful slice replaces it with an openable container named “Unlocked Briefcase”; the usual `looted_container` reward roll stays inside. Quest briefcases sharing the original asset remain unsliceable, and previously looted briefcases retain their old object type. The replacement uses the normal loot-container component, and a failed inventory transfer preserves the locked item instead of destroying it.

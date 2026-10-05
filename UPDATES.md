@@ -2,6 +2,10 @@
 
 ## 2026-10-04
 
+### Committed Slicing skill modifier
+
+- Clothing and armor attachments and looted clothing can now roll Slicing. Smuggler boxes grant +10 Novice, +10/+15/+15/+25 across Slicing I–IV, and +25 Master. Training narrows the weapon and armor slice range; Master Smugglers with more than 100 Slicing gain stronger slices. The update TRE adds the skill name, description, and box bonuses.
+
 ### Committed locked briefcase slicing
 
 - Newly looted locked briefcases can be sliced like locked loot crates. Slicing replaces one with an openable “Unlocked Briefcase” holding the same loot roll and keeping the briefcase appearance. The update TRE stages the new container template and its object-template CRC table entry. Quest briefcases keep their existing behavior.
