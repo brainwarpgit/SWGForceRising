@@ -2,6 +2,10 @@
 
 ## 2026-10-05
 
+### Committed Master Smuggler slicing choice
+
+- A successful weapon or armor slicing cable sequence now opens a result choice for characters with Master Smuggler. Weapons offer Damage or Speed; armor offers Effectiveness or Encumbrance. The existing percentage roll, skill-based range, Slicing bonus, and 250 XP award still apply after the selection. Non-masters retain a random result, and terminals, containers, and base slicing keep their prior flow. Cancelling the choice ends the session without applying the slice or awarding XP; the slicing callback now handles cancellation even when the SUI response has no selected row. The update TRE adds a display-only `slicing_choice` command to Master Smuggler and its `cmd_n`/`cmd_d` strings. The user verified the behavior in game. The assistant did not build or run Core3.
+
 ### Committed regrantSkills skill-mod refresh fix
 
 - `verifySkillBoxSkillMods` previously reconciled values for modifiers already stored on a character but merely logged missing modifiers. Thus `/regrantSkills` could not add a newly introduced `slicing` modifier to an existing Smuggler. The skill-box reconciliation now adds each missing modifier and notifies the client. A temporary +25 Luck bonus on Master Smuggler confirmed that `/regrantSkills` adds a new modifier. Changed modifiers are now reconciled through one notified value adjustment, including removal. A temporary +25 Force Luck bonus tested removal; an initially stale server TRE still contained the bonus, then a rebuilt archive's embedded `skills.iff` was checked against the corrected source byte-for-byte. The user subsequently restarted the server and verified that the refreshed value is correct. Both temporary bonuses and the console diagnostic have been removed from the source. Successful reconciliation no longer emits the misleading `SkillBox mods don't match` warning. The assistant did not build or run Core3.

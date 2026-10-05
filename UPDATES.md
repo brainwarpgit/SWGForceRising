@@ -2,6 +2,10 @@
 
 ## 2026-10-05
 
+### Committed Master Smuggler slicing choice
+
+- Master Smugglers can choose Damage or Speed for successful weapon slices and Effectiveness or Encumbrance for successful armor slices. Other slicers keep the existing random result. The Master Smuggler skill box shows a display-only Slicing Choice ability in the update TRE. The user verified the behavior in game.
+
 ### Committed regrantSkills skill-mod refresh fix
 
 - `/regrantSkills` now reconciles skill-box modifiers newly added to or removed from learned skills and notifies the client when a value changes. The temporary Force Luck test bonus was removed from Master Smuggler, and the user verified that the refreshed value is correct. Successful reconciliation no longer emits a misleading skill-box mismatch warning.

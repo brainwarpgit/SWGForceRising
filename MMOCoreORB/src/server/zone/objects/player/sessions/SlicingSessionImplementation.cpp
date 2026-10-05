@@ -38,6 +38,7 @@ int SlicingSessionImplementation::initializeSession() {
 
 	usedNode = false;
 	usedClamp = false;
+	awaitingChoice = false;
 
 	relockEvent = nullptr;
 
@@ -170,6 +171,31 @@ void SlicingSessionImplementation::handleMenuSelect(CreatureObject* pl, byte men
 			player->sendSystemMessage("The object must be in your inventory in order to perform the slice.");
 			return;
 		}
+	}
+
+	if (awaitingChoice) {
+		if (menuID > 1 || !player->hasSkill("combat_smuggler_master")) {
+			cancelSession();
+			return;
+		}
+
+		awaitingChoice = false;
+		Locker locker(player);
+		Locker clocker(tangibleObject, player);
+
+		if (tangibleObject->isWeaponObject())
+			handleWeaponSlice(menuID);
+		else if (tangibleObject->isArmorObject())
+			handleArmorSlice(menuID);
+		else {
+			cancelSession();
+			return;
+		}
+
+		player->getZoneServer()->getPlayerManager()->awardExperience(player, "slicing", 250, true);
+		tangibleObject->notifyObservers(ObserverEventType::SLICED, player, 1);
+		endSlicing();
+		return;
 	}
 
 	uint8 progress = getProgress();
@@ -456,6 +482,24 @@ void SlicingSessionImplementation::handleSlice(SuiListBox* suiBox) {
 	Locker clocker(tangibleObject, player);
 
 	PlayerManager* playerManager = player->getZoneServer()->getPlayerManager();
+	if (player->hasSkill("combat_smuggler_master") &&
+			(tangibleObject->isWeaponObject() || tangibleObject->isArmorObject())) {
+		awaitingChoice = true;
+		suiBox->removeAllMenuItems();
+		suiBox->setCancelButton(true, "@cancel");
+		suiBox->setPromptTitle("Slicing Choice");
+		suiBox->setPromptText("Choose the result for this slice:");
+		if (tangibleObject->isWeaponObject()) {
+			suiBox->addMenuItem("Damage", 0);
+			suiBox->addMenuItem("Speed", 1);
+		} else {
+			suiBox->addMenuItem("Effectiveness", 0);
+			suiBox->addMenuItem("Encumbrance", 1);
+		}
+		player->getPlayerObject()->addSuiBox(suiBox);
+		player->sendMessage(suiBox->generateMessage());
+		return;
+	}
 
 	suiBox->removeAllMenuItems();
 	suiBox->setCancelButton(false,"@cancel");
@@ -477,10 +521,10 @@ void SlicingSessionImplementation::handleSlice(SuiListBox* suiBox) {
 		term->addSlicer(player);
 		player->sendSystemMessage("@slicing/slicing:terminal_success");
 	} else if (tangibleObject->isWeaponObject()) {
-		handleWeaponSlice();
+		handleWeaponSlice(-1);
 		playerManager->awardExperience(player, "slicing", 250, true); // Weapon Slice XP
 	} else if (tangibleObject->isArmorObject()) {
-		handleArmorSlice();
+		handleArmorSlice(-1);
 		playerManager->awardExperience(player, "slicing", 250, true); // Armor Slice XP
 	} else if ( isBaseSlice()){
 		playerManager->awardExperience(player,"slicing", 1000, true); // Base slicing
@@ -504,7 +548,7 @@ void SlicingSessionImplementation::handleSlice(SuiListBox* suiBox) {
 
 }
 
-void SlicingSessionImplementation::handleWeaponSlice() {
+void SlicingSessionImplementation::handleWeaponSlice(int choice) {
 	ManagedReference<CreatureObject*> player = this->player.get();
 	ManagedReference<TangibleObject*> tangibleObject = this->tangibleObject.get();
 
@@ -545,7 +589,7 @@ void SlicingSessionImplementation::handleWeaponSlice() {
 
 	uint8 percentage = System::random(max - min) + min;
 
-	switch(System::random(1)) {
+	switch (choice < 0 ? System::random(1) : choice) {
 	case 0:
 		handleSliceDamage(percentage);
 		break;
@@ -622,14 +666,14 @@ void SlicingSessionImplementation::handleSliceSpeed(uint8 percent) {
 	player->sendSystemMessage(params);
 }
 
-void SlicingSessionImplementation::handleArmorSlice() {
+void SlicingSessionImplementation::handleArmorSlice(int choice) {
 	ManagedReference<CreatureObject*> player = this->player.get();
 	ManagedReference<TangibleObject*> tangibleObject = this->tangibleObject.get();
 
 	if (tangibleObject == nullptr || player == nullptr)
 		return;
 
-	uint8 sliceType = System::random(1);
+	uint8 sliceType = choice < 0 ? System::random(1) : choice;
 	int sliceSkill = getSlicingSkill(player);
 	uint8 min = 0;
 	uint8 max = 0;

@@ -23,9 +23,6 @@ public:
 		if (!suiBox->isListBox())
 			return;
 
-		if (args->size() < 1)
-			return;
-
 		ManagedReference<Facade*> facade = player->getActiveSession(SessionFacadeType::SLICING);
 		ManagedReference<SlicingSession*> session = dynamic_cast<SlicingSession*>(facade.get());
 
@@ -44,6 +41,9 @@ public:
 			session->cancelSession();
 			return;
 		}
+
+		if (args == nullptr || args->size() < 1)
+			return;
 
 		int idx = Integer::valueOf(args->get(0).toString());
 

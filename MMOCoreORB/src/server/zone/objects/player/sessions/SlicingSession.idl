@@ -34,6 +34,7 @@ class SlicingSession extends Facade {
 
 	protected boolean usedNode;
 	protected boolean usedClamp;
+	protected transient boolean awaitingChoice;
 
 	protected boolean baseSlice;
 	protected boolean keypadSlice;
@@ -123,13 +124,13 @@ class SlicingSession extends Facade {
 
 	private native void handleSlice(SuiListBox suiBox);
 
-	private native void handleWeaponSlice();
+	private native void handleWeaponSlice(int choice);
 
 	private native void handleSliceDamage(byte percent);
 
 	private native void handleSliceSpeed(byte percent);
 
-	private native void handleArmorSlice();
+	private native void handleArmorSlice(int choice);
 
 	private native void handleSliceEncumbrance(byte percent);
 
