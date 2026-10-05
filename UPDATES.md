@@ -2,6 +2,10 @@
 
 ## 2026-10-05
 
+### Committed weapon and armor slice details
+
+- Examining a newly sliced weapon or armor piece now shows the slicer, slice type, and percentage under a shared Slice Attributes heading. The percentage label is shortened to “Slice %.” These details are stored in dedicated weapon and armor fields; containers and briefcases retain their existing examine layout. The user verified the presentation in game.
+
 ### Committed Master Smuggler slicing choice
 
 - Master Smugglers can choose Damage or Speed for successful weapon slices and Effectiveness or Encumbrance for successful armor slices. Other slicers keep the existing random result. The Master Smuggler skill box shows a display-only Slicing Choice ability in the update TRE. The user verified the behavior in game.

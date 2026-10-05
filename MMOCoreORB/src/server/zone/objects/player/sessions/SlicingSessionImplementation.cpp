@@ -633,6 +633,7 @@ void SlicingSessionImplementation::handleSliceDamage(uint8 percent) {
 
 	weap->setDamageSlice(percent / 100.f);
 	weap->setSliced(true);
+	weap->setSliceDetails(player->getDisplayedName(), "Damage", percent);
 
 	StringIdChatParameter params;
 	params.setDI(percent);
@@ -658,6 +659,7 @@ void SlicingSessionImplementation::handleSliceSpeed(uint8 percent) {
 
 	weap->setSpeedSlice(percent / 100.f);
 	weap->setSliced(true);
+	weap->setSliceDetails(player->getDisplayedName(), "Speed", percent);
 
 	StringIdChatParameter params;
 	params.setDI(percent);
@@ -731,6 +733,7 @@ void SlicingSessionImplementation::handleSliceEncumbrance(uint8 percent) {
 
 	armor->setEncumbranceSlice(percent / 100.f);
 	armor->setSliced(true);
+	armor->setSliceDetails(player->getDisplayedName(), "Encumbrance", percent);
 
 	StringIdChatParameter params;
 	params.setDI(percent);
@@ -752,6 +755,7 @@ void SlicingSessionImplementation::handleSliceEffectiveness(uint8 percent) {
 
 	armor->setEffectivenessSlice(percent / 100.f);
 	armor->setSliced(true);
+	armor->setSliceDetails(player->getDisplayedName(), "Effectiveness", percent);
 
 	StringIdChatParameter params;
 	params.setDI(percent);

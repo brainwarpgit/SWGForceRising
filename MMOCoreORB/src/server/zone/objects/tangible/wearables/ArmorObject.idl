@@ -40,6 +40,9 @@ class ArmorObject extends WearableObject {
 
 	protected float effectivenessSlice;
 	protected float encumbranceSlice;
+	protected string sliceSlicerName;
+	protected string sliceType;
+	protected int slicePercentage;
 
 	public static final int LIGHT = 0x1;
 	public static final int MEDIUM = 0x2;
@@ -63,6 +66,9 @@ class ArmorObject extends WearableObject {
 		lightSaber = 0;
 		effectivenessSlice = 1;
 		encumbranceSlice = 1;
+		sliceSlicerName = "";
+		sliceType = "";
+		slicePercentage = 0;
 
 		baseProtection = 0;
 		specialProtection = 0;
@@ -253,6 +259,27 @@ class ArmorObject extends WearableObject {
 		if (value > 0.5f || value < 0)
 			return;
 		encumbranceSlice = 1 - value;
+	}
+
+	public void setSliceDetails(final string slicer, final string type, int percentage) {
+		sliceSlicerName = slicer;
+		sliceType = type;
+		slicePercentage = percentage;
+	}
+
+	@read
+	public string getSliceSlicerName() {
+		return sliceSlicerName;
+	}
+
+	@read
+	public string getSliceType() {
+		return sliceType;
+	}
+
+	@read
+	public int getSlicePercentage() {
+		return slicePercentage;
 	}
 
 	@read

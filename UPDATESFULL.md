@@ -2,6 +2,10 @@
 
 ## 2026-10-05
 
+### Committed weapon and armor slice details
+
+- Successful weapon and armor slicing now records the slicer's displayed name, outcome type, and numeric percentage in dedicated persistent fields on `WeaponObject` and `ArmorObject`. Both examine windows group the details under the new `slice_attr` heading, displayed as “Slice Attributes,” and the percentage label is shortened to “Slice %.” The user confirmed this is a new server, so no migration or cleanup of the earlier temporary string-data keys is needed for launch. Containers and briefcases do not record or display these fields. `obj_attr_n.stf` in the update TRE adds the heading and examine labels. Items sliced before any detail recording have no slicer or percentage to display. The user verified the feature in game. The assistant did not build or run Core3.
+
 ### Committed Master Smuggler slicing choice
 
 - A successful weapon or armor slicing cable sequence now opens a result choice for characters with Master Smuggler. Weapons offer Damage or Speed; armor offers Effectiveness or Encumbrance. The existing percentage roll, skill-based range, Slicing bonus, and 250 XP award still apply after the selection. Non-masters retain a random result, and terminals, containers, and base slicing keep their prior flow. Cancelling the choice ends the session without applying the slice or awarding XP; the slicing callback now handles cancellation even when the SUI response has no selected row. The update TRE adds a display-only `slicing_choice` command to Master Smuggler and its `cmd_n`/`cmd_d` strings. The user verified the behavior in game. The assistant did not build or run Core3.

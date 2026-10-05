@@ -445,8 +445,11 @@ void WeaponObjectImplementation::fillAttributeList(AttributeListMessage* alm, Cr
 	if (hasPowerup())
 		powerupObject->fillWeaponAttributeList(alm, _this.getReferenceUnsafeStaticCast());
 
-	if (sliced == 1)
-		alm->insertAttribute("wpn_attr", "@obj_attr_n:hacked1");
+	if (!sliceSlicerName.isEmpty()) {
+		alm->insertAttribute("slice_attr.slice_slicer", sliceSlicerName);
+		alm->insertAttribute("slice_attr.slice_type", sliceType);
+		alm->insertAttribute("slice_attr.slice_percentage", String::valueOf(slicePercentage) + "%");
+	}
 
 	if (isJediWeapon() && getCraftersID() == 0) {
 		ZoneServer* zoneServer = getZoneServer();

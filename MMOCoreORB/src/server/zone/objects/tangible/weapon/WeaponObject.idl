@@ -63,6 +63,9 @@ class WeaponObject extends TangibleObject {
 
 	protected float damageSlice;
 	protected float speedSlice;
+	protected string sliceSlicerName;
+	protected string sliceType;
+	protected int slicePercentage;
 
 	@dereferenced
 	protected Vector<int> dotType;
@@ -119,6 +122,9 @@ class WeaponObject extends TangibleObject {
 
 		damageSlice = 1;
 		speedSlice = 1;
+		sliceSlicerName = "";
+		sliceType = "";
+		slicePercentage = 0;
 
 		wearableSkillMods.setAllowOverwriteInsertPlan();
 	}
@@ -579,6 +585,27 @@ class WeaponObject extends TangibleObject {
 		if(value > 0.5f || value < 0)
 			return;
 		speedSlice = 1 - value;
+	}
+
+	public void setSliceDetails(final string slicer, final string type, int percentage) {
+		sliceSlicerName = slicer;
+		sliceType = type;
+		slicePercentage = percentage;
+	}
+
+	@read
+	public string getSliceSlicerName() {
+		return sliceSlicerName;
+	}
+
+	@read
+	public string getSliceType() {
+		return sliceType;
+	}
+
+	@read
+	public int getSlicePercentage() {
+		return slicePercentage;
 	}
 
 	@read

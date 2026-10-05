@@ -271,8 +271,11 @@ void ArmorObjectImplementation::fillAttributeList(AttributeListMessage* alm, Cre
 		alm->insertAttribute("@veteran_new:antidecay_examine_title", "@veteran_new:antidecay_examine_text");
 	}
 
-	if (sliced)
-		alm->insertAttribute("arm_attr", "@obj_attr_n:hacked");
+	if (!sliceSlicerName.isEmpty()) {
+		alm->insertAttribute("slice_attr.slice_slicer", sliceSlicerName);
+		alm->insertAttribute("slice_attr.slice_type", sliceType);
+		alm->insertAttribute("slice_attr.slice_percentage", String::valueOf(slicePercentage) + "%");
+	}
 }
 
 bool ArmorObjectImplementation::isVulnerable(int type) const {
