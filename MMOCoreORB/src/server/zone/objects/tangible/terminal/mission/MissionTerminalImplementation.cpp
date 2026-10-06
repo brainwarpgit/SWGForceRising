@@ -47,6 +47,21 @@ int MissionTerminalImplementation::handleObjectMenuSelect(CreatureObject* player
 			return 0;
 		}
 
+		if (containsActiveSession(SessionFacadeType::SLICING)) {
+			Reference<SlicingSession*> activeSession = getActiveSession(SessionFacadeType::SLICING).castTo<SlicingSession*>();
+			if (activeSession != nullptr && player->getGroupID() != 0 && activeSession->getSlicerGroupID() == player->getGroupID())
+				player->sendSystemMessage("A group member is already slicing this mission terminal.");
+			else
+				player->sendSystemMessage("This mission terminal already has an active slicing session.");
+			return 0;
+		}
+
+		int terminalCooldown = getSliceCooldownRemaining();
+		if (terminalCooldown > 0) {
+			player->sendSystemMessage("This mission terminal can be sliced again in " + String::valueOf(terminalCooldown) + " seconds.");
+			return 0;
+		}
+
 		if (!player->checkCooldownRecovery("slicing.terminal")) {
 			StringIdChatParameter message;
 			message.setStringId("@slicing/slicing:not_yet"); // You will be able to hack the network again in %DI seconds.
@@ -90,4 +105,30 @@ String MissionTerminalImplementation::getTerminalName() {
 		name = name + "_" + terminalType;
 
 	return name;
+}
+
+void MissionTerminalImplementation::setSliceBonus(CreatureObject* slicer, int percent, int durationSeconds) {
+	if (slicer == nullptr)
+		return;
+
+	sliceOwnerID = slicer->getObjectID();
+	sliceGroupID = slicer->getGroupID();
+	sliceBonusPercent = durationSeconds > 0 ? (percent < 0 ? 0 : (percent > 100 ? 100 : percent)) : 0;
+	sliceExpiresAt = System::getTime() + (durationSeconds > 0 ? durationSeconds : 0);
+	sliceCooldownExpiresAt = sliceExpiresAt + 120; // Two-minute terminal cooldown follows the bonus window.
+}
+
+int MissionTerminalImplementation::getSliceCooldownRemaining() {
+	int64 remaining = static_cast<int64>(sliceCooldownExpiresAt) - static_cast<int64>(System::getTime());
+	return remaining > 0 ? static_cast<int>(remaining) : 0;
+}
+
+int MissionTerminalImplementation::getSliceBonusPercent(CreatureObject* player) {
+	if (player == nullptr || System::getTime() >= sliceExpiresAt || sliceBonusPercent <= 0 || !player->isInRange(_this.getReferenceUnsafeStaticCast(), 64))
+		return 0;
+
+	if (player->getObjectID() == sliceOwnerID || (sliceGroupID != 0 && player->getGroupID() == sliceGroupID))
+		return sliceBonusPercent;
+
+	return 0;
 }

@@ -6,6 +6,7 @@
  */
 
 #include "server/zone/objects/player/sessions/SlicingSession.h"
+#include "conf/ConfigManager.h"
 #include "server/zone/objects/player/sui/SuiWindowType.h"
 #include "server/zone/objects/player/sui/listbox/SuiListBox.h"
 #include "server/zone/objects/tangible/tool/smuggler/SlicingTool.h"
@@ -19,6 +20,8 @@
 #include "server/zone/objects/tangible/weapon/WeaponObject.h"
 #include "server/zone/objects/tangible/wearables/ArmorObject.h"
 #include "server/zone/objects/tangible/terminal/mission/MissionTerminal.h"
+#include "server/zone/objects/group/GroupObject.h"
+#include "server/zone/objects/waypoint/WaypointObject.h"
 #include "server/zone/objects/tangible/tool/smuggler/PrecisionLaserKnife.h"
 #include "server/zone/objects/tangible/powerup/PowerupObject.h"
 
@@ -30,6 +33,7 @@
 #include "server/zone/objects/scene/SceneObjectType.h"
 
 int SlicingSessionImplementation::initializeSession() {
+	slicerGroupID = 0;
 	firstCable = System::random(1);
 	nodeCable = 0;
 
@@ -62,7 +66,15 @@ void SlicingSessionImplementation::initalizeSlicingMenu(CreatureObject* pl, Tang
 		return;
 
 	if (tangibleObject->containsActiveSession(SessionFacadeType::SLICING)) {
-		player->sendSystemMessage("@slicing/slicing:slicing_underway");
+		if (tangibleObject->isMissionTerminal()) {
+			Reference<SlicingSession*> activeSession = tangibleObject->getActiveSession(SessionFacadeType::SLICING).castTo<SlicingSession*>();
+			if (activeSession != nullptr && player->getGroupID() != 0 && activeSession->getSlicerGroupID() == player->getGroupID())
+				player->sendSystemMessage("A group member is already slicing this mission terminal.");
+			else
+				player->sendSystemMessage("This mission terminal already has an active slicing session.");
+		} else {
+			player->sendSystemMessage("@slicing/slicing:slicing_underway");
+		}
 		return;
 	}
 
@@ -106,8 +118,23 @@ void SlicingSessionImplementation::initalizeSlicingMenu(CreatureObject* pl, Tang
 	slicingSuiBox->setCancelButton(true, "@cancel");
 	generateSliceMenu(slicingSuiBox);
 
+	Locker terminalLocker(tangibleObject);
+	if (tangibleObject->containsActiveSession(SessionFacadeType::SLICING)) {
+		if (tangibleObject->isMissionTerminal()) {
+			Reference<SlicingSession*> activeSession = tangibleObject->getActiveSession(SessionFacadeType::SLICING).castTo<SlicingSession*>();
+			if (activeSession != nullptr && player->getGroupID() != 0 && activeSession->getSlicerGroupID() == player->getGroupID())
+				player->sendSystemMessage("A group member is already slicing this mission terminal.");
+			else
+				player->sendSystemMessage("This mission terminal already has an active slicing session.");
+		} else {
+			player->sendSystemMessage("@slicing/slicing:slicing_underway");
+		}
+		return;
+	}
+
 	player->getPlayerObject()->addSuiBox(slicingSuiBox);
 
+	slicerGroupID = player->getGroupID();
 	player->addActiveSession(SessionFacadeType::SLICING, _this.getReferenceUnsafeStaticCast());
 	tangibleObject->addActiveSession(SessionFacadeType::SLICING, _this.getReferenceUnsafeStaticCast());
 }
@@ -249,7 +276,7 @@ void SlicingSessionImplementation::handleMenuSelect(CreatureObject* pl, byte men
 
 }
 
-void SlicingSessionImplementation::endSlicing() {
+void SlicingSessionImplementation::endSlicing(int terminalBonusDurationSeconds) {
 	ManagedReference<CreatureObject*> player = this->player.get();
 	ManagedReference<TangibleObject*> tangibleObject = this->tangibleObject.get();
 
@@ -259,7 +286,7 @@ void SlicingSessionImplementation::endSlicing() {
 	}
 
 	if (tangibleObject->isMissionTerminal())
-		player->addCooldown("slicing.terminal", (2 * (60 * 1000))); // 2min Cooldown
+		player->addCooldown("slicing.terminal", (static_cast<uint64>(terminalBonusDurationSeconds) + 120) * 1000);
 
 	cancelSession();
 
@@ -512,14 +539,73 @@ void SlicingSessionImplementation::handleSlice(SuiListBox* suiBox) {
 	player->getPlayerObject()->addSuiBox(suiBox);
 	player->sendMessage(suiBox->generateMessage());
 
+	int bonusDurationSeconds = 0;
 	if (tangibleObject->isContainerObject() || tangibleObject->getGameObjectType() == SceneObjectType::PLAYERLOOTCRATE) {
 		handleContainerSlice();
 		playerManager->awardExperience(player, "slicing", 250, true); // Container Slice XP
 	} else if (tangibleObject->isMissionTerminal()) {
 		MissionTerminal* term = cast<MissionTerminal*>( tangibleObject.get());
 		playerManager->awardExperience(player, "slicing", 100, true); // Terminal Slice XP
-		term->addSlicer(player);
+		bonusDurationSeconds = ConfigManager::instance()->getInt("Core3.MissionManager.TerminalSliceBonusDurationSeconds", 60);
+		if (bonusDurationSeconds < 0)
+			bonusDurationSeconds = 0;
+
+		int64 score = static_cast<int64>(player->getSkillMod("slicing")) + player->getSkillMod("luck") + player->getSkillMod("force_luck");
+		int cappedScore = static_cast<int>(score < 0 ? 0 : (score > 150 ? 150 : score));
+		int bonusPercent = (cappedScore * 100 + 75) / 150; // A score of 150 doubles the base payout; zero leaves it unchanged.
+		term->setSliceBonus(player, bonusPercent, bonusDurationSeconds);
 		player->sendSystemMessage("@slicing/slicing:terminal_success");
+		if (bonusDurationSeconds > 0 && bonusPercent > 0) {
+			player->sendSystemMessage("Mission payouts from this terminal are increased by " + String::valueOf(bonusPercent) + "% for " + String::valueOf(bonusDurationSeconds) + " seconds.");
+			ManagedWeakReference<CreatureObject*> weakSlicer(player.get());
+			Core::getTaskManager()->scheduleTask([weakSlicer] () mutable {
+				ManagedReference<CreatureObject*> slicer = weakSlicer.get();
+				if (slicer != nullptr && slicer->getPlayerObject() != nullptr && slicer->getPlayerObject()->isOnline())
+					slicer->sendSystemMessage("The sliced mission terminal's payout bonus has expired.");
+			}, "NotifyMissionSliceExpiry", static_cast<uint64>(bonusDurationSeconds) * 1000);
+		}
+
+		ManagedReference<GroupObject*> group = player->getGroup();
+		if (bonusDurationSeconds > 0 && bonusPercent > 0 && group != nullptr && term->getZone() != nullptr) {
+			for (int i = 0; i < group->getGroupSize(); ++i) {
+				ManagedReference<CreatureObject*> member = group->getGroupMember(i);
+				if (member == nullptr || member == player || !member->isPlayerCreature() || !member->isInRange(term, 64))
+					continue;
+
+				PlayerObject* ghost = member->getPlayerObject();
+				if (ghost == nullptr)
+					continue;
+
+				ManagedReference<WaypointObject*> waypoint = member->getZoneServer()->createObject(0xc456e788, 1).castTo<WaypointObject*>();
+				if (waypoint != nullptr) {
+					Locker waypointLocker(waypoint);
+					Vector3 position = term->getWorldPosition();
+					waypoint->setPlanetCRC(term->getZone()->getZoneName().hashCode());
+					waypoint->setPosition(position.getX(), 0, position.getY());
+					waypoint->setCustomObjectName("Sliced Mission Terminal", false);
+					waypoint->setActive(true);
+					waypoint->setSpecialTypeID(WaypointObject::SPECIALTYPE_MISSION_SLICE);
+					ghost->addWaypoint(waypoint, false, true);
+
+					uint64 waypointID = waypoint->getObjectID();
+					ManagedReference<PlayerObject*> waypointOwner = ghost;
+					Core::getTaskManager()->scheduleTask([waypointOwner, waypointID] {
+						Locker ownerLocker(waypointOwner);
+						WaypointObject* current = waypointOwner->getWaypointBySpecialType(WaypointObject::SPECIALTYPE_MISSION_SLICE);
+						if (current != nullptr && current->getObjectID() == waypointID)
+							waypointOwner->removeWaypoint(waypointID, true, true);
+					}, "RemoveMissionSliceWaypoint", static_cast<uint64>(bonusDurationSeconds) * 1000);
+				}
+
+				member->sendSystemMessage("A group member sliced a nearby mission terminal. Missions from it have a +" + String::valueOf(bonusPercent) + "% payout bonus for " + String::valueOf(bonusDurationSeconds) + " seconds. A waypoint has been added.");
+				ManagedWeakReference<CreatureObject*> weakMember(member.get());
+				Core::getTaskManager()->scheduleTask([weakMember] () mutable {
+					ManagedReference<CreatureObject*> groupMember = weakMember.get();
+					if (groupMember != nullptr && groupMember->getPlayerObject() != nullptr && groupMember->getPlayerObject()->isOnline())
+						groupMember->sendSystemMessage("The sliced mission terminal's payout bonus has expired.");
+				}, "NotifyGroupMissionSliceExpiry", static_cast<uint64>(bonusDurationSeconds) * 1000);
+			}
+		}
 	} else if (tangibleObject->isWeaponObject()) {
 		handleWeaponSlice(-1);
 		playerManager->awardExperience(player, "slicing", 250, true); // Weapon Slice XP
@@ -544,7 +630,7 @@ void SlicingSessionImplementation::handleSlice(SuiListBox* suiBox) {
 
 	tangibleObject->notifyObservers(ObserverEventType::SLICED, player, 1);
 
-	endSlicing();
+	endSlicing(bonusDurationSeconds);
 
 }
 

@@ -589,31 +589,28 @@ void MissionManagerImplementation::handleMissionAbort(MissionObject* mission, Cr
 void MissionManagerImplementation::populateMissionList(MissionTerminal* missionTerminal, CreatureObject* player, int counter) {
 	Locker crossLocker(missionTerminal, player);
 
-	bool slicer = missionTerminal->isSlicer(player);
+	int sliceBonusPercent = missionTerminal->getSliceBonusPercent(player);
 
 	if (missionTerminal->isGeneralTerminal()) {
-		randomizeGeneralTerminalMissions(player, counter, slicer);
+		randomizeGeneralTerminalMissions(player, counter, sliceBonusPercent);
 	} else if (missionTerminal->isArtisanTerminal()) {
-		randomizeArtisanTerminalMissions(player, counter, slicer);
+		randomizeArtisanTerminalMissions(player, counter, sliceBonusPercent);
 	} else if (missionTerminal->isEntertainerTerminal()) {
-		randomizeEntertainerTerminalMissions(player, counter, slicer);
+		randomizeEntertainerTerminalMissions(player, counter, sliceBonusPercent);
 	} else if (missionTerminal->isScoutTerminal()) {
-		randomizeScoutTerminalMissions(player, counter, slicer);
+		randomizeScoutTerminalMissions(player, counter, sliceBonusPercent);
 	} else if (missionTerminal->isBountyTerminal()) {
 		randomizeBountyTerminalMissions(player, counter);
 	} else if (missionTerminal->isImperialTerminal()) {
-		randomizeFactionTerminalMissions(player, counter, slicer, Factions::FACTIONIMPERIAL);
+		randomizeFactionTerminalMissions(player, counter, sliceBonusPercent, Factions::FACTIONIMPERIAL);
 	} else if (missionTerminal->isRebelTerminal()) {
-		randomizeFactionTerminalMissions(player, counter, slicer, Factions::FACTIONREBEL);
+		randomizeFactionTerminalMissions(player, counter, sliceBonusPercent, Factions::FACTIONREBEL);
 	}
 
-	// Remove the Slicer from the List. They have received their one time mission reward increase.
-	if (slicer)
-		missionTerminal->removeSlicer(player);
 
 }
 
-void MissionManagerImplementation::randomizeGeneralTerminalMissions(CreatureObject* player, int counter, bool slicer) {
+void MissionManagerImplementation::randomizeGeneralTerminalMissions(CreatureObject* player, int counter, int sliceBonusPercent) {
 	SceneObject* missionBag = player->getSlottedObject("mission_bag");
 	int bagSize = missionBag->getContainerObjectsSize();
 
@@ -631,8 +628,8 @@ void MissionManagerImplementation::randomizeGeneralTerminalMissions(CreatureObje
 			randomizeGenericDeliverMission(player, mission, Factions::FACTIONNEUTRAL);
 		}
 
-		if (slicer) {
-			mission->setRewardCredits(mission->getRewardCredits() * 1.5);
+		if (sliceBonusPercent > 0) {
+			mission->setRewardCredits(mission->getRewardCredits() * (1.f + sliceBonusPercent / 100.f));
 		}
 
 		float cityBonus = 1.f + player->getSkillMod("private_spec_missions") / 100.f;
@@ -642,7 +639,7 @@ void MissionManagerImplementation::randomizeGeneralTerminalMissions(CreatureObje
 	}
 }
 
-void MissionManagerImplementation::randomizeArtisanTerminalMissions(CreatureObject* player, int counter, bool slicer) {
+void MissionManagerImplementation::randomizeArtisanTerminalMissions(CreatureObject* player, int counter, int sliceBonusPercent) {
 	SceneObject* missionBag = player->getSlottedObject("mission_bag");
 	int bagSize = missionBag->getContainerObjectsSize();
 
@@ -660,8 +657,8 @@ void MissionManagerImplementation::randomizeArtisanTerminalMissions(CreatureObje
 			randomizeGenericCraftingMission(player, mission, Factions::FACTIONNEUTRAL);
 		}
 
-		if (slicer) {
-			mission->setRewardCredits(mission->getRewardCredits() * 1.5);
+		if (sliceBonusPercent > 0) {
+			mission->setRewardCredits(mission->getRewardCredits() * (1.f + sliceBonusPercent / 100.f));
 		}
 
 		float cityBonus = 1.f + player->getSkillMod("private_spec_missions") / 100.f;
@@ -671,7 +668,7 @@ void MissionManagerImplementation::randomizeArtisanTerminalMissions(CreatureObje
 	}
 }
 
-void MissionManagerImplementation::randomizeEntertainerTerminalMissions(CreatureObject* player, int counter, bool slicer) {
+void MissionManagerImplementation::randomizeEntertainerTerminalMissions(CreatureObject* player, int counter, int sliceBonusPercent) {
 	SceneObject* missionBag = player->getSlottedObject("mission_bag");
 	int bagSize = missionBag->getContainerObjectsSize();
 
@@ -689,8 +686,8 @@ void MissionManagerImplementation::randomizeEntertainerTerminalMissions(Creature
 			randomizeGenericEntertainerMission(player, mission, Factions::FACTIONNEUTRAL, MissionTypes::MUSICIAN);
 		}
 
-		if (slicer) {
-			mission->setRewardCredits(mission->getRewardCredits() * 1.5);
+		if (sliceBonusPercent > 0) {
+			mission->setRewardCredits(mission->getRewardCredits() * (1.f + sliceBonusPercent / 100.f));
 		}
 
 		float cityBonus = 1.f + player->getSkillMod("private_spec_missions") / 100.f;
@@ -700,7 +697,7 @@ void MissionManagerImplementation::randomizeEntertainerTerminalMissions(Creature
 	}
 }
 
-void MissionManagerImplementation::randomizeScoutTerminalMissions(CreatureObject* player, int counter, bool slicer) {
+void MissionManagerImplementation::randomizeScoutTerminalMissions(CreatureObject* player, int counter, int sliceBonusPercent) {
 	SceneObject* missionBag = player->getSlottedObject("mission_bag");
 	int bagSize = missionBag->getContainerObjectsSize();
 
@@ -718,8 +715,8 @@ void MissionManagerImplementation::randomizeScoutTerminalMissions(CreatureObject
 			randomizeGenericHuntingMission(player, mission, Factions::FACTIONNEUTRAL);
 		}
 
-		if (slicer) {
-			mission->setRewardCredits(mission->getRewardCredits() * 1.5);
+		if (sliceBonusPercent > 0) {
+			mission->setRewardCredits(mission->getRewardCredits() * (1.f + sliceBonusPercent / 100.f));
 		}
 
 		float cityBonus = 1.f + player->getSkillMod("private_spec_missions") / 100.f;
@@ -754,7 +751,7 @@ void MissionManagerImplementation::randomizeBountyTerminalMissions(CreatureObjec
 	}
 }
 
-void MissionManagerImplementation::randomizeFactionTerminalMissions(CreatureObject* player, int counter, bool slicer, const uint32 faction) {
+void MissionManagerImplementation::randomizeFactionTerminalMissions(CreatureObject* player, int counter, int sliceBonusPercent, const uint32 faction) {
 	SceneObject* missionBag = player->getSlottedObject("mission_bag");
 	int bagSize = missionBag->getContainerObjectsSize();
 
@@ -791,8 +788,8 @@ void MissionManagerImplementation::randomizeFactionTerminalMissions(CreatureObje
 			}
 		}
 
-		if (slicer) {
-			mission->setRewardCredits(mission->getRewardCredits() * 1.5);
+		if (sliceBonusPercent > 0) {
+			mission->setRewardCredits(mission->getRewardCredits() * (1.f + sliceBonusPercent / 100.f));
 		}
 
 		float cityBonus = 1.f + player->getSkillMod("private_spec_missions") / 100.f;

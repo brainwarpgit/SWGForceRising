@@ -2,6 +2,10 @@
 
 ## 2026-10-05
 
+### Committed timed mission-terminal slicing bonus
+
+- A sliced mission terminal now offers a timed payout bonus across mission refreshes. `Core3.MissionManager.TerminalSliceBonusDurationSeconds` in both configuration files defaults to 60 seconds; `0` disables the bonus. Slicing + Luck + Force Luck is capped at 150 and scales payouts from the unchanged base at zero to at most 2× at 150. The slicer sees the bonus and its duration when successful and receives an expiry message when the bonus ends, including when solo. Nearby group members within 64 meters can use the same bonus and receive a system message, a waypoint removed when the configured window ends, and an expiry message. Only one active slice session can use a mission terminal at a time; another slicer is told when their group member is already slicing it. After a successful slice, the slicer and that terminal must wait through the bonus window and then a two-minute cooldown before slicing again. Failed slices retain the existing personal two-minute cooldown. The user verified the payout, cooldown, and group behavior in game.
+
 ### Committed weapon and armor slice details
 
 - Examining a newly sliced weapon or armor piece now shows the slicer, slice type, and percentage under a shared Slice Attributes heading. The percentage label is shortened to “Slice %.” These details are stored in dedicated weapon and armor fields; containers and briefcases retain their existing examine layout. The user verified the presentation in game.

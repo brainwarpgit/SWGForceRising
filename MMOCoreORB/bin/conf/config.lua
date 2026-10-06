@@ -313,6 +313,8 @@ Core3 = {
 		-- Milliseconds; 24 hours.
 		PlayerBountyCooldownTime = 86400000,
 		PrivateStructureJediMissions = true,
+		-- Seconds that a sliced terminal grants bonus mission payouts; 0 disables the bonus.
+		TerminalSliceBonusDurationSeconds = 60,
 	},
 	GCWManager = {
 		useCovertOvertSystem = false,

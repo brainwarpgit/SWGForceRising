@@ -8,15 +8,17 @@ import server.zone.objects.tangible.terminal.Terminal;
 import server.zone.objects.creature.CreatureObject;
 include templates.tangible.MissionTerminalTemplate;
 import server.zone.packets.object.ObjectMenuResponse;
-include system.util.Vector;
 include templates.SharedObjectTemplate;
 
 @json
 class MissionTerminal extends Terminal {
 	protected string terminalType;
 
-	@dereferenced
-	protected transient Vector<CreatureObject> slicers;
+	protected transient unsigned long sliceExpiresAt;
+	protected transient unsigned long sliceCooldownExpiresAt;
+	protected transient unsigned long sliceOwnerID;
+	protected transient unsigned long sliceGroupID;
+	protected transient int sliceBonusPercent;
 
 	public MissionTerminal() {
 		Logger.setLoggingName("MissionTerminal");
@@ -53,6 +55,11 @@ class MissionTerminal extends Terminal {
 		super.initializeTransientMembers();
 
 		Logger.setLoggingName("MissionTerminal");
+		sliceExpiresAt = 0;
+		sliceCooldownExpiresAt = 0;
+		sliceOwnerID = 0;
+		sliceGroupID = 0;
+		sliceBonusPercent = 0;
 	}
 
 	/**
@@ -122,26 +129,7 @@ class MissionTerminal extends Terminal {
 		return terminalType == "statue";
 	}
 
-	@dirty
-	public boolean isSlicer(CreatureObject slicer) {
-		if (slicer == null)
-			return 0;
-
-		for (int i = 0; i < slicers.size(); ++i) {
-			CreatureObject player = slicers.get(i);
-			if (player == slicer)
-				return true;
-		}
-
-		return 0;
-	}
-
-	public void addSlicer(CreatureObject slicer) {
-		if (!slicers.contains(slicer))
-			slicers.add(slicer);
-	}
-
-	public void removeSlicer(CreatureObject slicer) {
-		slicers.removeElement(slicer);
-	}
+	public native void setSliceBonus(CreatureObject slicer, int percent, int durationSeconds);
+	public native int getSliceBonusPercent(CreatureObject player);
+	public native int getSliceCooldownRemaining();
 }

@@ -46,6 +46,26 @@ int PrecisionLaserKnifeImplementation::handleObjectMenuSelect(CreatureObject* pl
 		if (terminal == nullptr || terminal->isBountyTerminal())
 			return 0;
 
+		if (player->containsActiveSession(SessionFacadeType::SLICING)) {
+			player->sendSystemMessage("@slicing/slicing:already_slicing");
+			return 0;
+		}
+
+		if (terminal->containsActiveSession(SessionFacadeType::SLICING)) {
+			Reference<SlicingSession*> activeSession = terminal->getActiveSession(SessionFacadeType::SLICING).castTo<SlicingSession*>();
+			if (activeSession != nullptr && player->getGroupID() != 0 && activeSession->getSlicerGroupID() == player->getGroupID())
+				player->sendSystemMessage("A group member is already slicing this mission terminal.");
+			else
+				player->sendSystemMessage("This mission terminal already has an active slicing session.");
+			return 0;
+		}
+
+		int terminalCooldown = terminal->getSliceCooldownRemaining();
+		if (terminalCooldown > 0) {
+			player->sendSystemMessage("This mission terminal can be sliced again in " + String::valueOf(terminalCooldown) + " seconds.");
+			return 0;
+		}
+
 		ManagedReference<CityRegion*> city = player->getCityRegion().get();
 		if (city != nullptr && !city->isClientRegion() && city->isBanned(player->getObjectID())) {
 			player->sendSystemMessage("@city/city:banned_services"); // You are banned from using this city's services.

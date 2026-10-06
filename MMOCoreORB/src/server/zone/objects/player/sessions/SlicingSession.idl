@@ -19,6 +19,7 @@ include server.zone.objects.tangible.RelockLootContainerEvent;
 class SlicingSession extends Facade {
 	@weakReference
 	protected CreatureObject player;
+	protected transient unsigned long slicerGroupID;
 
 	@weakReference
 	protected transient TangibleObject tangibleObject;
@@ -47,6 +48,11 @@ class SlicingSession extends Facade {
 
 	}
 
+	@read
+	public unsigned long getSlicerGroupID() {
+		return slicerGroupID;
+	}
+
 	@local
 	public native void initalizeSlicingMenu(CreatureObject pl, TangibleObject obj);
 
@@ -64,7 +70,7 @@ class SlicingSession extends Facade {
 		return 0;
 	}
 
-	public native void endSlicing();
+	public native void endSlicing(int terminalBonusDurationSeconds = 0);
 
 	private native void generateSliceMenu(SuiListBox suiBox);
 
