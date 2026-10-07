@@ -887,7 +887,7 @@ void SlicingSessionImplementation::handleContainerSlice() {
 			return;
 		}
 		if (isLockedBriefcase)
-			container->setCustomObjectName(UnicodeString("Unlocked Briefcase"), false);
+			container->setObjectName(StringId("@container_name:unlocked_briefcase"), false);
 
 		TransactionLog trx(TrxCode::SLICECONTAINER, player, container);
 
@@ -938,12 +938,27 @@ void SlicingSessionImplementation::handleSliceFailed() {
 	if (tangibleObject == nullptr || player == nullptr)
 			return;
 
+	bool canRetryLootContainer = false;
+	int attemptsLeft = 0;
+	if (tangibleObject->getGameObjectType() == SceneObjectType::PLAYERLOOTCRATE) {
+		int allowedRetries = ConfigManager::instance()->getInt("Core3.SlicingContainerRetries", 0);
+		if (allowedRetries > 0) {
+			tangibleObject->incrementSlicingFailedAttempts();
+			int failedAttempts = tangibleObject->getSlicingFailedAttempts();
+			canRetryLootContainer = failedAttempts <= allowedRetries;
+			if (canRetryLootContainer)
+				attemptsLeft = allowedRetries - failedAttempts + 1;
+		}
+	}
+
 	if (tangibleObject->isMissionTerminal())
 		player->sendSystemMessage("@slicing/slicing:terminal_fail");
 	else if (tangibleObject->isWeaponObject())
 		player->sendSystemMessage("@slicing/slicing:fail_weapon");
 	else if (tangibleObject->isArmorObject())
 		player->sendSystemMessage("@slicing/slicing:fail_armor");
+	else if (canRetryLootContainer)
+		player->sendSystemMessage("The slice failed. You have " + String::valueOf(attemptsLeft) + " slice attempts left on this locked item.");
 	else if (tangibleObject->isContainerObject() || tangibleObject->getGameObjectType() == SceneObjectType::PLAYERLOOTCRATE)
 		player->sendSystemMessage("@slicing/slicing:container_fail");
 	else if (isBaseSlice())
@@ -977,8 +992,14 @@ void SlicingSessionImplementation::handleSliceFailed() {
 				gcwMan->failSecuritySlice(tangibleObject.get());
 
 		}
-	} else if (!tangibleObject->isMissionTerminal() && !isKeypadSlice()) {
+	} else if (!canRetryLootContainer && !tangibleObject->isMissionTerminal() && !isKeypadSlice()) {
 		tangibleObject->setSliced(true);
+		if (tangibleObject->getGameObjectType() == SceneObjectType::PLAYERLOOTCRATE) {
+			const char* brokenName = tangibleObject->isLockedLootBriefcase() ?
+					"@container_name:broken_locked_briefcase" : "@container_name:broken_locked_container";
+			tangibleObject->setObjectName(StringId(brokenName), true);
+			tangibleObject->setCustomObjectName(UnicodeString(), true);
+		}
 	}
 
 	tangibleObject->notifyObservers(ObserverEventType::SLICED, player, 0);

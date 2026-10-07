@@ -1,5 +1,13 @@
 # Project Updates
 
+## 2026-10-07
+
+### Committed locked-container slicing and briefcase display updates
+
+- `Core3.SlicingContainerRetries` now controls extra attempts for locked loot containers and briefcases. Its default is `0`, retaining the original one-attempt behavior; setting it to `2` allows three total attempts, with the remaining count shown on examine and preserved across restarts. Exhausted attempts show a broken lock and rename the item **Broken Locked Container** or **Broken Locked Briefcase**.
+- Looted briefcases retain their slicing behavior and attempt state after restart. Locked and unlocked briefcases use localized names without the redundant “Variation Of” line. The update TRE adds the attempt label and briefcase/container names. The appearance loader no longer reports `SPRT` UI sprites as unknown world appearances.
+- The user verified the final behavior in game. The user selected `0` as the default retry setting in both Lua configurations; retry counts were verified with the option enabled.
+
 ## 2026-10-05
 
 ### Committed timed mission-terminal slicing bonus

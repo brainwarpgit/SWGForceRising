@@ -418,9 +418,11 @@ TangibleObject* LootManagerImplementation::createLootObject(TransactionLog& trx,
 	setCustomizationData(templateObject, prototype);
 	setCustomObjectName(prototype, templateObject, excMod);
 	if (templateObject->getTemplateName() == "locked_briefcase") {
+		prototype->setLockedLootBriefcase(true);
 		prototype->setGameObjectType(SceneObjectType::PLAYERLOOTCRATE);
 		prototype->setSliceable(true);
-		prototype->setCustomObjectName(UnicodeString("Locked Briefcase"), false);
+		prototype->setObjectName(StringId("@container_name:locked_briefcase"), false);
+		prototype->setCustomObjectName(UnicodeString(), false);
 	}
 
 	// Set the values for the random attributes to be modified if there are any

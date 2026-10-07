@@ -769,6 +769,12 @@ Reference<DistributedObjectStub*> ObjectManager::loadPersistentObject(uint64 obj
 
 			scene->setGameObjectType(templateObjectType); // we dont want this to be the old one
 
+			// Looted briefcases share an ordinary briefcase template, but their
+			// slicing behavior requires the loot-crate type after this reset.
+			TangibleObject* tangible = scene->asTangibleObject();
+			if (tangible != nullptr && tangible->isLockedLootBriefcase())
+				scene->setGameObjectType(SceneObjectType::PLAYERLOOTCRATE);
+
 			scene->setLoggingName(loggingName);
 
 			scene->debug("loaded from db");

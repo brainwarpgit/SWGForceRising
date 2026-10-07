@@ -89,6 +89,36 @@ void TangibleObjectImplementation::loadTemplateData(SharedObjectTemplate* templa
 void TangibleObjectImplementation::notifyLoadFromDatabase() {
 	SceneObjectImplementation::notifyLoadFromDatabase();
 
+	// The shared briefcase template is an ordinary tangible. Restore the loot-only
+	// slicing override after template data is loaded, without changing quest items.
+	if (!lockedLootBriefcase && templateObject != nullptr &&
+			templateObject->getFullTemplateString() == "object/tangible/loot/misc/briefcase_s01.iff" &&
+			(slicingFailedAttempts > 0 ||
+				(!objectSerial.isEmpty() && getCustomObjectName().toString() == "Locked Briefcase"))) {
+		lockedLootBriefcase = true;
+	}
+
+	if (lockedLootBriefcase) {
+		setGameObjectType(SceneObjectType::PLAYERLOOTCRATE);
+		setSliceable(true);
+		setObjectName(StringId("@container_name:locked_briefcase"), false);
+		setCustomObjectName(UnicodeString(), false);
+	} else if (templateObject != nullptr &&
+			templateObject->getFullTemplateString() == "object/tangible/container/loot/unlocked_briefcase.iff") {
+		setObjectName(StringId("@container_name:unlocked_briefcase"), false);
+		setCustomObjectName(UnicodeString(), false);
+	}
+
+	if (isSliced() && (lockedLootBriefcase || gameObjectType == SceneObjectType::PLAYERLOOTCRATE)) {
+		setObjectName(StringId(lockedLootBriefcase ? "@container_name:broken_locked_briefcase" :
+				"@container_name:broken_locked_container"), false);
+		setCustomObjectName(UnicodeString(), false);
+		if (maxCondition > 0 && conditionDamage >= maxCondition) {
+			setConditionDamage(0, false);
+			clearOptionBit(OptionBitmask::YELLOW, false);
+		}
+	}
+
 	if (activeAreas.size() > 0) {
 		Reference<TangibleObject*> refTano = asTangibleObject();
 
@@ -889,11 +919,19 @@ void TangibleObjectImplementation::fillAttributeList(AttributeListMessage* alm, 
 	}
 
 	if (gameObjectType == SceneObjectType::PLAYERLOOTCRATE) {
-		if (isSliceable()) {
+		if (isSliceable() && !isSliced()) {
 			alm->insertAttribute( "lock_mechanism", "@obj_attr_n:slicable" );
 		}
 		else {
 			alm->insertAttribute( "lock_mechanism", "@obj_attr_n:broken" );
+		}
+
+		int allowedRetries = ConfigManager::instance()->getInt("Core3.SlicingContainerRetries", 0);
+		if (allowedRetries > 0) {
+			int failedAttempts = getSlicingFailedAttempts();
+			int attemptsLeft = allowedRetries - failedAttempts + 1;
+			if (attemptsLeft > 0 && !isSliced())
+				alm->insertAttribute("slicing_attempts_left", attemptsLeft);
 		}
 	}
 }

@@ -924,6 +924,8 @@ AppearanceTemplate* TemplateManager::instantiateAppearanceTemplate(IffStream* if
 			break;
 		case 'LSAT':
 			break;
+		case 'SPRT': // UI sprite, not a world appearance template.
+			break;
 		case 'APT ': {
 			AppearanceRedirect redirect;
 			redirect.readObject(iffStream);

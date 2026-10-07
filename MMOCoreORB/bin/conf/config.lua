@@ -329,6 +329,8 @@ Core3 = {
 		DebugAttributes = false,
 		LootedWearableSockets = false,
 	},
+	-- Extra attempts after the first failed slice of a locked loot container or briefcase; 0 disables retries.
+	SlicingContainerRetries = 0,
 	TangibleObject = {
 		ForceNoTradeADKMessage = "",
 		ForceNoTradeMessage = "",

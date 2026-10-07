@@ -1,5 +1,14 @@
 # Detailed Project Updates
 
+## 2026-10-07
+
+### Committed locked-container slicing and briefcase display updates
+
+- Added `Core3.SlicingContainerRetries` to `config.lua` and the ignored `config-local.lua`. The user set its final default to `0`, preserving the game's original one-attempt behavior and hiding the attempts attribute. When set to `2`, a locked loot container or briefcase has three total attempts; examine counts down 3 → 2 → 1. Failed attempts persist on the item across trades and restarts. The last failure marks the lock broken, hides the count, and changes the localized name to **Broken Locked Container** or **Broken Locked Briefcase**. Success still replaces the locked item with an unlocked container or briefcase. Other slicing paths are unchanged.
+- Looted briefcases have a persistent identity marker. Their shared client template normally has an ordinary tangible type; `ObjectManager` now preserves the loot-crate override after database load, restoring slicing state and attributes at every attempt count. Older loot briefcases with a recorded failed attempt, or with both a loot serial and the prior custom name, are recognized. Quest briefcases without that loot identity remain unchanged.
+- Locked and unlocked loot briefcases now use localized object-name IDs instead of custom names, removing the client's “Variation Of” line. Existing recognized loot briefcases are normalized on load. The update TRE's `container_name.stf` adds locked, unlocked, and broken names; `obj_attr_n.stf` adds **Slice Attempts Left**. Existing string records and keys are preserved. The appearance loader ignores `SPRT` UI sprites such as `appearance/ui_destroy.spr` instead of logging an unknown-world-appearance error.
+- The zero-condition and yellow-highlight experiments did not provide the requested full red inventory-box effect, so they are absent from the final failure path. Previously broken test items that received those changes are restored on load and renamed. The user verified the final in-game behavior, including restart persistence and display. The assistant performed source and whitespace checks but did not build or run Core3.
+
 ## 2026-10-05
 
 ### Committed timed mission-terminal slicing bonus

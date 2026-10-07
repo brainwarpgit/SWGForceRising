@@ -86,6 +86,8 @@ class TangibleObject extends SceneObject {
 
 	protected boolean sliceable;
 	protected boolean sliced;
+	protected int slicingFailedAttempts;
+	protected boolean lockedLootBriefcase;
 
 	@dereferenced
 	protected SortedVector<ActiveArea> activeAreas;
@@ -142,6 +144,8 @@ class TangibleObject extends SceneObject {
 
 		sliceable = false;
 		sliced = false;
+		slicingFailedAttempts = 0;
+		lockedLootBriefcase = false;
 		isCraftedEnhancedItem = false;
 
 		threatMap = null;
@@ -714,6 +718,24 @@ class TangibleObject extends SceneObject {
 
 	public void setSliced(boolean slice) {
 		sliced = slice;
+	}
+
+	@read
+	public int getSlicingFailedAttempts() {
+		return slicingFailedAttempts;
+	}
+
+	public void incrementSlicingFailedAttempts() {
+		slicingFailedAttempts++;
+	}
+
+	@read
+	public boolean isLockedLootBriefcase() {
+		return lockedLootBriefcase;
+	}
+
+	public void setLockedLootBriefcase(boolean value) {
+		lockedLootBriefcase = value;
 	}
 
 	@read
