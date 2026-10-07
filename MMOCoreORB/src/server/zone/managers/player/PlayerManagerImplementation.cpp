@@ -4236,6 +4236,14 @@ void PlayerManagerImplementation::lootAll(CreatureObject* player, CreatureObject
 
 	if (cashCredits > 0) {
 		cashCredits = LootCreditBonus::apply(cashCredits, ai->getLevel(), player);
+		bool groupBonusApplied = false;
+		ManagedReference<GroupObject*> group = player->getGroup();
+		if (group != nullptr) {
+			Locker groupLocker(group, ai);
+			int playerCount = group->getNumberOfPlayerMembers();
+			cashCredits = LootCreditBonus::applyGroup(cashCredits, playerCount);
+			groupBonusApplied = playerCount > 1;
+		}
 
 		{
 			TransactionLog trx(ai, player, TrxCode::NPCLOOTCLAIM, cashCredits, true);
@@ -4245,7 +4253,7 @@ void PlayerManagerImplementation::lootAll(CreatureObject* player, CreatureObject
 			ai->clearCashCredits();
 		}
 
-		StringIdChatParameter param("base_player", "prose_coin_loot"); //You loot %DI credits from %TT.
+		StringIdChatParameter param("base_player", groupBonusApplied ? "prose_coin_loot_group_bonus" : "prose_coin_loot");
 		param.setDI(cashCredits);
 		param.setTT(ai->getObjectID());
 

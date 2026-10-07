@@ -2,6 +2,10 @@
 
 ## 2026-10-07
 
+### Committed group creature-credit bonus
+
+- Creature credits looted while grouped now increase by 50% of the original total for each additional player member: two players receive 1.5×, four receive 2.5×. Pets and droids do not count. The bonus applies after the existing Luck credit adjustment and before nearby group members split the payout; it also covers direct creature looting by a grouped player. The existing payout message says when the group bonus is included, without sending a separate message. The update TRE adds these message variants. Missions, slicing rewards, transfers, and other credit sources are unchanged. The user verified the final behavior in game.
+
 ### Committed locked-loot slicing credit rewards
 
 - Successfully slicing a locked loot container or briefcase now pays cash credits in addition to the existing loot roll. Normal rewards roll 250–500, Exceptional 750–1,250, and Legendary 2,500–3,000. Base chances are 15% Exceptional and 5% Legendary; each Luck or Force Luck point adds 0.2 and 0.1 percentage points respectively. Each failed attempt before success reduces the rolled amount by 25%. The final payout and tier appear in a system message. The user verified the reward in game.

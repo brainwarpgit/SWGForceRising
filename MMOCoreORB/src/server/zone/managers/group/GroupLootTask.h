@@ -136,6 +136,8 @@ public:
 		lootCredits = LootCreditBonus::apply(lootCredits, corpse->getLevel(), player);
 
 		Locker clocker(group, corpse);
+		int playerCount = group->getNumberOfPlayerMembers();
+		lootCredits = LootCreditBonus::applyGroup(lootCredits, playerCount);
 
 		//Determine eligible group members to give credits.
 		Vector<CreatureObject*> payees;
@@ -203,12 +205,14 @@ public:
 
 			//Send credit split system message.
 			if (payee == player) {
-				StringIdChatParameter splitLooter("group", "prose_split_coins_self"); //"[GROUP] You split %TU credits and receive %TT credits as your share."
+				StringIdChatParameter splitLooter("group", playerCount > 1 && payout > 0 ?
+						"prose_split_coins_self_group_bonus" : "prose_split_coins_self");
 				splitLooter.setTU(String::valueOf(lootCredits));
 				splitLooter.setTT(String::valueOf(payout));
 				player->sendSystemMessage(splitLooter);
 			} else {
-				StringIdChatParameter splitMember("group", "prose_split"); //"[GROUP] You receive %DI credits as your share."
+				StringIdChatParameter splitMember("group", playerCount > 1 && payout > 0 ?
+						"prose_split_group_bonus" : "prose_split");
 				splitMember.setDI(payout);
 				payee->sendSystemMessage(splitMember);
 			}

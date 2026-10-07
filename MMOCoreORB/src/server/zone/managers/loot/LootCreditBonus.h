@@ -32,6 +32,15 @@ namespace LootCreditBonus {
 		double boostedCredits = std::round(baseCredits * (boostedExpected / baseExpected));
 		return boostedCredits >= std::numeric_limits<int>::max() ? std::numeric_limits<int>::max() : (int)boostedCredits;
 	}
+
+	inline int applyGroup(int credits, int playerCount) {
+		if (credits <= 0 || playerCount <= 1)
+			return credits;
+
+		// Each additional player adds 50% of the original creature-credit total.
+		long long boosted = (long long)credits * (playerCount + 1) / 2;
+		return boosted > std::numeric_limits<int>::max() ? std::numeric_limits<int>::max() : (int)boosted;
+	}
 }
 
 #endif
