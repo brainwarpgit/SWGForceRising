@@ -2,11 +2,15 @@
 
 ## 2026-10-07
 
+### Committed locked-loot slicing credit rewards
+
+- Successfully slicing a locked loot container or briefcase now pays cash credits in addition to the existing loot roll. Normal rewards roll 250–500, Exceptional 750–1,250, and Legendary 2,500–3,000. Base chances are 15% Exceptional and 5% Legendary; each Luck or Force Luck point adds 0.2 and 0.1 percentage points respectively. Each failed attempt before success reduces the rolled amount by 25%. The final payout and tier appear in a system message. The user verified the reward in game.
+
 ### Committed locked-container slicing and briefcase display updates
 
 - `Core3.SlicingContainerRetries` now controls extra attempts for locked loot containers and briefcases. Its default is `0`, retaining the original one-attempt behavior; setting it to `2` allows three total attempts, with the remaining count shown on examine and preserved across restarts. Exhausted attempts show a broken lock and rename the item **Broken Locked Container** or **Broken Locked Briefcase**.
 - Looted briefcases retain their slicing behavior and attempt state after restart. Locked and unlocked briefcases use localized names without the redundant “Variation Of” line. The update TRE adds the attempt label and briefcase/container names. The appearance loader no longer reports `SPRT` UI sprites as unknown world appearances.
-- The user verified the final behavior in game. The user selected `0` as the default retry setting in both Lua configurations; retry counts were verified with the option enabled.
+- The user verified the final behavior in game. The tracked configuration defaults to `0`; the ignored local configuration keeps the user's `2`-retry testing override.
 
 ## 2026-10-05
 

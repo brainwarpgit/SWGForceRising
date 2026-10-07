@@ -901,6 +901,7 @@ void SlicingSessionImplementation::handleContainerSlice() {
 			return;
 		}
 		container->sendTo(player, true);
+		int failedAttempts = tangibleObject->getSlicingFailedAttempts();
 
 		trx.commit();
 
@@ -910,6 +911,41 @@ void SlicingSessionImplementation::handleContainerSlice() {
 		}
 
 		tangibleObject->destroyObjectFromDatabase(true);
+
+		// Roll each tier on a single 0-999 scale. Each Luck point adds 0.1%
+		// Legendary chance and 0.2% Exceptional chance.
+		int64 totalLuck = static_cast<int64>(player->getSkillMod("luck")) + player->getSkillMod("force_luck");
+		// Cap where Normal reaches zero, so more Luck never reduces Exceptional odds.
+		int luckBonus = totalLuck < 0 ? 0 : (totalLuck > 267 ? 267 : static_cast<int>(totalLuck));
+		int legendaryThreshold = 50 + luckBonus;
+		int exceptionalThreshold = legendaryThreshold + 150 + 2 * luckBonus;
+		if (exceptionalThreshold > 1000)
+			exceptionalThreshold = 1000;
+
+		int tierRoll = System::random(999);
+		int credits;
+		String tier;
+		if (tierRoll < legendaryThreshold) {
+			credits = 2500 + System::random(500);
+			tier = "Legendary";
+		} else if (tierRoll < exceptionalThreshold) {
+			credits = 750 + System::random(500);
+			tier = "Exceptional";
+		} else {
+			credits = 250 + System::random(250);
+			tier = "Normal";
+		}
+
+		// Each failed attempt before success reduces the rolled award by 25%.
+		for (int i = 0; i < failedAttempts && credits > 1; ++i) {
+			credits = (credits * 3) / 4;
+			if (credits < 1)
+				credits = 1;
+		}
+
+		player->addCashCredits(credits);
+		player->sendSystemMessage("You found " + String::valueOf(credits) + " credits in the sliced " +
+				(isLockedBriefcase ? "briefcase" : "container") + " (" + tier + " reward).");
 
 	} else if (tangibleObject->isContainerObject()) {
 
