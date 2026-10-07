@@ -476,6 +476,7 @@
 #include "PermissionListModifyCommand.h"
 #include "PistolMeleeDefense1Command.h"
 #include "PistolMeleeDefense2Command.h"
+#include "PlayerAdminCommand.h"
 #include "PlaceBattlefieldStructureCommand.h"
 #include "PlaceStructureCommand.h"
 #include "PlaceStructureModeCommand.h"

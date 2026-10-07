@@ -10,6 +10,7 @@
 
 #include "server/zone/objects/player/sui/SuiCallback.h"
 #include "server/zone/objects/player/sessions/DestroyStructureSession.h"
+#include "server/zone/objects/player/PlayerObject.h"
 
 class DestroyStructureRequestSuiCallback : public SuiCallback {
 	ManagedWeakReference<DestroyStructureSession*> destroySession;
@@ -38,7 +39,11 @@ public:
 			return;
 		}
 
-		session->sendDestroyCode();
+		PlayerObject* ghost = player->getPlayerObject();
+		if (ghost != nullptr && !ghost->isStructureDestroyCodeEnabled())
+			session->destroyStructure();
+		else
+			session->sendDestroyCode();
 	}
 };
 

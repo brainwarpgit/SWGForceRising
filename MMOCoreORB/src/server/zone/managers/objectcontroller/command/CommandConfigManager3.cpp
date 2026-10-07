@@ -112,6 +112,7 @@
 #include "server/zone/objects/creature/commands/PlaceBattlefieldStructureCommand.h"
 #include "server/zone/objects/creature/commands/PlaceStructureCommand.h"
 #include "server/zone/objects/creature/commands/PlaceStructureModeCommand.h"
+#include "server/zone/objects/creature/commands/PlayerAdminCommand.h"
 #include "server/zone/objects/creature/commands/PlanetCommand.h"
 #include "server/zone/objects/creature/commands/PlanetsayCommand.h"
 #include "server/zone/objects/creature/commands/PlanetwarpCommand.h"
@@ -413,6 +414,7 @@ void CommandConfigManager::registerCommands3() {
 	commandFactory.registerCommand<PlaceBattlefieldStructureCommand>(String("placeBattlefieldStructure").toLowerCase());
 	commandFactory.registerCommand<PlaceStructureCommand>(String("placeStructure").toLowerCase());
 	commandFactory.registerCommand<PlaceStructureModeCommand>(String("placeStructureMode").toLowerCase());
+	commandFactory.registerCommand<PlayerAdminCommand>(String("playerAdmin").toLowerCase());
 	commandFactory.registerCommand<PlanetCommand>(String("planet").toLowerCase());
 	commandFactory.registerCommand<PlanetsayCommand>(String("planetsay").toLowerCase());
 	commandFactory.registerCommand<PlanetwarpCommand>(String("planetwarp").toLowerCase());

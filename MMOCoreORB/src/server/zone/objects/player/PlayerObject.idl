@@ -101,6 +101,7 @@ class PlayerObject extends IntangibleObject {
 	protected boolean forcedTransform;
 
 	protected boolean muted;
+	protected boolean structureDestroyCodeDisabled;
 	protected string mutedReason;
 	protected int tosVersionAccepted;
 
@@ -346,6 +347,7 @@ class PlayerObject extends IntangibleObject {
 		forcedTransform = false;
 
 		muted = false;
+		structureDestroyCodeDisabled = false;
 		mutedReason = "";
 
 		debugOutput = false;
@@ -450,6 +452,15 @@ class PlayerObject extends IntangibleObject {
 	@read
 	public int getLogLevel() {
 		return playerLogLevel;
+	}
+
+	@read
+	public boolean isStructureDestroyCodeEnabled() {
+		return !structureDestroyCodeDisabled;
+	}
+
+	public void setStructureDestroyCodeEnabled(boolean enabled) {
+		structureDestroyCodeDisabled = !enabled;
 	}
 
 	@read

@@ -2,6 +2,10 @@
 
 ## 2026-10-07
 
+### Committed player settings command
+
+- Added `/playerAdmin` as a player-accessible settings menu with a Storage option that toggles the destroy/redeed numeric confirmation code. Enabled appears green and Disabled red; changing the option reopens Storage with its new state. Admins can edit another online player's setting by targeting them or using `/playerAdmin playerName`; ordinary players can edit only their own. The command and setting change require the operator to be out of combat and stationary. The code remains enabled by default, and disabling it skips only the numeric-code prompt after the existing Yes/No confirmation; all structure safeguards still apply. The choice is saved per character and takes effect immediately. The update TRE adds the command-table row and command-browser strings. The user verified the final behavior in game after the missing C++ command-factory registration was added.
+
 ### Committed group creature-credit bonus
 
 - Creature credits looted while grouped now increase by 50% of the original total for each additional player member: two players receive 1.5×, four receive 2.5×. Pets and droids do not count. The bonus applies after the existing Luck credit adjustment and before nearby group members split the payout; it also covers direct creature looting by a grouped player. The existing payout message says when the group bonus is included, without sending a separate message. The update TRE adds these message variants. Missions, slicing rewards, transfers, and other credit sources are unchanged. The user verified the final behavior in game.
