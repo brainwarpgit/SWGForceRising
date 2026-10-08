@@ -70,6 +70,8 @@ public:
 
 private:
 	bool playerIsInvitingOwnPet(CreatureObject* inviter, CreatureObject* target);
+	void sendLootRuleJoinMessage(CreatureObject* member, int lootRule);
+	void showLootRuleNotice(CreatureObject* member, int lootRule);
 
 public:
 	GroupManager();
@@ -82,6 +84,7 @@ public:
 	void makeLeader(GroupObject* group, CreatureObject* player, CreatureObject* newLeader);
 
 	void changeLootRule(GroupObject* group, int newRule);
+	void sendGroupLootMenu(CreatureObject* leader, GroupObject* group);
 	void changeMasterLooter(GroupObject* group, CreatureObject* newLooter, bool enableRule);
 	void sendMasterLooterList(GroupObject* group, CreatureObject* leader);
 	void notifyMasterLooter(GroupObject* group);

@@ -13,7 +13,7 @@ class PlayerAdminSuiCallback : public SuiCallback {
 	uint64 subjectID;
 
 public:
-	enum Menu { CATEGORIES, STORAGE };
+	enum Menu { CATEGORIES, STORAGE, LOOT };
 
 	PlayerAdminSuiCallback(ZoneServer* server, int menu, uint64 subjectID) : SuiCallback(server), menu(menu), subjectID(subjectID) {}
 
@@ -34,11 +34,17 @@ public:
 			box->setPromptTitle(String("Player Settings") + owner);
 			box->setPromptText("Choose a settings category.");
 			box->addMenuItem("Storage");
+			box->addMenuItem("Loot");
 		} else if (menu == STORAGE) {
 			box->setPromptTitle(String("Storage Settings") + owner);
 			box->setPromptText("Select a setting to toggle it.");
 			box->addMenuItem(String("Destroy/Redeed Confirmation Code: ") +
 					(ghost->isStructureDestroyCodeEnabled() ? "\\#32CD32Enabled\\#." : "\\#FF6347Disabled\\#."));
+		} else if (menu == LOOT) {
+			box->setPromptTitle(String("Loot Settings") + owner);
+			box->setPromptText("Select a setting to toggle it. Area Loot applies to solo Loot All within 64 meters.");
+			box->addMenuItem(String("Solo Area Loot: ") +
+					(ghost->isAreaLootEnabled() ? "\\#32CD32Enabled\\#." : "\\#FF6347Disabled\\#."));
 		} else {
 			return;
 		}
@@ -53,7 +59,7 @@ public:
 			return;
 
 		String selectionText = args->get(0).toString();
-		if (selectionText != "0")
+		if (selectionText != "0" && selectionText != "1")
 			return;
 		ManagedReference<CreatureObject*> subject = player->getZoneServer()->getObject(subjectID).castTo<CreatureObject*>();
 		if (subject == nullptr || !subject->isPlayerCreature() || subject->getPlayerObject() == nullptr) {
@@ -66,8 +72,8 @@ public:
 		}
 
 		if (menu == CATEGORIES) {
-			showMenu(player, subject, STORAGE);
-		} else if (menu == STORAGE) {
+			showMenu(player, subject, selectionText == "0" ? STORAGE : LOOT);
+		} else if ((menu == STORAGE || menu == LOOT) && selectionText == "0") {
 			PlayerObject* ghost = subject->getPlayerObject();
 			if (ghost == nullptr)
 				return;
@@ -78,14 +84,23 @@ public:
 			bool enabled;
 			{
 				Locker ghostLocker(ghost, player);
-				enabled = !ghost->isStructureDestroyCodeEnabled();
-				ghost->setStructureDestroyCodeEnabled(enabled);
+				if (menu == STORAGE) {
+					enabled = !ghost->isStructureDestroyCodeEnabled();
+					ghost->setStructureDestroyCodeEnabled(enabled);
+				} else {
+					enabled = !ghost->isAreaLootEnabled();
+					ghost->setAreaLootEnabled(enabled);
+				}
 				ghost->updateToDatabase();
 			}
-			player->sendSystemMessage((subject == player ? String("") : subject->getFirstName() + String(": ")) + (enabled ?
-					"Destroy/redeed confirmation code enabled." :
-					"Destroy/redeed confirmation code disabled. The Yes/No confirmation and other structure checks still apply."));
-			showMenu(player, subject, STORAGE);
+			String prefix = subject == player ? String("") : subject->getFirstName() + String(": ");
+			if (menu == STORAGE)
+				player->sendSystemMessage(prefix + (enabled ?
+						"Destroy/redeed confirmation code enabled." :
+						"Destroy/redeed confirmation code disabled. The Yes/No confirmation and other structure checks still apply."));
+			else
+				player->sendSystemMessage(prefix + (enabled ? "Solo Area Loot enabled." : "Solo Area Loot disabled."));
+			showMenu(player, subject, menu);
 		}
 	}
 };

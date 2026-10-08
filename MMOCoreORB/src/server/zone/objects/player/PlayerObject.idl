@@ -102,6 +102,7 @@ class PlayerObject extends IntangibleObject {
 
 	protected boolean muted;
 	protected boolean structureDestroyCodeDisabled;
+	protected boolean areaLootEnabled;
 	protected string mutedReason;
 	protected int tosVersionAccepted;
 
@@ -348,6 +349,7 @@ class PlayerObject extends IntangibleObject {
 
 		muted = false;
 		structureDestroyCodeDisabled = false;
+		areaLootEnabled = false;
 		mutedReason = "";
 
 		debugOutput = false;
@@ -461,6 +463,15 @@ class PlayerObject extends IntangibleObject {
 
 	public void setStructureDestroyCodeEnabled(boolean enabled) {
 		structureDestroyCodeDisabled = !enabled;
+	}
+
+	@read
+	public boolean isAreaLootEnabled() {
+		return areaLootEnabled;
+	}
+
+	public void setAreaLootEnabled(boolean enabled) {
+		areaLootEnabled = enabled;
 	}
 
 	@read

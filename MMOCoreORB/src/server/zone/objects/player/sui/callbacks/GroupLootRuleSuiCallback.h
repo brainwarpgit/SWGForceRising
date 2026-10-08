@@ -27,7 +27,7 @@ public:
 
 		int selection = Integer::valueOf(args->get(0).toString()); //The row number they chose in the list.
 
-		if (selection < 0) //Player made no selection but pressed OK.
+		if (selection < 0 || selection > 4) //Player made no valid selection but pressed OK.
 			return;
 
 		ManagedReference<GroupObject*> group = player->getGroup();
@@ -39,7 +39,14 @@ public:
 		if (group->getLeader() != player)
 			return;
 
-		GroupManager::instance()->changeLootRule(group, selection);
+		if (selection == 4) {
+			bool enabled = !group->isAreaLootEnabled();
+			group->setAreaLootEnabled(enabled);
+			group->sendSystemMessage(enabled ? "Group Area Loot enabled." : "Group Area Loot disabled.");
+			GroupManager::instance()->sendGroupLootMenu(player, group);
+		} else {
+			GroupManager::instance()->changeLootRule(group, selection);
+		}
 	}
 
 };

@@ -22,7 +22,9 @@
 #include "server/zone/managers/objectcontroller/ObjectController.h"
 #include "server/zone/objects/player/sessions/EntertainingSession.h"
 #include "server/zone/objects/player/sui/messagebox/SuiMessageBox.h"
+#include "server/zone/objects/player/sui/listbox/SuiListBox.h"
 #include "server/zone/objects/player/sui/callbacks/GroupLootChangedSuiCallback.h"
+#include "server/zone/objects/player/sui/callbacks/GroupLootRuleSuiCallback.h"
 #include "server/zone/objects/player/sui/callbacks/GroupLootPickLooterSuiCallback.h"
 #include "server/zone/packets/object/OpenLotteryWindow.h"
 #include "server/zone/objects/player/sessions/LootLotterySession.h"
@@ -36,6 +38,65 @@ GroupManager::GroupManager() {
 
 bool GroupManager::playerIsInvitingOwnPet(CreatureObject* inviter, CreatureObject* target) {
 	return inviter != nullptr && target != nullptr && target->isPet() && target->getCreatureLinkID() != 0 && target->getCreatureLinkID() == inviter->getObjectID();
+}
+
+void GroupManager::sendLootRuleJoinMessage(CreatureObject* member, int lootRule) {
+	if (member == nullptr || !member->isPlayerCreature())
+		return;
+
+	String rule;
+	switch (lootRule) {
+	case FREEFORALL:
+		rule = "Free For All";
+		break;
+	case MASTERLOOTER:
+		rule = "Master Looter";
+		break;
+	case LOTTERY:
+		rule = "Lottery";
+		break;
+	case RANDOM:
+		rule = "Random (default)";
+		break;
+	default:
+		return;
+	}
+
+	member->sendSystemMessage(String("Group loot is set to ") + rule + ".");
+}
+
+void GroupManager::showLootRuleNotice(CreatureObject* member, int lootRule) {
+	if (member == nullptr || !member->isPlayerCreature() || member->getPlayerObject() == nullptr)
+		return;
+
+	String promptText;
+	switch (lootRule) {
+	case FREEFORALL:
+		promptText = "@group:selected_free4all";
+		break;
+	case MASTERLOOTER:
+		promptText = "@group:selected_master";
+		break;
+	case LOTTERY:
+		promptText = "@group:selected_lotto";
+		break;
+	case RANDOM:
+		promptText = "@group:selected_random";
+		break;
+	default:
+		return;
+	}
+
+	PlayerObject* ghost = member->getPlayerObject();
+	ghost->closeSuiWindowType(SuiWindowType::GROUP_LOOT_CHANGED);
+	ManagedReference<SuiMessageBox*> sui = new SuiMessageBox(member, SuiWindowType::GROUP_LOOT_CHANGED);
+	sui->setPromptTitle("@group:loot_changed");
+	sui->setPromptText(promptText);
+	sui->setCancelButton(true, "@group:ok");
+	sui->setOkButton(true, "@group:leave_group");
+	sui->setCallback(new GroupLootChangedSuiCallback(member->getZoneServer()));
+	ghost->addSuiBox(sui);
+	member->sendMessage(sui->generateMessage());
 }
 
 void GroupManager::inviteToGroup(CreatureObject* inviter, CreatureObject* target) {
@@ -240,6 +301,7 @@ void GroupManager::joinGroup(CreatureObject* creature) {
 
 	if (creature->isPlayerCreature()) {
 		creature->sendSystemMessage("@group:joined_self");
+		sendLootRuleJoinMessage(creature, group->getLootRule());
 
 		//Inform new member who the Master Looter is.
 		if (group->getLootRule() == MASTERLOOTER) {
@@ -322,6 +384,7 @@ void GroupManager::createGroup(CreatureObject* leader, CreatureObject* creature)
 		leaderGhost->clearPlayerBit(PlayerBitmasks::LFG, true);
 
 	leader->sendSystemMessage("@group:formed_self");
+	sendLootRuleJoinMessage(leader, group->getLootRule());
 
 	// Lock the new member
 	Locker memberLock(creature, group);
@@ -334,6 +397,7 @@ void GroupManager::createGroup(CreatureObject* leader, CreatureObject* creature)
 
 	if (creature->isPlayerCreature()) {
 		creature->sendSystemMessage("@group:joined_self");
+		sendLootRuleJoinMessage(creature, group->getLootRule());
 
 		auto playerGhost = creature->getPlayerObject();
 
@@ -593,6 +657,48 @@ void GroupManager::joinGroupEntertainingSession(CreatureObject* player) {
 	session->joinBand();
 }
 
+void GroupManager::sendGroupLootMenu(CreatureObject* leader, GroupObject* group) {
+	if (leader == nullptr || group == nullptr || group->getLeader() != leader || leader->getPlayerObject() == nullptr)
+		return;
+
+	String currentRule;
+	switch (group->getLootRule()) {
+	case FREEFORALL:
+		currentRule = "Free For All";
+		break;
+	case MASTERLOOTER:
+		currentRule = "Master Looter";
+		break;
+	case LOTTERY:
+		currentRule = "Lottery";
+		break;
+	case RANDOM:
+		currentRule = "Random";
+		break;
+	default:
+		return;
+	}
+
+	PlayerObject* ghost = leader->getPlayerObject();
+	ghost->closeSuiWindowType(SuiWindowType::GROUP_LOOT_RULE);
+	ManagedReference<SuiListBox*> sui = new SuiListBox(leader, SuiWindowType::GROUP_LOOT_RULE);
+	sui->setPromptTitle("@group:set_loot_type_title");
+	sui->setPromptText(String("Current loot type: ") + currentRule + "\n\nChoose a loot type or toggle Area Loot:");
+	sui->setCancelButton(true, "@ui:cancel");
+	sui->setOkButton(true, "@ui:ok");
+	sui->setCallback(new GroupLootRuleSuiCallback(leader->getZoneServer()));
+	sui->addMenuItem("Free For All");
+	sui->addMenuItem("Master Looter");
+	sui->addMenuItem("@ui_lottery:title");
+	sui->addMenuItem("@group:random");
+	String areaState = group->isAreaLootEnabled() ? "\\#32CD32Enabled\\#." : "\\#FF6347Disabled\\#.";
+	if (group->getLootRule() == MASTERLOOTER)
+		areaState += " (inactive with Master Looter)";
+	sui->addMenuItem(String("Group Area Loot: ") + areaState);
+	ghost->addSuiBox(sui);
+	leader->sendMessage(sui->generateMessage());
+}
+
 void GroupManager::changeLootRule(GroupObject* group, int newRule) {
 		//Pre: group is locked
 		//Post: group is locked
@@ -635,29 +741,23 @@ void GroupManager::changeLootRule(GroupObject* group, int newRule) {
 		if (leader != nullptr)
 			leader->sendSystemMessage(leaderMsg);
 
-		//Notify group members of the new rule with an SUI box.
+		//Notify group members, without a popup for the leader's other characters.
+		PlayerObject* leaderGhost = leader != nullptr ? leader->getPlayerObject() : nullptr;
+		uint32 leaderAccountID = leaderGhost != nullptr ? leaderGhost->getAccountID() : 0;
 		for (int i = 0; i < group->getGroupSize(); ++i) {
 			ManagedReference<CreatureObject*> member = group->getGroupMember(i);
 
 			if (member == nullptr || !member->isPlayerCreature() || member == group->getLeader())
 				continue;
 
-			ManagedReference<PlayerObject*> ghost = member->getPlayerObject();
-			if (ghost == nullptr)
-				continue;
-
-			//Close SUI box if already open.
-			ghost->closeSuiWindowType(SuiWindowType::GROUP_LOOT_CHANGED);
-
-			ManagedReference<SuiMessageBox*> sui = new SuiMessageBox(member, SuiWindowType::GROUP_LOOT_CHANGED);
-			sui->setPromptTitle("@group:loot_changed"); //"Loot Type Changed."
-			sui->setPromptText(promptText);
-			sui->setCancelButton(true, "@group:ok");
-			sui->setOkButton(true, "@group:leave_group");
-			sui->setCallback(new GroupLootChangedSuiCallback(member->getZoneServer()));
-
-			ghost->addSuiBox(sui);
-			member->sendMessage(sui->generateMessage());
+			PlayerObject* memberGhost = member->getPlayerObject();
+			if (leaderAccountID != 0 && memberGhost != nullptr && memberGhost->getAccountID() == leaderAccountID) {
+				memberGhost->closeSuiWindowType(SuiWindowType::GROUP_LOOT_CHANGED);
+				StringIdChatParameter notice(promptText);
+				member->sendSystemMessage(notice);
+			} else {
+				showLootRuleNotice(member, newRule);
+			}
 		}
 }
 
@@ -907,4 +1007,3 @@ void GroupManager::transferLoot(GroupObject* group, CreatureObject* winner, Scen
 		}
 
 	}
-

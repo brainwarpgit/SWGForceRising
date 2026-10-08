@@ -9,6 +9,8 @@
 #include "server/zone/managers/player/PlayerManager.h"
 #include "server/zone/managers/group/GroupLootTask.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
+#include "server/zone/objects/player/PlayerObject.h"
+#include "server/zone/Zone.h"
 
 class LootCommand : public QueueCommand {
 
@@ -23,6 +25,50 @@ public:
 	LootCommand(const String& name, ZoneProcessServer* server)
 		: QueueCommand(name, server) {
 
+	}
+
+	void lootNearbyCorpses(CreatureObject* creature, AiAgent* selectedCorpse, PlayerManager* playerManager) const {
+		Zone* zone = creature->getZone();
+		if (zone == nullptr)
+			return;
+		ManagedReference<GroupObject*> group = creature->getGroup();
+		if (group != nullptr && (!group->isAreaLootEnabled() || group->getLootRule() == GroupManager::MASTERLOOTER))
+			return;
+		if (group == nullptr && (creature->getPlayerObject() == nullptr || !creature->getPlayerObject()->isAreaLootEnabled()))
+			return;
+		uint64 ownerID = group != nullptr ? group->getObjectID() : creature->getObjectID();
+
+		Vector3 position = creature->getWorldPosition();
+		SortedVector<TreeEntry*> objects(512, 512);
+		zone->getInRangeObjects(position.getX(), position.getZ(), position.getY(), 64, &objects, true);
+
+		for (int i = 0; i < objects.size(); ++i) {
+			SceneObject* object = static_cast<SceneObject*>(objects.get(i));
+			if (object == nullptr || object == selectedCorpse || !object->isAiAgent())
+				continue;
+
+			ManagedReference<AiAgent*> nearby = object->asAiAgent();
+			if (nearby == nullptr || nearby->getZone() != zone || nearby->getParentID() != creature->getParentID() ||
+					!checkDistance(nearby, creature, 64))
+				continue;
+
+			Locker nearbyLocker(nearby, creature);
+			if (!nearby->isDead() || creature->isDead() || creature->getGroup() != group ||
+					(group != nullptr && (!group->isAreaLootEnabled() || group->getLootRule() == GroupManager::MASTERLOOTER)))
+				continue;
+
+			SceneObject* inventory = nearby->getSlottedObject("inventory");
+			const ContainerPermissions* permissions = inventory != nullptr ? inventory->getContainerPermissions() : nullptr;
+			if (permissions == nullptr || permissions->getOwnerID() != ownerID)
+				continue;
+
+			if (group == nullptr)
+				playerManager->lootAll(creature, nearby);
+			else {
+				GroupLootTask* task = new GroupLootTask(group, creature, nearby, true);
+				task->execute();
+			}
+		}
 	}
 
 	int doQueueCommand(CreatureObject* creature, const uint64& target, const UnicodeString& arguments) const {
@@ -85,7 +131,13 @@ public:
 		// Allow player to loot the corpse if they own it.
 		if (looterIsOwner) {
 			if (lootAll) {
+				bool areaLoot = creature->getGroup() == nullptr && creature->getPlayerObject() != nullptr &&
+						creature->getPlayerObject()->isAreaLootEnabled();
 				playerManager->lootAll(creature, agent);
+				if (areaLoot) {
+					locker.release();
+					lootNearbyCorpses(creature, agent, playerManager);
+				}
 			} else {
 				//Check if the corpse's inventory contains any items.
 				if (lootContainer->getContainerObjectsSize() < 1) {
@@ -143,6 +195,11 @@ public:
 
 		if (task != nullptr)
 			task->execute();
+		if (lootAll && group->isAreaLootEnabled() &&
+				group->getLootRule() != GroupManager::MASTERLOOTER) {
+			locker.release();
+			lootNearbyCorpses(creature, agent, playerManager);
+		}
 
 		return SUCCESS;
 	}

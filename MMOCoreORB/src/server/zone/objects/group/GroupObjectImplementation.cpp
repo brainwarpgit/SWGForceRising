@@ -777,7 +777,7 @@ bool GroupObjectImplementation::initializeLeader(CreatureObject* leader, Creatur
 	groupMembers.add(member, nullptr, 0);
 
 	setMasterLooterID(leader->getObjectID());
-	setLootRule(GroupManager::FREEFORALL);
+	setLootRule(GroupManager::RANDOM);
 	calculateGroupLevel();
 
 	uint64 leaderShipID = 0;

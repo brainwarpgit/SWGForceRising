@@ -35,6 +35,7 @@ class GroupObject extends SceneObject {
 	int factionPetLevel;
 
 	int lootRule;
+	boolean areaLootEnabled;
 
 	unsigned long masterLooterID;
 
@@ -46,7 +47,8 @@ class GroupObject extends SceneObject {
 
 		chatRoom = null;
 
-		lootRule = GroupManager.FREEFORALL;
+		lootRule = GroupManager.RANDOM;
+		areaLootEnabled = false;
 		masterLooterID = 0;
 	}
 
@@ -209,6 +211,16 @@ class GroupObject extends SceneObject {
 	@preLocked
 	public void setLootRule(int newRule) {
 		lootRule = newRule;
+	}
+
+	@read
+	public boolean isAreaLootEnabled() {
+		return areaLootEnabled;
+	}
+
+	@preLocked
+	public void setAreaLootEnabled(boolean enabled) {
+		areaLootEnabled = enabled;
 	}
 
 	@read

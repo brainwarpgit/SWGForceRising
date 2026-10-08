@@ -2,6 +2,10 @@
 
 ## 2026-10-07
 
+### Committed area loot and group rules
+
+- Added a persistent personal Area Loot toggle under `/playerAdmin` → Loot for solo play, disabled by default. Group Area Loot is instead a separate leader-controlled toggle in `/groupLoot`, also disabled by default; toggling it returns to the menu, and any member's Loot All then processes eligible group corpses within 64 meters. Group corpses follow the selected Free For All, Lottery, or Random rule; Master Looter never uses Area Loot. New groups default to Random unless the leader chooses another rule. Joining players receive a system message with the current rule. Later rule changes send the leader's account characters a system message instead of a popup; other accounts keep the existing popup. The leader's `/groupLoot` menu shows the current rule and Group Area Loot state. The user verified the final behavior in game.
+
 ### Committed player settings command
 
 - Added `/playerAdmin` as a player-accessible settings menu with a Storage option that toggles the destroy/redeed numeric confirmation code. Enabled appears green and Disabled red; changing the option reopens Storage with its new state. Admins can edit another online player's setting by targeting them or using `/playerAdmin playerName`; ordinary players can edit only their own. The command and setting change require the operator to be out of combat and stationary. The code remains enabled by default, and disabling it skips only the numeric-code prompt after the existing Yes/No confirmation; all structure safeguards still apply. The choice is saved per character and takes effect immediately. The update TRE adds the command-table row and command-browser strings. The user verified the final behavior in game after the missing C++ command-factory registration was added.
