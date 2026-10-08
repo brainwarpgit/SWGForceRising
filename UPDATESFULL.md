@@ -2,6 +2,10 @@
 
 ## 2026-10-08
 
+### Committed group Area Loot default
+
+- Changed the `GroupObject` constructor default for `areaLootEnabled` from false to true. New groups therefore start with Group Area Loot enabled for all members, regardless of the leader's solo `/playerAdmin` Area Loot preference. The leader's `/groupLoot` toggle remains available, saved settings on existing groups are not reset, and Master Looter still bypasses Area Loot. Source and whitespace checks passed, and the user verified the behavior in game. The assistant did not build or run Core3.
+
 ### Committed junk dealer update
 
 - Updated all 12 ground junk dealer mobile templates to use `NAME_GENERIC` with the existing `@mob/creature_names:junk_dealer` tag, which already resolves to “a Junk Dealer” in the client string table. Removed fixed names from the 11 named variants and pointed every variant to `junkDealerGenericConvoTemplate`. Their appearances and spawn placements remain unchanged; specialized dealer conversations will no longer be used by these mobiles.

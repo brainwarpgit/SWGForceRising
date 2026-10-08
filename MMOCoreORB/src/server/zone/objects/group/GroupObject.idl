@@ -48,7 +48,7 @@ class GroupObject extends SceneObject {
 		chatRoom = null;
 
 		lootRule = GroupManager.RANDOM;
-		areaLootEnabled = false;
+		areaLootEnabled = true;
 		masterLooterID = 0;
 	}
 

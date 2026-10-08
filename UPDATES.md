@@ -2,6 +2,10 @@
 
 ## 2026-10-08
 
+### Committed group Area Loot default
+
+- Newly formed groups now start with Group Area Loot enabled. The leader can still disable or re-enable it through `/groupLoot`; existing groups keep their saved setting. Static checks passed, and the user verified the behavior in game.
+
 ### Committed junk dealer update
 
 - Ground junk dealers now receive a random name followed by “(a Junk Dealer)” and use the generic junk dealer conversation, including dealers previously defined with fixed names and specialized dialogue. City and Jawa-trader screenplays now keep that conversation instead of overriding it with specialized dialogue. Mayors can place **Junk Dealer (Vendor)** through `/recruitSkillTrainer`; it uses one city trainer slot and the existing 1,000-credit city treasury charge. Recruited junk dealers now have the mayor's Rename and Remove radial options. Static checks passed, and the user verified the final behavior in game.
