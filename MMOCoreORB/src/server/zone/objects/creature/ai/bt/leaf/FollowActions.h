@@ -16,6 +16,7 @@
 #include "server/zone/objects/player/FactionStatus.h"
 #include "server/zone/managers/reaction/ReactionManager.h"
 #include "server/zone/objects/creature/events/DroidHarvestTask.h"
+#include "server/zone/objects/creature/events/DroidAutoLootTask.h"
 
 namespace server {
 namespace zone {
@@ -1051,17 +1052,20 @@ public:
 			return FAILURE;
 
 		auto module = droid->getModule("harvest_module").castTo<DroidHarvestModuleDataComponent*>();
+		auto lootModule = droid->getModule("auto_loot_module").castTo<DroidAutoLootModuleDataComponent*>();
 
-		if (module == nullptr)
+		if (module == nullptr && lootModule == nullptr)
 			return FAILURE;
 
 		ManagedReference<SceneObject*> target = nullptr;
+		bool autoLoot = agent->peekBlackboard("autoLootTarget");
 
-		if (!agent->peekBlackboard("harvestTarget")) {
-			if (!module->hasMoreTargets())
+		if (!agent->peekBlackboard("harvestTarget") && !autoLoot) {
+			autoLoot = lootModule != nullptr && lootModule->hasMoreTargets();
+			if (!autoLoot && (module == nullptr || !module->hasMoreTargets()))
 				return FAILURE;
 
-			uint64 targetID = module->getNextHarvestTarget();
+			uint64 targetID = autoLoot ? lootModule->getNextLootTarget() : module->getNextHarvestTarget();
 
 			ZoneServer* zoneServer = agent->getZoneServer();
 
@@ -1070,20 +1074,36 @@ public:
 
 			target = zoneServer->getObject(targetID, true);
 		} else {
-			target = agent->readBlackboard("harvestTarget").get<ManagedReference<SceneObject*> >();
+			target = agent->readBlackboard(autoLoot ? "autoLootTarget" : "harvestTarget").get<ManagedReference<SceneObject*> >();
 		}
 
-		if (target == nullptr || !target->isCreature())
+		if (target == nullptr || (autoLoot ? !target->isAiAgent() : !target->isCreature())) {
+			agent->eraseBlackboard(autoLoot ? "autoLootTarget" : "harvestTarget");
+			auto owner = agent->getLinkedCreature().get();
+			if (owner != nullptr) {
+				agent->setFollowObject(owner);
+				agent->storeFollowObject();
+				agent->setMovementState(AiAgent::FOLLOWING);
+			}
 			return FAILURE;
+		}
 
 		Locker cLocker(target, agent);
 
-		agent->writeBlackboard("harvestTarget", target);
+		agent->writeBlackboard(autoLoot ? "autoLootTarget" : "harvestTarget", target);
 
 		CreatureObject* tarCreo = target->asCreatureObject();
 
-		if (tarCreo == nullptr || !tarCreo->isDead())
+		if (tarCreo == nullptr || !tarCreo->isDead()) {
+			agent->eraseBlackboard(autoLoot ? "autoLootTarget" : "harvestTarget");
+			auto owner = agent->getLinkedCreature().get();
+			if (owner != nullptr) {
+				agent->setFollowObject(owner);
+				agent->storeFollowObject();
+				agent->setMovementState(AiAgent::FOLLOWING);
+			}
 			return FAILURE;
+		}
 
 		ManagedReference<CreatureObject*> owner = agent->getLinkedCreature().get();
 
@@ -1101,7 +1121,7 @@ public:
 		}
 
 		if (!tarCreo->isInRange(owner, 64.0f)) {
-			agent->eraseBlackboard("harvestTarget");
+			agent->eraseBlackboard(autoLoot ? "autoLootTarget" : "harvestTarget");
 
 			agent->setFollowObject(owner);
 			agent->storeFollowObject();
@@ -1119,12 +1139,16 @@ public:
 			return SUCCESS;
 		}
 
-		Reference<Task*> task = new DroidHarvestTask(module, tarCreo);
+		Reference<Task*> task;
+		if (autoLoot)
+			task = new DroidAutoLootTask(lootModule, tarCreo);
+		else
+			task = new DroidHarvestTask(module, tarCreo);
 		Core::getTaskManager()->executeTask(task);
 
-		agent->eraseBlackboard("harvestTarget");
+		agent->eraseBlackboard(autoLoot ? "autoLootTarget" : "harvestTarget");
 
-		if (!module->hasMoreTargets()) {
+		if ((module == nullptr || !module->hasMoreTargets()) && (lootModule == nullptr || !lootModule->hasMoreTargets())) {
 			agent->setFollowObject(owner);
 			agent->storeFollowObject();
 			agent->setMovementState(AiAgent::FOLLOWING);

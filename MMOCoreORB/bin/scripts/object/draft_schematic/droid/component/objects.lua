@@ -4107,3 +4107,9 @@ object_draft_schematic_droid_component_shared_unit_delivery_cartridge_advanced =
 }
 
 ObjectTemplates:addClientTemplate(object_draft_schematic_droid_component_shared_unit_delivery_cartridge_advanced, "object/draft_schematic/droid/component/shared_unit_delivery_cartridge_advanced.iff")
+
+object_draft_schematic_droid_component_shared_auto_loot_module = SharedDraftSchematicObjectTemplate:new {
+	clientTemplateFileName = "object/draft_schematic/droid/component/shared_auto_loot_module.iff"
+}
+
+ObjectTemplates:addClientTemplate(object_draft_schematic_droid_component_shared_auto_loot_module, "object/draft_schematic/droid/component/shared_auto_loot_module.iff")

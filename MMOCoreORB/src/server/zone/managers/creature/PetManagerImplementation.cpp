@@ -258,6 +258,8 @@ void PetManagerImplementation::handleChat(CreatureObject* speaker, AiAgent* pet,
 		enqueueOwnerOnlyPetCommand(speaker, pet, STRING_HASHCODE("pettransfer"), "");
 	} else if (command == HARVEST) {
 		enqueuePetCommand(speaker, pet, STRING_HASHCODE("petharvest"), String::valueOf(speaker->getObjectID()), false);
+	} else if (command == LOOT) {
+		enqueuePetCommand(speaker, pet, STRING_HASHCODE("petloot"), String::valueOf(speaker->getObjectID()), false);
 	}
 
 	// Hand off to droid modules for handling

@@ -57,6 +57,7 @@
 #include "server/zone/objects/creature/commands/pet/PetRepairCommand.h"
 #include "server/zone/objects/creature/commands/pet/PetThrowCommand.h"
 #include "server/zone/objects/creature/commands/pet/PetHarvestCommand.h"
+#include "server/zone/objects/creature/commands/pet/PetLootCommand.h"
 #include "server/zone/objects/creature/commands/pet/PetPatrolCommand.h"
 #include "server/zone/objects/creature/commands/pet/PetClearPatrolPointsCommand.h"
 #include "server/zone/objects/creature/commands/pet/PetGetPatrolPointCommand.h"
@@ -390,6 +391,7 @@ void CommandConfigManager::registerSpecialCommands(CommandList* sCommands) {
 	createCommand(String("petRepair").toLowerCase())->setCommandGroup(0xe1c9a54a);
 	createCommand(String("petThrow").toLowerCase())->setCommandGroup(0xe1c9a54a);
 	createCommand(String("petHarvest").toLowerCase())->setCommandGroup(0xe1c9a54a);
+	createCommand(String("petLoot").toLowerCase())->setCommandGroup(0xe1c9a54a);
 	createCommand(String("petPatrol").toLowerCase())->setCommandGroup(0xe1c9a54a);
 	createCommand(String("petClearPatrolPoints").toLowerCase())->setCommandGroup(0xe1c9a54a);
 	createCommand(String("petGetPatrolPoint").toLowerCase())->setCommandGroup(0xe1c9a54a);
@@ -886,6 +888,7 @@ void CommandConfigManager::registerCommands() {
 	commandFactory.registerCommand<PetRepairCommand>(String("petRepair").toLowerCase());
 	commandFactory.registerCommand<PetThrowCommand>(String("petThrow").toLowerCase());
 	commandFactory.registerCommand<PetHarvestCommand>(String("petHarvest").toLowerCase());
+	commandFactory.registerCommand<PetLootCommand>(String("petLoot").toLowerCase());
 	commandFactory.registerCommand<PetPatrolCommand>(String("petPatrol").toLowerCase());
 	commandFactory.registerCommand<PetClearPatrolPointsCommand>(String("petClearPatrolPoints").toLowerCase());
 	commandFactory.registerCommand<PetGetPatrolPointCommand>(String("petGetPatrolPoint").toLowerCase());

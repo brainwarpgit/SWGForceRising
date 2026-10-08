@@ -115,6 +115,13 @@ void DroidComponentImplementation::fillAttributeList(AttributeListMessage* alm, 
 		if (playbackModules > 0)
 			alm->insertAttribute("playback_modules", playbackModules);
 	}
+
+	DataObjectComponentReference* data = getDataObjectComponent();
+	if (data != nullptr && data->get() != nullptr && data->get()->isDroidModuleData()) {
+		BaseDroidModuleComponent* module = cast<BaseDroidModuleComponent*>(data->get());
+		if (module != nullptr && module->getModuleName() == "auto_loot_module")
+			module->fillAttributeList(alm, object);
+	}
 }
 bool DroidComponentImplementation::isSocketCluster() {
 	String objTemplate = getObjectTemplate()->getFullTemplateString();

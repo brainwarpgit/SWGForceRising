@@ -2,6 +2,10 @@
 
 ## 2026-10-08
 
+### Committed Auto Loot droid module
+
+- Added a Droid Engineer Auto Loot Module schematic using the Creature Harvest Module's copper, inert gas, and steel recipe and the same appearance. The module has its own Auto Loot Options radial with an on/off toggle and teachable Loot Target command; examining the droid shows whether Auto Loot is on or off. An activated module queues newly killed owner-owned NPC and creature corpses within 64 meters, drives to each corpse, collects items and credits, and returns to following its owner. It does not collect group-owned corpses. Experimentation raises only the module's credit bonus, from 0% to 15%, and the bonus applies only to credits collected by the droid. The update TRE source adds the schematic, component, crafting group, names, and object CRC entries. Static checks passed, and the user verified the final behavior in game.
+
 ### Committed group Area Loot default
 
 - Newly formed groups now start with Group Area Loot enabled. The leader can still disable or re-enable it through `/groupLoot`; existing groups keep their saved setting. Static checks passed, and the user verified the behavior in game.

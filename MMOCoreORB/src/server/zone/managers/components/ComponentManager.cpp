@@ -162,6 +162,7 @@
 #include "server/zone/objects/tangible/components/droid/DroidPlaybackModuleDataComponent.h"
 #include "server/zone/objects/tangible/components/droid/DroidTrapModuleDataComponent.h"
 #include "server/zone/objects/tangible/components/droid/DroidHarvestModuleDataComponent.h"
+#include "server/zone/objects/tangible/components/droid/DroidAutoLootModuleDataComponent.h"
 #include "server/zone/objects/tangible/components/droid/DroidPersonalityModuleDataComponent.h"
 #include "server/zone/objects/tangible/components/PobShipObjectMenuComponent.h"
 #include "server/zone/objects/tangible/components/StarshipPaintKitObjectMenuComponent.h"
@@ -375,6 +376,7 @@ ComponentManager::ComponentManager() {
 	dataObjectFactory.registerObject<DroidPlaybackModuleDataComponent>("DroidPlaybackModuleDataComponent");
 	dataObjectFactory.registerObject<DroidTrapModuleDataComponent>("DroidTrapModuleDataComponent");
 	dataObjectFactory.registerObject<DroidHarvestModuleDataComponent>("DroidHarvestModuleDataComponent");
+	dataObjectFactory.registerObject<DroidAutoLootModuleDataComponent>("DroidAutoLootModuleDataComponent");
 	dataObjectFactory.registerObject<DroidPersonalityModuleDataComponent>("DroidPersonalityModuleDataComponent");
 
 	// Warren Disks

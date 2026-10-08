@@ -4220,6 +4220,10 @@ int PlayerManagerImplementation::checkSpeedHackTests(CreatureObject* player, Pla
 }
 
 void PlayerManagerImplementation::lootAll(CreatureObject* player, CreatureObject* ai) {
+	lootAllWithAutoLootBonus(player, ai, 0);
+}
+
+void PlayerManagerImplementation::lootAllWithAutoLootBonus(CreatureObject* player, CreatureObject* ai, int bonusPercent) {
 	Locker locker(ai, player);
 
 	if (!ai->isDead() || player->isDead())
@@ -4236,6 +4240,7 @@ void PlayerManagerImplementation::lootAll(CreatureObject* player, CreatureObject
 
 	if (cashCredits > 0) {
 		cashCredits = LootCreditBonus::apply(cashCredits, ai->getLevel(), player);
+		cashCredits = LootCreditBonus::applyAutoLoot(cashCredits, bonusPercent);
 		bool groupBonusApplied = false;
 		ManagedReference<GroupObject*> group = player->getGroup();
 		if (group != nullptr) {

@@ -13,6 +13,7 @@
 #include "server/zone/managers/frs/FrsManager.h"
 #include "server/zone/managers/reaction/ReactionManager.h"
 #include "server/zone/objects/tangible/components/droid/DroidHarvestModuleDataComponent.h"
+#include "server/zone/objects/tangible/components/droid/DroidAutoLootModuleDataComponent.h"
 #include "server/zone/objects/creature/ai/DroidObject.h"
 #include "server/zone/managers/creature/observers/CreatureHerdObserver.h"
 
@@ -674,14 +675,14 @@ template<> bool CheckIsHarvester::check(AiAgent* agent) const {
 
 	auto module = droid->getModule("harvest_module").castTo<DroidHarvestModuleDataComponent*>();
 
-	return module != nullptr ? true : false;
+	return module != nullptr || droid->getModule("auto_loot_module") != nullptr;
 }
 
 template<> bool CheckHasHarvestTargets::check(AiAgent* agent) const {
 	if (agent == nullptr || !agent->isDroid())
 		return false;
 
-	if (agent->peekBlackboard("harvestTarget"))
+	if (agent->peekBlackboard("harvestTarget") || agent->peekBlackboard("autoLootTarget"))
 		return true;
 
 	ManagedReference<DroidObject*> droid = cast<DroidObject*>(agent);
@@ -691,7 +692,9 @@ template<> bool CheckHasHarvestTargets::check(AiAgent* agent) const {
 
 	auto module = droid->getModule("harvest_module").castTo<DroidHarvestModuleDataComponent*>();
 
-	return module != nullptr && module->hasMoreTargets() ? true : false;
+	auto lootModule = droid->getModule("auto_loot_module").castTo<DroidAutoLootModuleDataComponent*>();
+	return (module != nullptr && module->hasMoreTargets()) ||
+			(lootModule != nullptr && lootModule->hasMoreTargets());
 }
 
 template<> bool CheckShouldRest::check(AiAgent* agent) const {

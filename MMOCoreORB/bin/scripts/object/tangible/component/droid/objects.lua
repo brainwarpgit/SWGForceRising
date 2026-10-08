@@ -5114,3 +5114,9 @@ object_tangible_component_droid_shared_trap_module_base = SharedTangibleObjectTe
 }
 
 ObjectTemplates:addClientTemplate(object_tangible_component_droid_shared_trap_module_base, "object/tangible/component/droid/shared_trap_module_base.iff")
+
+object_tangible_component_droid_shared_auto_loot_module = SharedTangibleObjectTemplate:new {
+	clientTemplateFileName = "object/tangible/component/droid/shared_auto_loot_module.iff"
+}
+
+ObjectTemplates:addClientTemplate(object_tangible_component_droid_shared_auto_loot_module, "object/tangible/component/droid/shared_auto_loot_module.iff")

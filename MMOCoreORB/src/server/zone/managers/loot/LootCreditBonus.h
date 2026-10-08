@@ -41,6 +41,14 @@ namespace LootCreditBonus {
 		long long boosted = (long long)credits * (playerCount + 1) / 2;
 		return boosted > std::numeric_limits<int>::max() ? std::numeric_limits<int>::max() : (int)boosted;
 	}
+
+	inline int applyAutoLoot(int credits, int bonusPercent) {
+		if (credits <= 0 || bonusPercent <= 0)
+			return credits;
+		int cappedBonus = Math::min(15, bonusPercent);
+		long long boosted = (long long)credits * (100 + cappedBonus) / 100;
+		return boosted > std::numeric_limits<int>::max() ? std::numeric_limits<int>::max() : (int)boosted;
+	}
 }
 
 #endif

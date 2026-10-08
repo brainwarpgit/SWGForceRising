@@ -712,6 +712,7 @@ schematics = {
 	{path="object/draft_schematic/droid/component/data_storage_module_2.iff"},
 	{path="object/draft_schematic/droid/component/item_storage_module_2.iff"},
 	{path="object/draft_schematic/droid/component/harvest_module.iff"},
+	{path="object/draft_schematic/droid/component/auto_loot_module.iff"},
 	{path="object/draft_schematic/droid/component/crafting_module_weapon.iff"},
 	{path="object/draft_schematic/droid/component/merchant_barker.iff"},
 	{path="object/draft_schematic/droid/component/performer_effects_b.iff"},
