@@ -400,11 +400,11 @@ function TatooineMosEisleyScreenPlay:spawnMobiles()
 
 	local pNpc = spawnMobile(self.planet, "junk_dealer", 0, 3271.49, 5, -4797.09, 52, 0)
 	if pNpc ~= nil then
-		AiAgent(pNpc):setConvoTemplate("junkDealerFineryConvoTemplate")
+		AiAgent(pNpc):setConvoTemplate("junkDealerGenericConvoTemplate")
 	end
 	pNpc = spawnMobile(self.planet, "junk_dealer", 0, -31.1, -0.5, 7.1, 31, 1082887)
 	if pNpc ~= nil then
-		AiAgent(pNpc):setConvoTemplate("junkDealerArmsConvoTemplate")
+		AiAgent(pNpc):setConvoTemplate("junkDealerGenericConvoTemplate")
 	end
 
 	--Creatures

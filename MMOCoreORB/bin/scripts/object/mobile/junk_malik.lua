@@ -42,7 +42,7 @@
 
 
 object_mobile_junk_malik = object_mobile_shared_junk_malik:new {
-
+	objectMenuComponent = "TrainerMenuComponent"
 }
 
 ObjectTemplates:addTemplate(object_mobile_junk_malik, "object/mobile/junk_malik.iff")

@@ -1,5 +1,11 @@
 # Project Updates
 
+## 2026-10-08
+
+### Committed junk dealer update
+
+- Ground junk dealers now receive a random name followed by “(a Junk Dealer)” and use the generic junk dealer conversation, including dealers previously defined with fixed names and specialized dialogue. City and Jawa-trader screenplays now keep that conversation instead of overriding it with specialized dialogue. Mayors can place **Junk Dealer (Vendor)** through `/recruitSkillTrainer`; it uses one city trainer slot and the existing 1,000-credit city treasury charge. Recruited junk dealers now have the mayor's Rename and Remove radial options. Static checks passed, and the user verified the final behavior in game.
+
 ## 2026-10-07
 
 ### Committed area loot and group rules

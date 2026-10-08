@@ -42,7 +42,7 @@
 
 
 object_mobile_junk_nado = object_mobile_shared_junk_nado:new {
-
+	objectMenuComponent = "TrainerMenuComponent"
 }
 
 ObjectTemplates:addTemplate(object_mobile_junk_nado, "object/mobile/junk_nado.iff")

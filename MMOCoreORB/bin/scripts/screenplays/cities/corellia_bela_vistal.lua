@@ -215,6 +215,6 @@ function CorelliaBelaVistalScreenPlay:spawnMobiles()
 
 	local pNpc = spawnMobile("corellia", "junk_dealer", 0, 6840.98, 315, -5630.49, -47, 0)
 	if pNpc ~= nil then
-		AiAgent(pNpc):setConvoTemplate("junkDealerFineryConvoTemplate")
+		AiAgent(pNpc):setConvoTemplate("junkDealerGenericConvoTemplate")
 	end
 end

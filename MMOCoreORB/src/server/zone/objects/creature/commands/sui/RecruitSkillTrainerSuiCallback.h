@@ -202,6 +202,9 @@ public:
 		case 35: trainerTemplatePath = "imperial_recruiter";
 				break;
 
+		case 36: trainerTemplatePath = "junk_dealer";
+				break;
+
 		}
 
 		if (trainerTemplatePath != "") {

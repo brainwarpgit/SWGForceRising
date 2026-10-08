@@ -42,7 +42,7 @@
 
 
 object_mobile_junk_sneg = object_mobile_shared_junk_sneg:new {
-
+	objectMenuComponent = "TrainerMenuComponent"
 }
 
 ObjectTemplates:addTemplate(object_mobile_junk_sneg, "object/mobile/junk_sneg.iff")

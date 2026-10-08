@@ -1,5 +1,14 @@
 # Detailed Project Updates
 
+## 2026-10-08
+
+### Committed junk dealer update
+
+- Updated all 12 ground junk dealer mobile templates to use `NAME_GENERIC` with the existing `@mob/creature_names:junk_dealer` tag, which already resolves to “a Junk Dealer” in the client string table. Removed fixed names from the 11 named variants and pointed every variant to `junkDealerGenericConvoTemplate`. Their appearances and spawn placements remain unchanged; specialized dealer conversations will no longer be used by these mobiles.
+- Added **Junk Dealer (Vendor)** to `/recruitSkillTrainer`, mapped to the generic `junk_dealer` mobile. The existing city placement path applies mayor/admin permissions, permitted indoor/outdoor locations, one trainer slot, a 1,000-credit treasury cost, persistence, city listing/removal, and rotation toward the placing player. No new client assets are needed. Static source mapping, Lua template-field consistency, and whitespace checks passed. A Lua syntax interpreter was unavailable; the user verified the final behavior in game. The assistant did not build or run Core3.
+- The generic dealer's seven appearance templates did not assign `TrainerMenuComponent`, so recruited dealers lacked the mayor's Rename and Remove radial options. Added that component to each appearance used by the generic dealer. The user also added it to the Dender, Ollobo, and Quich object templates for consistency. Ollobo and Quich use those templates; the Dender mobile currently uses a Whiphid base template instead of `junk_dender.iff`. The Jawa mobile uses the shared `jawa.iff` template, which was not changed because other Jawas use it. The component's existing city-membership check limits mayor controls to recruited city NPCs; ordinary NPC-city dealers retain their conversation without mayor controls. The city trainer list removal path was already available.
+- Audited screenplay conversation overrides and found 24 spawn-time assignments in 15 city and Jawa-trader screenplays that selected Arms, Finery, or Jawa-specific conversations despite the generic mobile-template setting. Those assignments now select `junkDealerGenericConvoTemplate`. The Jawa-trader comments no longer imply different dealer specialties. Other NPCs using the junk-dealer sale helpers, such as the Geonosian laboratory dealer, were left unchanged because they are not ground junk dealer mobiles. Static checks passed, and the user verified the final behavior in game.
+
 ## 2026-10-07
 
 ### Committed area loot and group rules

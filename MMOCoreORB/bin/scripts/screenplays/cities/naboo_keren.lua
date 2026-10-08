@@ -170,11 +170,11 @@ function NabooKerenScreenPlay:spawnMobiles()
 
 	local pNpc = spawnMobile(self.planet, "junk_dealer", 0, 1242.11, 13, 2732.43, 48, 0)
 	if pNpc ~= nil then
-		AiAgent(pNpc):setConvoTemplate("junkDealerFineryConvoTemplate")
+		AiAgent(pNpc):setConvoTemplate("junkDealerGenericConvoTemplate")
 	end
 	pNpc = spawnMobile(self.planet, "junk_dealer", 0, 1286.34, 13, 2676.88, -166, 0)
 	if pNpc ~= nil then
-		AiAgent(pNpc):setConvoTemplate("junkDealerArmsConvoTemplate")
+		AiAgent(pNpc):setConvoTemplate("junkDealerGenericConvoTemplate")
 	end
 
 	--newb grind starter spawns

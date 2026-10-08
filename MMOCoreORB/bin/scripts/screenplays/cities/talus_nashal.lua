@@ -241,7 +241,7 @@ function TalusNashalScreenPlay:spawnMobiles()
 
 	local pNpc = spawnMobile(self.planet, "junk_dealer", 0, 4262.49, 2, 5146.93, 0, 0)
 	if pNpc ~= nil then
-		AiAgent(pNpc):setConvoTemplate("junkDealerFineryConvoTemplate")
+		AiAgent(pNpc):setConvoTemplate("junkDealerGenericConvoTemplate")
 	end
 
 	--thugs

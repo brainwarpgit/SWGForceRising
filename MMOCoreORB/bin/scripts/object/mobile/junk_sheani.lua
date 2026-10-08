@@ -42,7 +42,7 @@
 
 
 object_mobile_junk_sheani = object_mobile_shared_junk_sheani:new {
-
+	objectMenuComponent = "TrainerMenuComponent"
 }
 
 ObjectTemplates:addTemplate(object_mobile_junk_sheani, "object/mobile/junk_sheani.iff")

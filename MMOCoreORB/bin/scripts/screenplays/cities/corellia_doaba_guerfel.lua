@@ -250,7 +250,7 @@ function CorelliaDoabaGuerfelScreenPlay:spawnMobiles()
 
 	local pNpc = spawnMobile(self.planet, "junk_dealer", 0, 3367.86, 308.6, 5466.07, 0, 0)
 	if pNpc ~= nil then
-		AiAgent(pNpc):setConvoTemplate("junkDealerFineryConvoTemplate")
+		AiAgent(pNpc):setConvoTemplate("junkDealerGenericConvoTemplate")
 	end
 
 	--newb starter grind spawns

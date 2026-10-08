@@ -42,7 +42,7 @@
 
 
 object_mobile_junk_dender = object_mobile_shared_junk_dender:new {
-
+	objectMenuComponent = "TrainerMenuComponent"
 }
 
 ObjectTemplates:addTemplate(object_mobile_junk_dender, "object/mobile/junk_dender.iff")

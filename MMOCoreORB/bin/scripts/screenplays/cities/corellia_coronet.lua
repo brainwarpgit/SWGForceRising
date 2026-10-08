@@ -372,11 +372,11 @@ function CorelliaCoronetScreenPlay:spawnMobiles()
 
 	local pNpc = spawnMobile(self.planet, "junk_dealer", 0, -189.62, 28, -4371.06, 0, 0)
 	if pNpc ~= nil then
-		AiAgent(pNpc):setConvoTemplate("junkDealerFineryConvoTemplate")
+		AiAgent(pNpc):setConvoTemplate("junkDealerGenericConvoTemplate")
 	end
 	pNpc = spawnMobile(self.planet, "junk_dealer", 0, -28.7, -0.9, 20.8, 95, 8105505)
 	if pNpc ~= nil then
-		AiAgent(pNpc):setConvoTemplate("junkDealerArmsConvoTemplate")
+		AiAgent(pNpc):setConvoTemplate("junkDealerGenericConvoTemplate")
 	end
 
 	--Outside Misc

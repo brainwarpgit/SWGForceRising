@@ -48,7 +48,7 @@ public:
 		suiTrainerType->setCallback(new RecruitSkillTrainerSuiCallback(server->getZoneServer()));
 
 		suiTrainerType->setPromptTitle("Recruit City Trainer or NPC");
-		suiTrainerType->setPromptText("Choose a skill trainer, SpyNet informant, or faction recruiter to place. Each uses one city trainer slot and costs 1,000 credits from the city treasury.");
+		suiTrainerType->setPromptText("Choose a skill trainer, SpyNet operative, faction recruiter, or junk dealer to place. Each uses one city trainer slot and costs 1,000 credits from the city treasury.");
 
 		suiTrainerType->addMenuItem("@city/city:st_architect", 0);
 		suiTrainerType->addMenuItem("@city/city:st_armorsmith", 1);
@@ -86,6 +86,7 @@ public:
 		suiTrainerType->addMenuItem("SpyNet operative (Informant)", 33);
 		suiTrainerType->addMenuItem("Rebel (Recruiter)", 34);
 		suiTrainerType->addMenuItem("Imperial (Recruiter)", 35);
+		suiTrainerType->addMenuItem("Junk Dealer (Vendor)", 36);
 
 		ghost->addSuiBox(suiTrainerType);
 		creature->sendMessage(suiTrainerType->generateMessage());

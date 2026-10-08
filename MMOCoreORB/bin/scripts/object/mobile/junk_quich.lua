@@ -42,7 +42,7 @@
 
 
 object_mobile_junk_quich = object_mobile_shared_junk_quich:new {
-
+	objectMenuComponent = "TrainerMenuComponent"
 }
 
 ObjectTemplates:addTemplate(object_mobile_junk_quich, "object/mobile/junk_quich.iff")

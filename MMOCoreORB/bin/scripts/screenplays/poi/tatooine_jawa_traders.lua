@@ -109,25 +109,24 @@ function JawaTradersScreenPlay:spawnMobiles()
 	spawnMobile("tatooine", "jawa", 300, -6166.120, 8.800, 1882.970, 5.940, 0)
 	spawnMobile("tatooine", "jawa", 300, -6163.290, 9.208, 1887.390, -129.183, 0)
 
- 	-- Clothing & Apparel Junk Dealer
+	-- Junk Dealers
 	local pNpc = spawnMobile("tatooine", "junk_jawa", 0, -6142.8, 6.2, 1845, -40, 0)
 	if pNpc ~= nil then
-		AiAgent(pNpc):setConvoTemplate("junkDealerJawaFineryConvoTemplate")
+		AiAgent(pNpc):setConvoTemplate("junkDealerGenericConvoTemplate")
 	end
 	
-	-- Misc Items Junk Dealer
+	-- Junk Dealer
 	spawnMobile("tatooine", "junk_jawa", 0, -6171.1, 8.2, 1874.8, 136, 0)
 	
-	-- Weapons Junk Dealer
+	-- Junk Dealer
 	pNpc = spawnMobile("tatooine", "junk_jawa", 0, -6111.9, 6, 1840.1, -92, 0)
 	if pNpc ~= nil then
-		AiAgent(pNpc):setConvoTemplate("junkDealerJawaArmsConvoTemplate")
+		AiAgent(pNpc):setConvoTemplate("junkDealerGenericConvoTemplate")
 	end
 	
-	-- Tusken Equipment Junk Dealer
+	-- Junk Dealer
 	pNpc = spawnMobile("tatooine", "junk_jawa", 0, -6120.2, 9.7, 1899.5, 175, 0)
 	if pNpc ~= nil then
-		AiAgent(pNpc):setConvoTemplate("junkDealerJawaTuskenConvoTemplate")
+		AiAgent(pNpc):setConvoTemplate("junkDealerGenericConvoTemplate")
 	end
 end
-

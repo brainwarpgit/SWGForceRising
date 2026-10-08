@@ -1,5 +1,7 @@
 junk_dealer = Creature:new {
 	objectName = "@mob/creature_names:junk_dealer",
+	randomNameType = NAME_GENERIC,
+	randomNameTag = true,
 	planetMapCategory = "junkshop",
 	socialGroup = "townsperson",
 	mobType = MOB_NPC,

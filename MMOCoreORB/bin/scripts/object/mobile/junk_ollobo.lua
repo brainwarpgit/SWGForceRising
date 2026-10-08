@@ -42,7 +42,7 @@
 
 
 object_mobile_junk_ollobo = object_mobile_shared_junk_ollobo:new {
-
+	objectMenuComponent = "TrainerMenuComponent"
 }
 
 ObjectTemplates:addTemplate(object_mobile_junk_ollobo, "object/mobile/junk_ollobo.iff")

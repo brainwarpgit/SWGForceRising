@@ -280,7 +280,7 @@ function LokNymStrongholdScreenPlay:spawnMobiles()
 
 	local pNpc = spawnMobile(self.planet, "junk_dealer", 0, 345.73, 12, 5139.45, -177, 0)
 	if pNpc ~= nil then
-		AiAgent(pNpc):setConvoTemplate("junkDealerFineryConvoTemplate")
+		AiAgent(pNpc):setConvoTemplate("junkDealerGenericConvoTemplate")
 	end
 
 	pNpc = spawnMobile(self.planet, "nym_kusak_guardian", 60, -3.62, 3.27819, -25.44, 39.0011, 6595511)
