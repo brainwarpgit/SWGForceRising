@@ -98,7 +98,7 @@ public:
 		box->setPromptTitle("Account Structures and Lots");
 		box->setPromptText("Lots used: " + String::valueOf(maximum - remaining) + " / " + String::valueOf(maximum)
 				+ " | Available: " + String::valueOf(remaining)
-				+ ". Each structure shows its assigned lots and current balances.");
+				+ ". Each structure shows its assigned lots and applicable balances.");
 		box->setForceCloseDisabled();
 
 		for (uint64 structureID : structureIDs) {
@@ -111,13 +111,10 @@ public:
 			if (city != nullptr)
 				name += " / " + city->getCityRegionName();
 			String details = name + " | Lots: " + String::valueOf(structure->getLotSize());
-			if (!structure->isCivicStructure())
+			if (!structure->isCivicStructure()) {
 				details += " | Maintenance: " + String::valueOf((int)structure->getSurplusMaintenance()) + " cr";
-			if (structure->isInstallationObject() && !structure->isGeneratorObject())
-				details += " | Power: " + String::valueOf((int)structure->getSurplusPower());
-			if (structure->isCityHall()) {
-				if (city != nullptr)
-					details += " | City Treasury: " + String::valueOf((int)city->getCityTreasury()) + " cr";
+				if (structure->isInstallationObject() && !structure->isGeneratorObject())
+					details += " | Power: " + String::valueOf((int)structure->getSurplusPower());
 			}
 			box->addMenuItem(details);
 		}

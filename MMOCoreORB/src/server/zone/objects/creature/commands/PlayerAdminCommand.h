@@ -35,8 +35,11 @@ public:
 			}
 			if (!name.isEmpty())
 				subject = server->getZoneServer()->getPlayerManager()->getPlayer(name);
-			else
-				subject = server->getZoneServer()->getObject(selectedID).castTo<CreatureObject*>();
+			else {
+				ManagedReference<CreatureObject*> selectedPlayer = server->getZoneServer()->getObject(selectedID).castTo<CreatureObject*>();
+				if (selectedPlayer != nullptr && selectedPlayer->isPlayerCreature() && selectedPlayer->getPlayerObject() != nullptr)
+					subject = selectedPlayer;
+			}
 			if (subject == nullptr || !subject->isPlayerCreature() || subject->getPlayerObject() == nullptr) {
 				creature->sendSystemMessage("That player must be online to change their settings.");
 				return INVALIDTARGET;

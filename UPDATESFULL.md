@@ -1,5 +1,12 @@
 # Detailed Project Updates
 
+## 2026-10-10
+
+### Committed civic lot display and player settings targeting
+
+- In `/find lots`, civic structures retain their structure name, city name when within city limits, and lot count. Their entries no longer append maintenance, power, or city treasury, and the list prompt now describes balances as applicable rather than universal. Other structure types retain their existing balance display.
+- `/playerAdmin` continues to open the user's own settings for ordinary players regardless of a selected object. For admins, a selected online player opens that player's settings, while a selected non-player object falls back to the admin's own settings. An explicit player name still resolves as before and requires admin rights. The change was reviewed statically; the user verified the behavior in game. The assistant did not build or run Core3.
+
 ## 2026-10-08
 
 ### Area Harvest setting
