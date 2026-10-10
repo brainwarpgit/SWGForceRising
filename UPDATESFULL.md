@@ -2,6 +2,12 @@
 
 ## 2026-10-10
 
+### Committed junk dealer sales expansion
+
+- The junk dealer inventory list now uses one computed sale value across dealer types instead of requiring a matching junk category or rejecting crafted, sliced, and broken items. Items with contents, no-trade items, and resource containers have no eligible sale value. The chosen item's current value and eligibility are checked again when selling, and sold objects are removed before credits are paid.
+- Newly crafted items record a junk base value equal to the number of resources inserted plus the junk values of consumed components. Component values carry forward through later crafting. Existing loot retains its assigned junk value; other items without a recorded value have a minimum base value of one credit. A crafted item's own use count does not multiply its value; noncrafted multi-use items retain use-based pricing. An eligible factory crate sells for its remaining item count times the contained prototype's junk value, without multiplying by the prototype's uses. Structure deeds additionally contribute their stored maintenance credits and power units at one credit each. Calculations clamp to the signed credit limit.
+- Source references and whitespace were reviewed. A Lua syntax checker was unavailable. The assistant did not build or run Core3; the user verified the selling behavior in game.
+
 ### Committed civic lot display and player settings targeting
 
 - In `/find lots`, civic structures retain their structure name, city name when within city limits, and lot count. Their entries no longer append maintenance, power, or city treasury, and the list prompt now describes balances as applicable rather than universal. Other structure types retain their existing balance display.

@@ -283,6 +283,16 @@ public:
 		return quantity;
 	}
 
+	long long getJunkValueTotal() {
+		long long total = 0;
+		for (int i = 0; i < contents.size(); ++i) {
+			TangibleObject* component = contents.elementAt(i);
+			if (component != nullptr)
+				total += (long long)Math::max(1, component->getJunkValue()) * Math::max(1, component->getUseCount());
+		}
+		return total;
+	}
+
 	bool isFull() {
 		return requiredQuantity == getSlotQuantity();
 	}

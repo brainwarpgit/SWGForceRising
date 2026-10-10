@@ -28,6 +28,7 @@
 
 #include "templates/customization/AssetCustomizationManagerTemplate.h"
 #include "templates/params/RangedIntCustomizationVariable.h"
+#include <limits>
 #include "server/zone/objects/transaction/TransactionLog.h"
 
 // #define DEBUG_CRAFTING_SESSION
@@ -861,6 +862,20 @@ void CraftingSessionImplementation::initialAssembly(int clientCounter) {
 	String name = crafter->getFirstName();
 	prototype->setCraftersName(name);
 	prototype->setCraftersID(crafter->getObjectID());
+
+	long long craftedJunkValue = 0;
+	for (int i = 0; i < manufactureSchematic->getSlotCount(); ++i) {
+		IngredientSlot* ingredient = manufactureSchematic->getSlot(i);
+		if (ingredient == nullptr)
+			continue;
+
+		if (ingredient->isResourceSlot())
+			craftedJunkValue += ingredient->getSlotQuantity();
+		else if (ingredient->isComponentSlot())
+			craftedJunkValue += cast<ComponentSlot*>(ingredient)->getJunkValueTotal();
+	}
+	prototype->setJunkValue(craftedJunkValue > std::numeric_limits<int>::max() ?
+			std::numeric_limits<int>::max() : craftedJunkValue < 1 ? 1 : (int)craftedJunkValue);
 
 	String serial = craftingManager->generateSerial();
 	prototype->setSerialNumber(serial);

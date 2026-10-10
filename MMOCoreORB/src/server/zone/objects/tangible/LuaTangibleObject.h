@@ -62,6 +62,7 @@ namespace tangible {
 		int getCraftersName(lua_State* L);
 		int getJunkDealerNeeded(lua_State* L);
 		int getJunkValue(lua_State* L);
+		int getJunkSaleValue(lua_State* L);
 		int isBroken(lua_State* L);
 		int isSliced(lua_State* L);
 		int isNoTrade(lua_State* L);

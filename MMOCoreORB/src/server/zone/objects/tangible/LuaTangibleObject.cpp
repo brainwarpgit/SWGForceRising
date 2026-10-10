@@ -7,6 +7,9 @@
 
 #include "LuaTangibleObject.h"
 #include "server/zone/objects/tangible/TangibleObject.h"
+#include "server/zone/objects/tangible/deed/structure/StructureDeed.h"
+#include "server/zone/objects/factorycrate/FactoryCrate.h"
+#include <limits>
 #include "templates/params/PaletteColorCustomizationVariable.h"
 #include "templates/customization/AssetCustomizationManagerTemplate.h"
 #include "templates/appearance/PaletteTemplate.h"
@@ -52,6 +55,7 @@ Luna<LuaTangibleObject>::RegType LuaTangibleObject::Register[] = {
 		{ "getCraftersName", &LuaTangibleObject::getCraftersName},
 		{ "getJunkDealerNeeded", &LuaTangibleObject::getJunkDealerNeeded},
 		{ "getJunkValue", &LuaTangibleObject::getJunkValue},
+		{ "getJunkSaleValue", &LuaTangibleObject::getJunkSaleValue},
 		{ "isBroken", &LuaTangibleObject::isBroken},
 		{ "isSliced", &LuaTangibleObject::isSliced},
 		{ "isNoTrade", &LuaTangibleObject::isNoTrade},
@@ -401,6 +405,33 @@ int LuaTangibleObject::getJunkValue(lua_State* L){
 
 	lua_pushinteger(L, value);
 
+	return 1;
+}
+
+int LuaTangibleObject::getJunkSaleValue(lua_State* L) {
+	int value = 0;
+	if (realObject != nullptr && !realObject->isNoTrade() && !realObject->isResourceContainer()) {
+		long long total = 0;
+		FactoryCrate* crate = cast<FactoryCrate*>(realObject);
+		if (crate != nullptr) {
+			if (crate->getUseCount() > 0 && crate->getContainerObjectsSize() == 1) {
+				Reference<TangibleObject*> prototype = crate->getPrototype();
+				if (prototype != nullptr && !prototype->isNoTrade() && !prototype->isResourceContainer() &&
+						prototype->getContainerObjectsSize() == 0)
+					total = (long long)crate->getUseCount() * Math::max(1, prototype->getJunkValue());
+			}
+		} else if (realObject->getContainerObjectsSize() == 0) {
+			total = Math::max(1, realObject->getJunkValue());
+			if (realObject->getCraftersID() == 0 && realObject->getCraftersName().isEmpty())
+				total *= Math::max(1, realObject->getUseCount());
+			StructureDeed* deed = cast<StructureDeed*>(realObject);
+			if (deed != nullptr)
+				total += (long long)deed->getSurplusMaintenance() + deed->getSurplusPower();
+		}
+		value = total > std::numeric_limits<int>::max() ? std::numeric_limits<int>::max() : (int)total;
+	}
+
+	lua_pushinteger(L, value);
 	return 1;
 }
 

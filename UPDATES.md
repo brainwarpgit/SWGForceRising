@@ -2,6 +2,10 @@
 
 ## 2026-10-10
 
+### Committed junk dealer sales expansion
+
+- Junk dealers now offer to buy inventory items regardless of their former dealer category, crafted status, slice status, or condition. Filled containers, no-trade items, and resource containers remain excluded. Newly crafted items receive a base value from the resources and components used in crafting without multiplying for uses; eligible noncrafted items retain use-based pricing. Factory crates sell for their remaining item count times the contained prototype's junk value, and structure deeds add stored maintenance and power to their offer.
+
 ### Committed civic lot display and player settings targeting
 
 - `/find lots` now shows only the name, city, and lot count for civic structures; it omits maintenance, power, and treasury balances for those entries. `/playerAdmin` defaults to the command user's settings when the selected target is not a player, including for admins; an explicitly named player still requires admin rights. Static checks passed, and the user verified the behavior in game.
