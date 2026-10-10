@@ -138,6 +138,19 @@ class FactoryObject extends InstallationObject {
 	@dirty
 	public native string getRedeedMessage();
 
+	public native string getProductionName();
+
+	public native int getProductionRemaining();
+
+	public native int getProductionSecondsRemaining();
+
+	public native string getProductionTimeRemainingText();
+
+	@read
+	public int getProductionCreated() {
+		return currentRunCount;
+	}
+
 	@dirty
 	public native void sendRemoveFailureMessage(CreatureObject player, ManufactureSchematic schematic);
 }

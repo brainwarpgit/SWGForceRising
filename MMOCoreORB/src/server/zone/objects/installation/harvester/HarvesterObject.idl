@@ -102,6 +102,10 @@ class HarvesterObject extends InstallationObject {
 	@dirty
 	public native string getRedeedMessage();
 
+	public native string getHarvestResourceName();
+
+	public native int getHarvestDensityPercent();
+
 	/**
 	 * Fills the attribute list message options that are sent to player creature
 	 * @pre { }

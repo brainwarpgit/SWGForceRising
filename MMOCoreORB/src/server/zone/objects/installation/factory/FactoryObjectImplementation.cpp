@@ -27,6 +27,7 @@
 
 #include "templates/installation/FactoryObjectTemplate.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
+#include <limits>
 
 //#define DEBUG_FACTORIES
 
@@ -131,32 +132,79 @@ void FactoryObjectImplementation::createChildObjects() {
 	outputHopper->registerObserver(ObserverEventType::CLOSECONTAINER, hopperObserver);
 }
 
+String FactoryObjectImplementation::getProductionName() {
+	if (getContainerObjectsSize() == 0)
+		return "";
+
+	ManagedReference<ManufactureSchematic*> schematic = getContainerObject(0).castTo<ManufactureSchematic*>();
+	if (schematic == nullptr || schematic->getPrototype() == nullptr)
+		return "";
+
+	return schematic->getPrototype()->getDisplayedName();
+}
+
+int FactoryObjectImplementation::getProductionRemaining() {
+	if (getContainerObjectsSize() == 0)
+		return 0;
+
+	ManagedReference<ManufactureSchematic*> schematic = getContainerObject(0).castTo<ManufactureSchematic*>();
+	return schematic == nullptr ? 0 : Math::max(0, schematic->getManufactureLimit());
+}
+
+int FactoryObjectImplementation::getProductionSecondsRemaining() {
+	if (!isActive())
+		return -1;
+
+	int remaining = getProductionRemaining();
+	Reference<Task*> pending = getPendingTask("createFactoryObject");
+	if (remaining < 1 || pending == nullptr)
+		return -1;
+
+	AtomicTime nextExecution;
+	Core::getTaskManager()->getNextExecutionTime(pending, nextExecution);
+	long long waitMs = -(long long)nextExecution.miliDifference();
+	long long nextSeconds = waitMs > 0 ? (waitMs + 999) / 1000 : 0;
+	long long total = nextSeconds + (long long)(remaining - 1) * timer;
+	return total > std::numeric_limits<int>::max() ? std::numeric_limits<int>::max() : (int)total;
+}
+
+String FactoryObjectImplementation::getProductionTimeRemainingText() {
+	int remaining = getProductionSecondsRemaining();
+	if (remaining < 0)
+		return "Not running";
+
+	int days = remaining / 86400;
+	remaining %= 86400;
+	int hours = remaining / 3600;
+	remaining %= 3600;
+	int minutes = remaining / 60;
+	int seconds = remaining % 60;
+	String text;
+	if (days > 0)
+		text += String::valueOf(days) + (days == 1 ? " day" : " days");
+	if (hours > 0)
+		text += (text.isEmpty() ? "" : " ") + String::valueOf(hours) + (hours == 1 ? " hour" : " hours");
+	if (minutes > 0)
+		text += (text.isEmpty() ? "" : " ") + String::valueOf(minutes) + (minutes == 1 ? " minute" : " minutes");
+	if (seconds > 0 || text.isEmpty())
+		text += (text.isEmpty() ? "" : " ") + String::valueOf(seconds) + (seconds == 1 ? " second" : " seconds");
+	return text;
+}
+
 void FactoryObjectImplementation::fillAttributeList(AttributeListMessage* alm, CreatureObject* object) {
 	InstallationObjectImplementation::fillAttributeList(alm, object);
 
-	if (isActive() && object != nullptr && isOnAdminList(object)) {
-		if (getContainerObjectsSize() == 0)
+	if (object != nullptr && object->getPlayerObject() != nullptr &&
+			(isOwnedByAccount(object) || object->getPlayerObject()->isAdmin())) {
+		String productName = getProductionName();
+		alm->insertAttribute("manufacture_object", productName.isEmpty() ? String("None") : productName);
+		if (productName.isEmpty())
 			return;
-
-		ManagedReference<ManufactureSchematic*> schematic = getContainerObject(0).castTo<ManufactureSchematic*>();
-
-		if (schematic == nullptr)
-			return;
-
-		ManagedReference<TangibleObject*> prototype = dynamic_cast<TangibleObject*>(schematic->getPrototype());
-
-		if (prototype != nullptr) {
-			alm->insertAttribute("manufacture_object", prototype->getDisplayedName());
-		}
 
 		alm->insertAttribute("manufacture_time", timer);
-
-		ManagedReference<SceneObject*> outputHopper = getSlottedObject("output_hopper");
-
-		if (outputHopper != nullptr) {
-			alm->insertAttribute("manf_limit", schematic->getManufactureLimit());
-			alm->insertAttribute("manufacture_count", currentRunCount); // Manufactured Items:
-		}
+		alm->insertAttribute("manufacture_count", currentRunCount);
+		alm->insertAttribute("manf_limit", getProductionRemaining());
+		alm->insertAttribute("time_remaining", getProductionTimeRemainingText());
 	}
 }
 

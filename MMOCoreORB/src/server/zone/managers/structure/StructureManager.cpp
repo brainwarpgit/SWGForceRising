@@ -50,6 +50,7 @@
 #include "server/zone/objects/intangible/PetControlDevice.h"
 #include "server/zone/managers/creature/PetManager.h"
 #include "server/zone/objects/installation/harvester/HarvesterObject.h"
+#include "server/zone/objects/installation/factory/FactoryObject.h"
 #include "server/zone/managers/resource/ResourceManager.h"
 #include "server/zone/managers/resource/resourcespawner/ResourceSpawner.h"
 #include "server/zone/objects/resource/ResourceContainer.h"
@@ -1600,6 +1601,25 @@ void StructureManager::reportStructureStatus(CreatureObject* creature, Structure
 		status->addMenuItem("@player_structure:power_reserve_prompt " + String::valueOf((int)installation->getSurplusPower()) + " " + getTimeString((uint32)secsRemainingPower));
 
 		status->addMenuItem("@player_structure:power_consumption_prompt " + String::valueOf((int)installation->getBasePowerRate()) + " @player_structure:units_per_hour");
+	}
+
+	if (structure->isOwnedByAccount(creature) || ghost->isAdmin()) {
+		if (structure->isHarvesterObject()) {
+			HarvesterObject* harvester = cast<HarvesterObject*>(structure);
+			String resourceName = harvester->getHarvestResourceName();
+			status->addMenuItem(resourceName.isEmpty() ? "Harvesting: None" :
+					"Harvesting: " + resourceName + " | Density: " +
+					String::valueOf(harvester->getHarvestDensityPercent()) + "%");
+		} else if (structure->isFactory()) {
+			FactoryObject* factory = cast<FactoryObject*>(structure);
+			String productName = factory->getProductionName();
+			status->addMenuItem("Crafting: " + (productName.isEmpty() ? String("None") : productName));
+			if (!productName.isEmpty()) {
+				status->addMenuItem("Created: " + String::valueOf(factory->getProductionCreated()) +
+						" | Remaining: " + String::valueOf(factory->getProductionRemaining()));
+				status->addMenuItem("Total Time Remaining: " + factory->getProductionTimeRemainingText());
+			}
+		}
 	}
 
 	if (ghost->isPrivileged()) {

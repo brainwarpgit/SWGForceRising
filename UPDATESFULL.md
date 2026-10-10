@@ -2,6 +2,12 @@
 
 ## 2026-10-10
 
+### Committed private structure production details
+
+- Harvester Structure Status shows the selected resource's final class subtype and spawned name in the form `Titanium Aluminum (Kamaaria)`, plus its recorded site-density percentage. Examine uses the existing Resource Name attribute to display the same information. With no selected resource, both views show None.
+- Factory Structure Status and Examine show the inserted schematic's product, items created in the current run, and remaining manufacturing limit. While active, total time remaining combines the next scheduled production task with the remaining per-item timer intervals. Both views use the same day/hour/minute/second formatter without parentheses; when stopped, it reads Not running. Examine retains the existing per-item manufacture-time attribute.
+- Production details are gated separately in both paths to the owning account's characters or a game admin. The broader structure-admin permission does not grant these lines. A user build exposed const-qualified generated declarations and a protected task-timing call; the getter declarations were corrected and the public task-manager timing API is now used. The assistant did not build or run Core3; the user verified the final behavior in game.
+
 ### Committed junk dealer sales expansion
 
 - The junk dealer inventory list now uses one computed sale value across dealer types instead of requiring a matching junk category or rejecting crafted, sliced, and broken items. Items with contents, no-trade items, and resource containers have no eligible sale value. The chosen item's current value and eligibility are checked again when selling, and sold objects are removed before credits are paid.

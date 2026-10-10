@@ -2,6 +2,10 @@
 
 ## 2026-10-10
 
+### Committed private structure production details
+
+- Account owners and game admins can see a harvester's selected resource subtype and spawned name, such as Titanium Aluminum (Kamaaria), plus its density percentage in Structure Status and Examine. The same views show a factory's product, created and remaining item counts, and total time remaining while running. Other players, including structure admins outside the owner's account, do not receive these details.
+
 ### Committed junk dealer sales expansion
 
 - Junk dealers now offer to buy inventory items regardless of their former dealer category, crafted status, slice status, or condition. Filled containers, no-trade items, and resource containers remain excluded. Newly crafted items receive a base value from the resources and components used in crafting without multiplying for uses; eligible noncrafted items retain use-based pricing. Factory crates sell for their remaining item count times the contained prototype's junk value, and structure deeds add stored maintenance and power to their offer.

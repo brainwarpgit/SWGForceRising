@@ -10,6 +10,20 @@
 #include "server/zone/objects/resource/ResourceContainer.h"
 #include "server/zone/packets/object/ObjectMenuResponse.h"
 #include "server/zone/packets/harvester/ResourceHarvesterActivatePageMessage.h"
+#include "server/zone/objects/resource/ResourceSpawn.h"
+#include "server/zone/objects/player/PlayerObject.h"
+
+String HarvesterObjectImplementation::getHarvestResourceName() {
+	if (currentSpawn == nullptr)
+		return "";
+
+	String subtype = currentSpawn->getFinalClass();
+	return subtype.isEmpty() ? currentSpawn->getName() : subtype + " (" + currentSpawn->getName() + ")";
+}
+
+int HarvesterObjectImplementation::getHarvestDensityPercent() {
+	return currentSpawn == nullptr ? 0 : (int)(spawnDensity * 100.f + 0.5f);
+}
 
 void HarvesterObjectImplementation::fillObjectMenuResponse(ObjectMenuResponse* menuResponse, CreatureObject* player) {
 	if (!isOnAdminList(player))
@@ -90,6 +104,12 @@ String HarvesterObjectImplementation::getRedeedMessage() {
 void HarvesterObjectImplementation::fillAttributeList(AttributeListMessage* alm,
 		CreatureObject* object) {
 	InstallationObjectImplementation::fillAttributeList(alm, object);
+
+	if (object != nullptr && object->getPlayerObject() != nullptr &&
+			(isOwnedByAccount(object) || object->getPlayerObject()->isAdmin())) {
+		alm->insertAttribute("resource_name", currentSpawn == nullptr ? String("None") :
+				getHarvestResourceName() + " (" + String::valueOf(getHarvestDensityPercent()) + "% density)");
+	}
 
 	if(isSelfPowered()){
 		alm->insertAttribute("@veteran_new:harvester_examine_title", "@veteran_new:harvester_examine_text");
