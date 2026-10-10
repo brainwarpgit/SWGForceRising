@@ -2,6 +2,11 @@
 
 ## 2026-10-10
 
+### Committed Sampling Minigame player setting
+
+- Added a persisted per-player `samplingMinigameDisabled` setting, false by default so existing and new players retain current sampling behavior. `/playerAdmin` has a separate Sampling category for the Sampling Minigame toggle, with the existing colored enabled/disabled states. The categories remain alphabetical, and Harvesting retains Area Harvest. Players can toggle their own preference; game admins can edit another online player's preference through the established target/name flow. The change is saved immediately and the menu reopens in Sampling.
+- The concentrated-sampling minigame trigger checks the preference before rolling its chance. When disabled, sampling follows the existing ordinary path. An already-open minigame can still be completed; subsequent samples honor the new setting. The user verified the behavior in game.
+
 ### Committed private structure production details
 
 - Harvester Structure Status shows the selected resource's final class subtype and spawned name in the form `Titanium Aluminum (Kamaaria)`, plus its recorded site-density percentage. Examine uses the existing Resource Name attribute to display the same information. With no selected resource, both views show None.

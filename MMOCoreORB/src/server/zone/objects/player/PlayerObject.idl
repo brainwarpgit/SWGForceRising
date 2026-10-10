@@ -104,6 +104,7 @@ class PlayerObject extends IntangibleObject {
 	protected boolean structureDestroyCodeDisabled;
 	protected boolean areaLootEnabled;
 	protected boolean areaHarvestEnabled;
+	protected boolean samplingMinigameDisabled;
 	protected string mutedReason;
 	protected int tosVersionAccepted;
 
@@ -352,6 +353,7 @@ class PlayerObject extends IntangibleObject {
 		structureDestroyCodeDisabled = false;
 		areaLootEnabled = false;
 		areaHarvestEnabled = false;
+		samplingMinigameDisabled = false;
 		mutedReason = "";
 
 		debugOutput = false;
@@ -483,6 +485,15 @@ class PlayerObject extends IntangibleObject {
 
 	public void setAreaHarvestEnabled(boolean enabled) {
 		areaHarvestEnabled = enabled;
+	}
+
+	@read
+	public boolean isSamplingMinigameEnabled() {
+		return !samplingMinigameDisabled;
+	}
+
+	public void setSamplingMinigameEnabled(boolean enabled) {
+		samplingMinigameDisabled = !enabled;
 	}
 
 	@read

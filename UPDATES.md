@@ -2,6 +2,10 @@
 
 ## 2026-10-10
 
+### Committed Sampling Minigame player setting
+
+- Added a Sampling Minigame toggle under `/playerAdmin` → Sampling. It starts enabled and can be changed per player without restarting. When disabled, sampling uses the ordinary sample path instead of opening the concentrated-sampling minigame.
+
 ### Committed private structure production details
 
 - Account owners and game admins can see a harvester's selected resource subtype and spawned name, such as Titanium Aluminum (Kamaaria), plus its density percentage in Structure Status and Examine. The same views show a factory's product, created and remaining item counts, and total time remaining while running. Other players, including structure admins outside the owner's account, do not receive these details.

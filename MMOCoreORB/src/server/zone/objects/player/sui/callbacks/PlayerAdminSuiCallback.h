@@ -14,7 +14,7 @@ class PlayerAdminSuiCallback : public SuiCallback {
 	uint64 subjectID;
 
 public:
-	enum Menu { CATEGORIES, HARVESTING, LOOT, STRUCTURE };
+	enum Menu { CATEGORIES, HARVESTING, LOOT, SAMPLING, STRUCTURE };
 
 	PlayerAdminSuiCallback(ZoneServer* server, int menu, uint64 subjectID) : SuiCallback(server), menu(menu), subjectID(subjectID) {}
 
@@ -38,6 +38,7 @@ public:
 			box->setPromptText("Choose a settings category.");
 			box->addMenuItem("Harvesting");
 			box->addMenuItem("Loot");
+			box->addMenuItem("Sampling");
 			box->addMenuItem("Structure");
 		} else if (menu == STRUCTURE) {
 			box->setPromptTitle(String("Structure Settings") + owner);
@@ -54,6 +55,11 @@ public:
 			box->setPromptText("Select a setting to toggle it. Area Harvest applies to eligible corpses within 64 meters.");
 			box->addMenuItem(String("Area Harvest: ") +
 					(ghost->isAreaHarvestEnabled() ? "\\#32CD32Enabled\\#." : "\\#FF6347Disabled\\#."));
+		} else if (menu == SAMPLING) {
+			box->setPromptTitle(String("Sampling Settings") + owner);
+			box->setPromptText("Select a setting to toggle it.");
+			box->addMenuItem(String("Sampling Minigame: ") +
+					(ghost->isSamplingMinigameEnabled() ? "\\#32CD32Enabled\\#." : "\\#FF6347Disabled\\#."));
 		} else {
 			return;
 		}
@@ -77,7 +83,7 @@ public:
 		}
 
 		String selectionText = args->get(0).toString();
-		if (selectionText != "0" && selectionText != "1" && selectionText != "2")
+		if (selectionText != "0" && selectionText != "1" && selectionText != "2" && selectionText != "3")
 			return;
 		ManagedReference<CreatureObject*> subject = player->getZoneServer()->getObject(subjectID).castTo<CreatureObject*>();
 		if (subject == nullptr || !subject->isPlayerCreature() || subject->getPlayerObject() == nullptr) {
@@ -90,8 +96,9 @@ public:
 		}
 
 		if (menu == CATEGORIES) {
-			showMenu(player, subject, selectionText == "0" ? HARVESTING : selectionText == "1" ? LOOT : STRUCTURE);
-		} else if ((menu == STRUCTURE || menu == LOOT || menu == HARVESTING) && selectionText == "0") {
+			showMenu(player, subject, selectionText == "0" ? HARVESTING :
+					selectionText == "1" ? LOOT : selectionText == "2" ? SAMPLING : STRUCTURE);
+		} else if ((menu == STRUCTURE || menu == LOOT || menu == HARVESTING || menu == SAMPLING) && selectionText == "0") {
 			PlayerObject* ghost = subject->getPlayerObject();
 			if (ghost == nullptr)
 				return;
@@ -108,9 +115,12 @@ public:
 				} else if (menu == LOOT) {
 					enabled = !ghost->isAreaLootEnabled();
 					ghost->setAreaLootEnabled(enabled);
-				} else {
+				} else if (menu == HARVESTING) {
 					enabled = !ghost->isAreaHarvestEnabled();
 					ghost->setAreaHarvestEnabled(enabled);
+				} else {
+					enabled = !ghost->isSamplingMinigameEnabled();
+					ghost->setSamplingMinigameEnabled(enabled);
 				}
 				ghost->updateToDatabase();
 			}
@@ -121,8 +131,10 @@ public:
 						"Destroy/redeed confirmation code disabled. The Yes/No confirmation and other structure checks still apply."));
 			else if (menu == LOOT)
 				player->sendSystemMessage(prefix + (enabled ? "Solo Area Loot enabled." : "Solo Area Loot disabled."));
-			else
+			else if (menu == HARVESTING)
 				player->sendSystemMessage(prefix + (enabled ? "Area Harvest enabled." : "Area Harvest disabled."));
+			else
+				player->sendSystemMessage(prefix + (enabled ? "Sampling Minigame enabled." : "Sampling Minigame disabled."));
 			showMenu(player, subject, menu);
 		}
 	}
