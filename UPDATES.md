@@ -2,6 +2,10 @@
 
 ## 2026-10-08
 
+### Area Harvest setting
+
+- Added an Area Harvest toggle under `/playerAdmin` → Harvesting. When enabled, harvesting one eligible corpse also harvests eligible creature corpses within 64 meters. Default harvest chooses a random available resource type independently for each corpse; choosing meat, hide, or bone applies that type throughout the area and skips corpses without it. The setting persists per player, including when an admin changes it for another player. `/playerAdmin` lists Harvesting, Loot, and Structure alphabetically, keeps one window open, and closes it if the player moves or enters combat. Source and whitespace checks passed, and the user verified the behavior in game.
+
 ### Committed Auto Loot droid module
 
 - Added a Droid Engineer Auto Loot Module schematic using the Creature Harvest Module's copper, inert gas, and steel recipe and the same appearance. The module has its own Auto Loot Options radial with an on/off toggle and teachable Loot Target command; examining the droid shows whether Auto Loot is on or off. An activated module queues newly killed owner-owned NPC and creature corpses within 64 meters, drives to each corpse, collects items and credits, and returns to following its owner. It does not collect group-owned corpses. Experimentation raises only the module's credit bonus, from 0% to 15%, and the bonus applies only to credits collected by the droid. The update TRE source adds the schematic, component, crafting group, names, and object CRC entries. Static checks passed, and the user verified the final behavior in game.

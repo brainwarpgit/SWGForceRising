@@ -2,6 +2,13 @@
 
 ## 2026-10-08
 
+### Area Harvest setting
+
+- Added a persisted `areaHarvestEnabled` player setting, initially off, with an immediate `/playerAdmin` → Harvesting toggle. Admins can change it for an online player through the existing targeted/named player-admin flow; the menu keeps its stationary, out-of-combat edit checks and returns to Harvesting after a toggle.
+- Gave `/playerAdmin` a dedicated SUI window type. Its category menu is ordered alphabetically as Harvesting, Loot, and Structure; the former Storage menu is now named Structure without changing its setting. Re-running the command while its window is open reports that it is already open; moving between its pages replaces the previous window. A monitor checks only while the menu is open and closes it on movement or combat, and the response callback checks those states before accepting a selection.
+- A successful manual harvest now scans 64 meters around the player for other dead, harvestable creature corpses in the same zone and cell context. Each corpse passes the existing `canHarvestMe` rights and skill checks with an Area Harvest-specific 64-meter distance; ordinary harvesting retains its 10-meter rights check and 7-meter action range. The manager's normal resource, XP, and group-bonus path runs for each one. The scan does not recurse. Default harvest picks a random available type separately for every corpse; a specific meat, hide, or bone selection only harvests that type and skips corpses lacking it. The radial and `/harvestCorpse` command share this behavior; the command now forwards its default choice to the manager instead of resolving one random type for the whole area. Droid harvesting is unchanged.
+- Source and whitespace checks passed. The assistant did not build or run Core3; the user verified the behavior in game.
+
 ### Committed Auto Loot droid module
 
 - Added a Droid Engineer Auto Loot Module schematic beside the Creature Harvest Module in craftdroidgenmodGroupB (Droid Engineer Production II). It uses the same 50 copper, 20 inert gas, and 55 steel recipe, crafting skills, complexity, XP, and client appearance. New schematic and component templates, client names/descriptions, the experiment label, and object-template CRC entries are staged in SWGFR_update_01; that source must be rebuilt into the update TRE and installed on both server and client.

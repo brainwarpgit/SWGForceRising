@@ -103,7 +103,7 @@ class CreatureManager extends ZoneManager {
 
 	private native void setCreatureTemplateManager();
 
-	public native void harvest(Creature creature, CreatureObject player, int selectedID);
+	public native void harvest(Creature creature, CreatureObject player, int selectedID, boolean includeArea = true);
 
 	public native void droidHarvest(Creature creature, CreatureObject droid, int selectedID, int bonus);
 
@@ -134,4 +134,3 @@ class CreatureManager extends ZoneManager {
 
 	public native boolean addWearableItem(CreatureObject creature, TangibleObject clothing, boolean isVendor);
 }
-

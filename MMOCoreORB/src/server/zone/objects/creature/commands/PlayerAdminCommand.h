@@ -20,6 +20,10 @@ public:
 			creature->sendSystemMessage("You must be out of combat and stationary to use player settings.");
 			return INVALIDSTATE;
 		}
+		if (creature->getPlayerObject()->hasSuiBoxWindowType(SuiWindowType::PLAYER_ADMIN_SETTINGS)) {
+			creature->sendSystemMessage("Player Settings is already open.");
+			return SUCCESS;
+		}
 
 		ManagedReference<CreatureObject*> subject = creature;
 		String name = arguments.toString().trim();

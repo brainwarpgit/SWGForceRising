@@ -66,20 +66,8 @@ public:
 				player->sendSystemMessage("@error_message:no_resource");
 				return GENERALERROR;
 			}
-			Vector<int> types;
-			if(!cr->getMeatType().isEmpty()) {
-				types.add(234);
-			}
-
-			if(!cr->getHideType().isEmpty()) {
-				types.add(235);
-			}
-
-			if(!cr->getBoneType().isEmpty()) {
-				types.add(236);
-			}
-			if(types.size() > 0)
-				type = types.get(System::random(types.size() -1));
+			if (!cr->getMeatType().isEmpty() || !cr->getHideType().isEmpty() || !cr->getBoneType().isEmpty())
+				type = 112;
 		}
 
 		if(type == 0) {

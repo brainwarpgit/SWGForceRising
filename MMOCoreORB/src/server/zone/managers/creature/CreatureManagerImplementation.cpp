@@ -915,16 +915,16 @@ void CreatureManagerImplementation::droidHarvest(Creature* creature, CreatureObj
 	}
 }
 
-void CreatureManagerImplementation::harvest(Creature* creature, CreatureObject* player, int selectedID) {
+void CreatureManagerImplementation::harvest(Creature* creature, CreatureObject* player, int selectedID, bool includeArea) {
 	Zone* zone = creature->getZone();
 
 	if (zone == nullptr || !creature->isCreature())
 		return;
 
-	if (!creature->canHarvestMe(player))
+	if (!creature->canHarvestMe(player, includeArea ? 10.f : 64.f))
 		return;
 
-	if (!player->isInRange(creature, 7))
+	if (!player->isInRange(creature, includeArea ? 7 : 64))
 		return;
 
 	ManagedReference<ResourceManager*> resourceManager = zone->getZoneServer()->getResourceManager();
@@ -1064,6 +1064,38 @@ void CreatureManagerImplementation::harvest(Creature* creature, CreatureObject* 
 
 			despawn->reschedule(1000);
 		}
+	}
+
+	PlayerObject* ghost = player->getPlayerObject();
+	if (!includeArea || ghost == nullptr || !ghost->isAreaHarvestEnabled())
+		return;
+
+	Vector3 position = player->getWorldPosition();
+	SortedVector<TreeEntry*> objects(512, 512);
+	zone->getInRangeObjects(position.getX(), position.getZ(), position.getY(), 64, &objects, true);
+
+	for (int i = 0; i < objects.size(); ++i) {
+		SceneObject* object = static_cast<SceneObject*>(objects.get(i));
+		if (object == nullptr || object == creature || !object->isCreature())
+			continue;
+
+		Creature* nearby = cast<Creature*>(object);
+		if (nearby == nullptr || nearby->getZone() != zone || nearby->getParentID() != player->getParentID() ||
+				!player->isInRange(nearby, 64))
+			continue;
+
+		Locker nearbyLocker(nearby, player);
+		if (!nearby->isDead() || !nearby->canHarvestMe(player, 64.f))
+			continue;
+
+		bool hasMeat = nearby->getMeatMax() > 0 && !nearby->getMeatType().isEmpty();
+		bool hasHide = nearby->getHideMax() > 0 && !nearby->getHideType().isEmpty();
+		bool hasBone = nearby->getBoneMax() > 0 && !nearby->getBoneType().isEmpty();
+		bool hasRequestedResource = (selectedID == 112 && (hasMeat || hasHide || hasBone)) ||
+				(selectedID == 234 && hasMeat) || (selectedID == 235 && hasHide) ||
+				(selectedID == 236 && hasBone);
+		if (hasRequestedResource)
+			harvest(nearby, player, selectedID, false);
 	}
 }
 

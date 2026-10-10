@@ -229,9 +229,9 @@ void CreatureImplementation::notifyDespawn(Zone* zone) {
 	AiAgentImplementation::notifyDespawn(zone);
 }
 
-bool CreatureImplementation::canHarvestMe(CreatureObject* player) {
+bool CreatureImplementation::canHarvestMe(CreatureObject* player, float maxDistance) {
 
-	if(!player->isInRange(_this.getReferenceUnsafeStaticCast(), 10.0f) || player->isInCombat() || !player->hasSkill("outdoors_scout_novice")
+	if(!player->isInRange(_this.getReferenceUnsafeStaticCast(), maxDistance) || player->isInCombat() || !player->hasSkill("outdoors_scout_novice")
 			|| player->isDead() || player->isIncapacitated() || isPet())
 		return false;
 
