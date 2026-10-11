@@ -853,6 +853,14 @@ namespace conf {
 			return getBool("Core3.WearableColorChange.ArmorEnabled", false);
 		}
 
+		inline bool getRacesCanWearAllWearables() {
+			return getBool("Core3.RacesCanWearAllWearables", false);
+		}
+
+		inline bool getNoFactionRestrictionsOnWearables() {
+			return getBool("Core3.NoFactionRestrictionsOnWearables", false);
+		}
+
 		inline bool getAdminUnlimitedVeteranRewards() {
 			return getBool("Core3.PlayerManager.AdminUnlimitedVeteranRewards", false);
 		}

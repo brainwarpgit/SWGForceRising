@@ -2,6 +2,10 @@
 
 ## 2026-10-11
 
+### Committed wearable race and faction options
+
+- Added configuration switches to let every race equip wearable items and to remove faction requirements from wearables. Both are enabled in the local configuration and disabled by default.
+
 ### Committed admin veteran reward testing
 
 - Added an optional full-admin mode for unlimited veteran reward claims. Admins can select any configured reward repeatedly without using account claims; regular players keep the normal rules.

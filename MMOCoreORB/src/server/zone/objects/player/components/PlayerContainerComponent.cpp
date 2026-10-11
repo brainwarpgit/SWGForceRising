@@ -14,6 +14,7 @@
 #include "server/zone/managers/player/PlayerManager.h"
 #include "server/zone/ZoneServer.h"
 #include "server/zone/managers/visibility/VisibilityManager.h"
+#include "conf/ConfigManager.h"
 
 int PlayerContainerComponent::canAddObject(SceneObject* sceneObject, SceneObject* object, int containmentType, String& errorDescription) const {
 	CreatureObject* creo = dynamic_cast<CreatureObject*>(sceneObject);
@@ -24,10 +25,12 @@ int PlayerContainerComponent::canAddObject(SceneObject* sceneObject, SceneObject
 
 	if (object->isTangibleObject() && containmentType == 4) {
 		TangibleObject* wearable = cast<TangibleObject*>(object);
+		ConfigManager* config = ConfigManager::instance();
+		bool isWearable = object->isWearableObject() || object->isWearableContainerObject();
 
 		SharedTangibleObjectTemplate* tanoData = dynamic_cast<SharedTangibleObjectTemplate*>(wearable->getObjectTemplate());
 
-		if (tanoData != nullptr) {
+		if (tanoData != nullptr && (!isWearable || !config->getRacesCanWearAllWearables())) {
 			const auto races = tanoData->getPlayerRaces();
 			String race = creo->getObjectTemplate()->getFullTemplateString();
 
@@ -38,7 +41,7 @@ int PlayerContainerComponent::canAddObject(SceneObject* sceneObject, SceneObject
 			}
 		}
 
-		if (creo->isPlayerCreature()) {
+		if (creo->isPlayerCreature() && (!isWearable || !config->getNoFactionRestrictionsOnWearables())) {
 			if (!wearable->isNeutral()) {
 				if (wearable->isImperial() && (creo->getFactionStatus() == FactionStatus::ONLEAVE || !creo->isImperial())) {
 					errorDescription = "You lack the necessary requirements to wear this object";

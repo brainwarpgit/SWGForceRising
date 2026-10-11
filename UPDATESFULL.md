@@ -2,6 +2,10 @@
 
 ## 2026-10-11
 
+### Committed wearable race and faction options
+
+- Added `Core3.RacesCanWearAllWearables` and `Core3.NoFactionRestrictionsOnWearables` to both configuration files. They default to false in `config.lua` and are true in the ignored `config-local.lua`. When enabled, player equipment transfers skip the template race list and the Imperial/Rebel faction and on-leave checks for wearable objects and wearable containers. Other equipment checks, including armor encumbrance and required certifications, still apply; weapon restrictions stay unchanged. This is a server-side permission change and cannot provide missing client appearance assets for a race. The user verified the feature in game; the assistant did not build or run Core3.
+
 ### Committed admin veteran reward testing
 
 - Added `Core3.PlayerManager.AdminUnlimitedVeteranRewards`, disabled in the default `config.lua` and enabled in `config-local.lua`. When active, characters with full game-admin status can open `/claimVeteranReward` regardless of account age or already claimed milestones, see all configured rewards, and claim one-time items repeatedly. Admin testing grants do not record account milestones or one-time choices and do not automatically reopen the selection after each grant; admins can run the command again. The selection and final grant paths recheck admin status and the setting, so disabling it during a claim restores ordinary eligibility checks. Regular player rewards retain their age, milestone, and one-time limits. The user reported a signed/unsigned `Math::max` build error in the milestone calculation; the reward milestone is now converted to the signed type used by the session. The user verified the corrected behavior in game; the assistant did not build or run Core3.
