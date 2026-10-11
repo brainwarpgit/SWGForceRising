@@ -2,6 +2,10 @@
 
 ## 2026-10-11
 
+### Committed village phase status and timer recovery
+
+- Added `/fsVillage` for players outside combat to see the current village phase, time remaining, and next change in server time in a read-only SUI window. Its command-table entry and browser strings are staged in the update TRE source. Village startup now reconciles its persistent phase event with the configured duration so timer changes and overdue events continue progressing.
+
 ### Committed medical treatment options
 
 - Added configuration options for medic/doctor wound treatment and enhancement buffs anywhere, and for new medical buffs to replace existing buffs regardless of strength. Fixed enhancement packs granting a timed but zero-strength buff outside medical areas.

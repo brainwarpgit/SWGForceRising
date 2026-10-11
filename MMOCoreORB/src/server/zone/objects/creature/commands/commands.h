@@ -277,6 +277,7 @@
 #include "GmCreateSpecificResourceCommand.h"
 #include "GmForceRankCommand.h"
 #include "GmFsVillageCommand.h"
+#include "FsVillageCommand.h"
 #include "GmJediStateCommand.h"
 #include "GmReviveCommand.h"
 #include "GotoCommand.h"
@@ -843,4 +844,3 @@
 
 
 #endif /* COMMANDSNEW_H_ */
-

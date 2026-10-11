@@ -14,42 +14,25 @@ VillageJediManagerTownship = ScreenPlay:new {
 
 -- Set the current Village Phase for the first time.
 function VillageJediManagerTownship.setCurrentPhaseInit()
+	local now = os.time()
+	local lastChange = tonumber(getQuestStatus("Village:lastPhaseChangeTime"))
+
 	if (not hasServerEvent("VillagePhaseChange")) then
-		VillageJediManagerTownship.setCurrentPhase(1)
-		VillageJediManagerTownship.setCurrentPhaseID(1)
-		VillageJediManagerTownship.setLastPhaseChangeTime(os.time())
-		createServerEvent(VillageJediManagerTownship.VILLAGE_PHASE_DURATION, "VillageJediManagerTownship", "switchToNextPhase", "VillagePhaseChange")
-	else
-		local eventID = getServerEventID("VillagePhaseChange")
-
-		if (eventID == nil) then
-			VillageJediManagerTownship:switchToNextPhase(true)
-			return
+		if (lastChange == nil or lastChange <= 0) then
+			VillageJediManagerTownship.setCurrentPhase(1)
+			VillageJediManagerTownship.setCurrentPhaseID(1)
+			VillageJediManagerTownship.setLastPhaseChangeTime(now)
 		end
+	elseif (lastChange == nil or lastChange <= 0) then
+		-- Existing villages from before the timestamp was persisted keep their current phase.
+		VillageJediManagerTownship.setLastPhaseChangeTime(now)
+	end
 
-		local eventTimeLeft = getServerEventTimeLeft(eventID)
-
-		if (eventTimeLeft == nil) then
-			VillageJediManagerTownship:switchToNextPhase(true)
-			return
-		end
-
-		if (eventTimeLeft < 0) then
-			return
-		end
-
-		-- Fixes servers that were already running the village prior to the change in schedule handling
-		local lastChange = tonumber(getQuestStatus("Village:lastPhaseChangeTime"))
-
-		if (lastChange ~= nil and lastChange ~= 0) then
-			return
-		end
-
-		VillageJediManagerTownship.setLastPhaseChangeTime(os.time())
-
-		local timeToSchedule = (VillageJediManagerTownship.getNextPhaseChangeTime(false) - os.time()) * 1000
-
+	local timeToSchedule = math.max(1000, (VillageJediManagerTownship.getNextPhaseChangeTime() - now) * 1000)
+	if (hasServerEvent("VillagePhaseChange")) then
 		rescheduleServerEvent("VillagePhaseChange", timeToSchedule)
+	else
+		createServerEvent(timeToSchedule, "VillageJediManagerTownship", "switchToNextPhase", "VillagePhaseChange")
 	end
 end
 
@@ -57,7 +40,7 @@ function VillageJediManagerTownship.getVillagePhaseDuration()
 	return VillageJediManagerTownship.VILLAGE_PHASE_DURATION
 end
 
-function VillageJediManagerTownship.getNextPhaseChangeTime(includePast)
+function VillageJediManagerTownship.getNextPhaseChangeTime()
 	local lastPhaseChange = VillageJediManagerTownship.getLastPhaseChangeTime()
 	local nextPhaseChange = lastPhaseChange + (VillageJediManagerTownship.getVillagePhaseDuration() / 1000)
 
@@ -74,13 +57,40 @@ function VillageJediManagerTownship.getNextPhaseChangeTime(includePast)
 		end
 	end
 
-	local returnTime = os.time(timeTable)
+	return os.time(timeTable)
+end
 
-	if (returnTime < os.time() and not includePast and not disregardTimeOfDay) then
-		returnTime = returnTime + 86400 -- If the time was modified by phaseChangeTimeOfDay and ended up being in the past, push it forward by 24 hours
+function VillageJediManagerTownship:showPhaseStatus(pPlayer)
+	if (pPlayer == nil) then
+		return
 	end
 
-	return returnTime
+	local sui = SuiMessageBox.new("VillageJediManagerTownship", "noCallback")
+	sui.setTitle("Force Sensitive Village")
+	sui.hideCancelButton()
+
+	if (not isZoneEnabled("dathomir") or not hasServerEvent("VillagePhaseChange")) then
+		sui.setPrompt("The Force Sensitive Village is not active.")
+		sui.sendTo(pPlayer)
+		return
+	end
+
+	local nextChange = VillageJediManagerTownship.getNextPhaseChangeTime()
+	local secondsLeft = math.max(0, nextChange - os.time())
+	local days = math.floor(secondsLeft / 86400)
+	local hours = math.floor(secondsLeft / 3600) % 24
+	local minutes = math.floor(secondsLeft / 60) % 60
+	local seconds = secondsLeft % 60
+	local timeLeft = string.format("%dd %dh %dm %ds", days, hours, minutes, seconds)
+
+	local prompt = " \\#pcontrast1 Current Phase: \\#pcontrast2 " .. VillageJediManagerTownship.getCurrentPhase() .. " of " .. VillageJediManagerTownship.VILLAGE_TOTAL_NUMBER_OF_PHASES
+		.. "\n \\#pcontrast1 Time Left: \\#pcontrast2 " .. timeLeft
+		.. "\n \\#pcontrast1 Next Phase Change: \\#pcontrast2 " .. os.date("%c", nextChange) .. " (server time)"
+	sui.setPrompt(prompt)
+	sui.sendTo(pPlayer)
+end
+
+function VillageJediManagerTownship:noCallback(pPlayer, pSui, eventIndex, args)
 end
 
 function VillageJediManagerTownship.setLastPhaseChangeTime(time)
@@ -140,7 +150,7 @@ function VillageJediManagerTownship:switchToNextPhase(manualSwitch)
 		return
 	end
 
-	local nextPhaseChange = VillageJediManagerTownship.getNextPhaseChangeTime(true)
+	local nextPhaseChange = VillageJediManagerTownship.getNextPhaseChangeTime()
 
 	if (manualSwitch) then
 		nextPhaseChange = os.time()
@@ -148,7 +158,7 @@ function VillageJediManagerTownship:switchToNextPhase(manualSwitch)
 
 	VillageJediManagerTownship.setLastPhaseChangeTime(nextPhaseChange)
 
-	local timeToSchedule = (VillageJediManagerTownship.getNextPhaseChangeTime(false) - os.time()) * 1000
+	local timeToSchedule = math.max(1000, (VillageJediManagerTownship.getNextPhaseChangeTime() - os.time()) * 1000)
 
 	if (hasServerEvent("VillagePhaseChange")) then
 		rescheduleServerEvent("VillagePhaseChange", timeToSchedule)
@@ -209,8 +219,8 @@ function VillageJediManagerTownship:start()
 	if (isZoneEnabled("dathomir")) then
 		Logger:log("Starting the Village Township Screenplay.", LT_INFO)
 
-		local currentPhase = VillageJediManagerTownship.getCurrentPhase()
 		VillageJediManagerTownship.setCurrentPhaseInit()
+		local currentPhase = VillageJediManagerTownship.getCurrentPhase()
 		VillageJediManagerTownship:spawnMobiles(currentPhase, true)
 		VillageJediManagerTownship:spawnSceneObjects(currentPhase, true)
 		VillageJediManagerTownship:createVillageMasterObject()
