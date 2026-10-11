@@ -113,7 +113,11 @@ class FactoryObject extends InstallationObject {
 	public native void handleOperateToggle(CreatureObject player);
 
 	@preLocked
-	public native boolean startFactory();
+	public native boolean startFactory(CreatureObject operatorPlayer = null);
+
+	public native int getProductionSecondsPerItem();
+
+	public native int getProductionTimeReductionPercent();
 
 	private native void stopFactory(final string message, final string tt, final string to, final int di);
 

@@ -1634,6 +1634,8 @@ void StructureManager::reportStructureStatus(CreatureObject* creature, Structure
 			String productName = factory->getProductionName();
 			status->addMenuItem("Crafting: " + (productName.isEmpty() ? String("None") : productName));
 			if (!productName.isEmpty()) {
+				status->addMenuItem("Time Per Item: " + String::valueOf(factory->getProductionSecondsPerItem()) +
+						" seconds | Skill Reduction: " + String::valueOf(factory->getProductionTimeReductionPercent()) + "%");
 				status->addMenuItem("Created: " + String::valueOf(factory->getProductionCreated()) +
 						" | Remaining: " + String::valueOf(factory->getProductionRemaining()));
 				status->addMenuItem("Total Time Remaining: " + factory->getProductionTimeRemainingText());

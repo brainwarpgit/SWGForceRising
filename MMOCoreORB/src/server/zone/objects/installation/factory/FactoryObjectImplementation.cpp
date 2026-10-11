@@ -151,6 +151,22 @@ int FactoryObjectImplementation::getProductionRemaining() {
 	return schematic == nullptr ? 0 : Math::max(0, schematic->getManufactureLimit());
 }
 
+int FactoryObjectImplementation::getProductionSecondsPerItem() {
+	return timer;
+}
+
+int FactoryObjectImplementation::getProductionTimeReductionPercent() {
+	if (getContainerObjectsSize() == 0)
+		return 0;
+
+	ManagedReference<ManufactureSchematic*> schematic = getContainerObject(0).castTo<ManufactureSchematic*>();
+	if (schematic == nullptr)
+		return 0;
+
+	int baseSeconds = Math::max(1, (int)schematic->getComplexity() * 8);
+	return Math::max(0, Math::min(50, (baseSeconds - timer) * 100 / baseSeconds));
+}
+
 int FactoryObjectImplementation::getProductionSecondsRemaining() {
 	if (!isActive())
 		return -1;
@@ -201,7 +217,8 @@ void FactoryObjectImplementation::fillAttributeList(AttributeListMessage* alm, C
 		if (productName.isEmpty())
 			return;
 
-		alm->insertAttribute("manufacture_time", timer);
+		alm->insertAttribute("manufacture_time", String::valueOf(timer) + " seconds (" +
+				String::valueOf(getProductionTimeReductionPercent()) + "% skill reduction)");
 		alm->insertAttribute("manufacture_count", currentRunCount);
 		alm->insertAttribute("manf_limit", getProductionRemaining());
 		alm->insertAttribute("time_remaining", getProductionTimeRemainingText());
@@ -472,6 +489,16 @@ void FactoryObjectImplementation::handleInsertFactorySchem(CreatureObject* playe
 	TransactionLog trx(player, asSceneObject(), schematic, TrxCode::FACTORYOPERATION);
 
 	if (transferObject(schematic, -1, true)) {
+		ManagedReference<DraftSchematic*> draft = schematic->getDraftSchematic();
+		int assemblySkill = 0;
+		if (draft != nullptr) {
+			String skillName = draft->getAssemblySkill();
+			if (!skillName.isEmpty())
+				assemblySkill = Math::max(0, Math::min(125, player->getSkillMod(skillName)));
+		}
+		int baseSeconds = Math::max(1, (int)schematic->getComplexity() * 8);
+		timer = Math::max(1, (int)(((long long)baseSeconds * (250 - assemblySkill) + 125) / 250));
+
 		StringIdChatParameter message("manf_station", "schematic_added"); // Schematic %TT has been inserted into the station. The station is now ready to manufacture items.
 
 		if (schematic->getCustomObjectName().isEmpty())
@@ -570,7 +597,7 @@ void FactoryObjectImplementation::handleOperateToggle(CreatureObject* player) {
 		currentUserName = player->getFirstName();
 		currentRunCount = 0;
 
-		if (startFactory()) {
+		if (startFactory(player)) {
 			player->sendSystemMessage("@manf_station:activated"); // Station activated
 			player->sendSystemMessage("This schematic limit is: " + String::valueOf(schematic->getManufactureLimit()));
 		}
@@ -581,7 +608,7 @@ void FactoryObjectImplementation::handleOperateToggle(CreatureObject* player) {
 	}
 }
 
-bool FactoryObjectImplementation::startFactory() {
+bool FactoryObjectImplementation::startFactory(CreatureObject* operatorPlayer) {
 	if (getContainerObjectsSize() == 0) {
 		return false;
 	}
@@ -610,12 +637,18 @@ bool FactoryObjectImplementation::startFactory() {
 			return false;
 	}
 
-#ifdef DEBUG_FACTORIES
-	timer = 30;
-	info(true) << "Factory Testing Timer Set To: " << timer;
-#else
-	timer = ((int)schematic->getComplexity()) * 8;
-#endif
+	// An active factory restores its persisted cycle time after a server restart.
+	if (operatorPlayer != nullptr || timer < 1) {
+		int baseSeconds = Math::max(1, (int)schematic->getComplexity() * 8);
+		int assemblySkill = 0;
+		ManagedReference<DraftSchematic*> draft = schematic->getDraftSchematic();
+		if (operatorPlayer != nullptr && draft != nullptr) {
+			String skillName = draft->getAssemblySkill();
+			if (!skillName.isEmpty())
+				assemblySkill = Math::max(0, Math::min(125, operatorPlayer->getSkillMod(skillName)));
+		}
+		timer = Math::max(1, (int)(((long long)baseSeconds * (250 - assemblySkill) + 125) / 250));
+	}
 
 	if (!populateSchematicBlueprint(schematic))
 		return false;

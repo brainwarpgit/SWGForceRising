@@ -2,6 +2,10 @@
 
 ## 2026-10-11
 
+### Committed factory production skill timing
+
+- Factory production time now decreases with the activating player's schematic assembly skill, up to 50% at skill 125. Inserting a schematic also refreshes its displayed cycle time using the inserting player's skill, so Structure Status and Examine do not show a stale reduction from the previous schematic.
+
 ### Committed container wipe radials
 
 - Added guarded wipe radials for unequipped containers and for inventory through an equipped wearable container. Both require confirmation and keep no-trade items and resources; inventory wipe also keeps nonempty containers.
