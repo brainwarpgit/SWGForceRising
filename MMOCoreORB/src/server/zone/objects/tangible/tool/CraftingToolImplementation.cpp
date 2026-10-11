@@ -42,6 +42,7 @@ void CraftingToolImplementation::initializeTransientMembers() {
 		status = TOOL_READY; // "@crafting:tool_status_ready"
 	}
 
+	creationTimeReductionPercent = 0;
 	setCountdownTimer(0, false);
 }
 
@@ -118,6 +119,13 @@ void CraftingToolImplementation::fillAttributeList(AttributeListMessage* alm, Cr
 	}
 
 	alm->insertAttribute("craft_tool_status", statusString);
+	if (isBusy()) {
+		Reference<TangibleObject*> prototype = getPrototype();
+		if (prototype != nullptr) {
+			alm->insertAttribute("crafting_item", prototype->getDisplayedName());
+			alm->insertAttribute("crafting_time_reduction", String::valueOf(creationTimeReductionPercent) + "%");
+		}
+	}
 
 	if (forceCriticalAssembly > 0)
 		alm->insertAttribute("@crafting:crit_assembly", forceCriticalAssembly);

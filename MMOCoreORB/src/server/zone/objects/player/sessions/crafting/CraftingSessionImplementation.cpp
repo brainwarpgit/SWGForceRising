@@ -1405,15 +1405,20 @@ void CraftingSessionImplementation::createPrototype(int clientCounter, bool crea
 	if (manufactureSchematic->isAssembled() && !manufactureSchematic->isCompleted()) {
 		closeCraftingWindow(clientCounter, true);
 
-		String xpType = manufactureSchematic->getDraftSchematic()->getXpType();
-		int xp = manufactureSchematic->getDraftSchematic()->getXpAmount();
+		DraftSchematic* draftSchematic = manufactureSchematic->getDraftSchematic();
+		String xpType = draftSchematic->getXpType();
+		int xp = draftSchematic->getXpAmount();
+		int baseSeconds = Math::max(1, (int)(manufactureSchematic->getComplexity() * 2));
+		int assemblySkill = Math::max(0, Math::min(125, crafter->getSkillMod(draftSchematic->getAssemblySkill())));
+		int creationSeconds = Math::max(1, (int)(((long long)baseSeconds * (250 - assemblySkill) + 125) / 250));
+		int reductionPercent = assemblySkill * 2 / 5;
 
 		if (createItem) {
-			startCreationTasks(manufactureSchematic->getComplexity() * 2, false);
+			startCreationTasks(creationSeconds, false, reductionPercent);
 
 		} else {
 			// This is for practicing
-			startCreationTasks(manufactureSchematic->getComplexity() * 2, true);
+			startCreationTasks(creationSeconds, true, reductionPercent);
 			xp = round(xp * 1.05f);
 		}
 
@@ -1431,7 +1436,7 @@ void CraftingSessionImplementation::createPrototype(int clientCounter, bool crea
 	cancelSession();
 }
 
-void CraftingSessionImplementation::startCreationTasks(int timer, bool practice) {
+void CraftingSessionImplementation::startCreationTasks(int timer, bool practice, int reductionPercent) {
 	ManagedReference<CraftingTool*> craftingTool = this->craftingTool.get();
 	ManagedReference<CreatureObject*> crafter = this->crafter.get();
 
@@ -1439,6 +1444,7 @@ void CraftingSessionImplementation::startCreationTasks(int timer, bool practice)
 
 	if (server != nullptr) {
 		Locker locker(craftingTool);
+		craftingTool->setCreationTimeReductionPercent(reductionPercent);
 		craftingTool->setBusy();
 
 		int timer2 = 1;

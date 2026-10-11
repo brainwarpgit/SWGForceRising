@@ -209,7 +209,7 @@ class CraftingSession extends Facade {
 	 * Starts tasks for counting down and creating item
 	 * based on complexity
 	 */
-	private native void startCreationTasks(int timer, boolean practice);
+	private native void startCreationTasks(int timer, boolean practice, int reductionPercent);
 
 	public int getState() {
 		return state;

@@ -2,6 +2,10 @@
 
 ## 2026-10-11
 
+### Committed crafting tool skill timing
+
+- Crafting tools now reduce the final item-creation countdown using the schematic's assembly skill, up to 50% at skill 125. The adjusted timer applies to both completed items and practice crafting. While working, the tool's Examine window shows the item being made and its time reduction with labels supplied by the update TRE.
+
 ### Committed factory production skill timing
 
 - Factory production time now decreases with the activating player's schematic assembly skill, up to 50% at skill 125. Inserting a schematic also refreshes its displayed cycle time using the inserting player's skill, so Structure Status and Examine do not show a stale reduction from the previous schematic.

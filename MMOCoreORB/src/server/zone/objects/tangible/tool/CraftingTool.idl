@@ -18,6 +18,7 @@ import server.zone.objects.manufactureschematic.craftingvalues.CraftingValues;
 @json
 class CraftingTool extends ToolTangibleObject {
 	protected transient int status;
+	protected transient int creationTimeReductionPercent;
 
 	protected int type;
 	protected float effectiveness;
@@ -46,6 +47,7 @@ class CraftingTool extends ToolTangibleObject {
 		Logger.setLoggingName("CraftingTool");
 
 		status = 0;
+		creationTimeReductionPercent = 0;
 		effectiveness = 0;
 		forceCriticalAssembly = 0;
 		forceCriticalExperiment = 0;
@@ -114,6 +116,10 @@ class CraftingTool extends ToolTangibleObject {
 
 	public void setBusy() {
 		status = TOOL_WORKING;
+	}
+
+	public void setCreationTimeReductionPercent(int percent) {
+		creationTimeReductionPercent = percent;
 	}
 
 	/**
