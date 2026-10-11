@@ -2,6 +2,10 @@
 
 ## 2026-10-11
 
+### Committed container wipe radials
+
+- Added guarded wipe radials for unequipped containers and for inventory through an equipped wearable container. Both require confirmation and keep no-trade items and resources; inventory wipe also keeps nonempty containers.
+
 ### Committed vendor listing quantities
 
 - Vendor listings for resource stacks and factory crates show their item count and approximate price per unit in a compact name suffix.

@@ -8,6 +8,8 @@
 #include "server/zone/objects/building/BuildingObject.h"
 #include "server/zone/objects/installation/factory/FactoryObject.h"
 #include "server/zone/objects/player/sui/inputbox/SuiInputBox.h"
+#include "server/zone/objects/player/sui/messagebox/SuiMessageBox.h"
+#include "server/zone/objects/player/sui/callbacks/ContainerWipeSuiCallback.h"
 #include "server/zone/objects/player/sessions/SlicingSession.h"
 #include "server/zone/objects/tangible/tool/CraftingStation.h"
 #include "server/zone/objects/tangible/wearables/WearableContainerObject.h"
@@ -15,6 +17,7 @@
 #include "server/zone/objects/creature/ai/AiAgent.h"
 #include "server/zone/objects/player/PlayerObject.h"
 #include "server/zone/objects/scene/AccountSafetyDepositAccess.h"
+#include "server/zone/objects/tangible/ContainerWipeHelper.h"
 
 void ContainerImplementation::initializeTransientMembers() {
 	TangibleObjectImplementation::initializeTransientMembers();
@@ -58,10 +61,43 @@ void ContainerImplementation::fillObjectMenuResponse(ObjectMenuResponse* menuRes
 
 	if (isSliceable() && isContainerLocked() && player->hasSkill("combat_smuggler_novice"))
 		menuResponse->addRadialMenuItem(69, 3, "@slicing/slicing:slice"); // Slice
+
+	SceneObject* container = _this.getReferenceUnsafeStaticCast();
+	if (ContainerWipeHelper::canWipe(container, player, false))
+		menuResponse->addRadialMenuItem(252, 3, "Wipe Container");
+	if (ContainerWipeHelper::canWipe(container, player, true))
+		menuResponse->addRadialMenuItem(253, 3, "Wipe Inventory");
 }
 
 int ContainerImplementation::handleObjectMenuSelect(CreatureObject* player, byte selectedID) {
-	if (selectedID == 50) {
+	if (selectedID == 252 || selectedID == 253) {
+		bool wipeInventory = selectedID == 253;
+		SceneObject* container = _this.getReferenceUnsafeStaticCast();
+		if (!ContainerWipeHelper::canWipe(container, player, wipeInventory))
+			return 0;
+
+		ManagedReference<SceneObject*> target = container;
+		if (wipeInventory)
+			target = player->getSlottedObject("inventory");
+		Vector<uint64> itemIDs;
+		ContainerWipeHelper::collectWipeable(target, player, wipeInventory, itemIDs);
+		if (itemIDs.size() == 0)
+			return 0;
+		int count = itemIDs.size();
+		ManagedReference<SuiMessageBox*> confirm = new SuiMessageBox(player, 0);
+		confirm->setPromptTitle(wipeInventory ? "WARNING: Wipe Inventory" : "WARNING: Wipe Container");
+		confirm->setPromptText("\\#FF6347WARNING: This permanently deletes " + String::valueOf(count) +
+				(wipeInventory ? " eligible item(s) from your inventory." : " eligible item(s) from this container.") +
+				" Deleted items cannot be recovered.\\#. No-trade items and resources are kept." +
+				(wipeInventory ? " Nonempty containers are also kept." : "") + " Are you absolutely sure?");
+		confirm->setUsingObject(container);
+		confirm->setCancelButton(true, "Cancel");
+		confirm->setOkButton(true, "Delete Items");
+		confirm->setCallback(new ContainerWipeSuiCallback(player->getZoneServer(), wipeInventory, itemIDs));
+		player->getPlayerObject()->addSuiBox(confirm);
+		player->sendMessage(confirm->generateMessage());
+		return 0;
+	} else if (selectedID == 50) {
 		if (checkContainerPermission(player, ContainerPermissions::MOVECONTAINER && getParent().get() != nullptr && getParent().get()->checkContainerPermission(player, ContainerPermissions::MOVEOUT))) {
 			ManagedReference<SuiInputBox*> inputBox = new SuiInputBox(player, SuiWindowType::OBJECT_NAME, 0x00);
 

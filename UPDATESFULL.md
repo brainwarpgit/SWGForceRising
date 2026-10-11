@@ -2,6 +2,10 @@
 
 ## 2026-10-11
 
+### Committed container wipe radials
+
+- Player-held unequipped containers with deletable contents show Wipe Container. An equipped wearable container instead shows Wipe Inventory when the inventory has deletable items. The two radials are mutually exclusive and hidden while the player moves or fights. A red warning confirmation lists the number of eligible direct items and states that deletion is permanent. Only the items shown as eligible when the confirmation opened can be deleted; ownership, equipment, movement, combat, and contents are checked again on confirmation. No-trade items, resources, and containers holding them are retained. Inventory wipe also preserves every nonempty container, even if its contents would otherwise be deletable; this is rechecked immediately before deletion. The user reported an ambiguous pointer conversion in the build; target selection is now explicit in both the radial and confirmation callback. The user verified the completed behavior in game; the assistant did not build or run Core3.
+
 ### Committed vendor listing quantities
 
 - Vendor listing rows append a compact `xN @ P cr/u` label to the displayed item name for resource containers and factory crates with more than one unit. The normal price column remains the total asking price. Unit price is rounded to the nearest cent; values below one cent display `<0.01`. This changes only the outgoing listing display, not stored item names, searches, sorting, or sale prices. Bazaar rows and single items keep their existing names. The user reported and verified a fix for a `UnicodeString` append build error, then verified the feature in game. The assistant did not build or run Core3.
