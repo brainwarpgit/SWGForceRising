@@ -2,6 +2,11 @@
 
 ## 2026-10-10
 
+### Committed factory crate capacity update
+
+- Set the factory crate default capacity to 1,000. Factory production uses that capacity for every schematic whose crate size is greater than one; schematic values of zero and one retain their existing non-crated behavior. The individual Lua schematic values remain as source data, but no longer limit cratable factory output.
+- Previously saved factory crates update their stored capacity to 1,000 when loaded, allowing a running factory to keep filling a matching crate past its former limit. The user verified the behavior in game; the assistant did not build or run Core3.
+
 ### Committed resource container and harvest naming update
 
 - Raised `ResourceContainer::MAXSIZE` from 100,000 to 1,000,000. Existing stack limits for sampling, inventory combination, hopper withdrawals, and resource container client baselines use this constant.

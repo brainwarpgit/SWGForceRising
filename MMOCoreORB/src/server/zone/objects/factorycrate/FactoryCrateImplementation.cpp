@@ -22,6 +22,11 @@ void FactoryCrateImplementation::initializeTransientMembers() {
 	setLoggingName("FactoryCrate");
 }
 
+void FactoryCrateImplementation::notifyLoadFromDatabase() {
+	TangibleObjectImplementation::notifyLoadFromDatabase();
+	maxCapacity = FactoryCrate::MAX_CAPACITY;
+}
+
 void FactoryCrateImplementation::loadTemplateData(SharedObjectTemplate* templateData) {
 	TangibleObjectImplementation::loadTemplateData(templateData);
 

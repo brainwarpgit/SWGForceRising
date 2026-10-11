@@ -765,6 +765,7 @@ void FactoryObjectImplementation::createNewObject() {
 	}
 
 	if (crateSize > 1) {
+		crateSize = FactoryCrate::MAX_CAPACITY;
 		String crateType = schematic->getFactoryCrateType();
 
 		ManagedReference<FactoryCrate*> crate = locateCrateInOutputHopper(prototype);

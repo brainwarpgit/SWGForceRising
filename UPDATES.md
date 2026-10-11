@@ -2,6 +2,10 @@
 
 ## 2026-10-10
 
+### Committed factory crate capacity update
+
+- Factories now fill crates to 1,000 items for every cratable product. Existing factory crates can also hold up to 1,000; products configured to be uncrated remain uncrated.
+
 ### Committed resource container and harvest naming update
 
 - Increased resource container capacity to 1,000,000 units. Resource containers now show the resource subtype and spawned name, such as Titanium Aluminum (Kadaamira), including containers already saved before this update. Sampling and creature harvesting messages use the same full name.
