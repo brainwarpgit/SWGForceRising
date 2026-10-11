@@ -262,6 +262,8 @@ class BuildingObject extends StructureObject {
 
 	@dirty
 	public native int getCurrentNumberOfPlayerItems();
+	@dirty
+	public native int getPlayerVendorCount();
 
 	/**
 	 * Loops through all the cells, destroying items from the database that aren't contained in the child objects vector.

@@ -2,6 +2,11 @@
 
 ## 2026-10-10
 
+### Committed player vendor counts in structure reports
+
+- Buildings count player vendor objects directly placed in their cells. Structure Status shows `Player Vendors: N` beside the storage information, and the city Structure Report appends the count to civic building entries. The count excludes vendors carried in inventories and ordinary NPCs.
+- The existing `/createVendor` path permits creation in a public building when the player has building admin or vendor permission. Civic structures transfer to the mayor and clear their permission lists on zone insertion, so a mayor can use a public civic building as owner if they meet the vendor skill requirements; other players do not gain vendor permission there automatically. The user verified the behavior in game; the assistant did not build or run Core3.
+
 ### Committed global safety deposit access
 
 - Enabled the existing global safety deposit switch in the bank terminal menu. Any bank terminal now opens the character's existing bank container regardless of the planet recorded as their bank location, including characters who have not joined a bank. Credits, bank membership, and stored items are unchanged. The user verified the behavior in game; the assistant did not build or run Core3.

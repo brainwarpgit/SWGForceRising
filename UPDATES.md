@@ -2,6 +2,10 @@
 
 ## 2026-10-10
 
+### Committed player vendor counts in structure reports
+
+- Building Structure Status now shows its player vendor count. The city Structure Report also shows a count for each civic building.
+
 ### Committed global safety deposit access
 
 - Safety deposit boxes can now be opened at bank terminals on any planet. Each character keeps the same existing bank container and contents.

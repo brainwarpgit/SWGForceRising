@@ -497,10 +497,14 @@ void CityManagerImplementation::sendStructureReport(CityRegion* city, CreatureOb
 
 	for (int i = 0; i < city->getStructuresCount(); i++) {
 		ManagedReference<StructureObject*> structure = city->getCivicStructure(i);
-		if (structure != nullptr)
-			maintList->addMenuItem(structure->getObjectName()->getFullPath() + " - Condition : "
+		if (structure != nullptr) {
+			String details = structure->getObjectName()->getFullPath() + " - Condition : "
 					+ String::valueOf((1.0f * structure->getMaxCondition() - structure->getConditionDamage())
-							/ structure->getMaxCondition() * 100) + "%", i);
+							/ structure->getMaxCondition() * 100) + "%";
+			if (structure->isBuildingObject())
+				details += " - Player Vendors: " + String::valueOf(cast<BuildingObject*>(structure.get())->getPlayerVendorCount());
+			maintList->addMenuItem(details, i);
+		}
 
 	}
 

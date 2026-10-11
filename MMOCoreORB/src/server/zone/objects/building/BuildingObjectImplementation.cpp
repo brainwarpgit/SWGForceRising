@@ -112,6 +112,21 @@ int BuildingObjectImplementation::getCurrentNumberOfPlayerItems() {
 	return items;
 }
 
+int BuildingObjectImplementation::getPlayerVendorCount() {
+	int count = 0;
+	for (int i = 0; i < cells.size(); ++i) {
+		auto& cell = cells.get(i);
+		if (cell == nullptr)
+			continue;
+		for (int j = 0; j < cell->getContainerObjectsSize(); ++j) {
+			auto vendor = cell->getContainerObject(j);
+			if (vendor != nullptr && vendor->isVendor())
+				++count;
+		}
+	}
+	return count;
+}
+
 void BuildingObjectImplementation::createCellObjects() {
 	for (int i = 0; i < totalCellNumber; ++i) {
 		auto newCell = getZoneServer()->createObject(0xAD431713, getPersistenceLevel());

@@ -1643,6 +1643,7 @@ void StructureManager::reportStructureStatus(CreatureObject* creature, Structure
 		}
 
 		status->addMenuItem("Storage Used: " + String::valueOf(building->getCurrentNumberOfPlayerItems()) + " / " + String::valueOf(building->getMaximumNumberOfPlayerItems()));
+		status->addMenuItem("Player Vendors: " + String::valueOf(building->getPlayerVendorCount()));
 		if (building->getBaseLotSize() > 0)
 			status->addMenuItem("Lots Used: " + String::valueOf(building->getLotSize()) + " (Base: "
 					+ String::valueOf(building->getBaseLotSize()) + ", Added: " + String::valueOf(building->getAdditionalLots()) + ")");
