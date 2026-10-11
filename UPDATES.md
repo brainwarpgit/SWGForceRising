@@ -2,6 +2,10 @@
 
 ## 2026-10-10
 
+### Committed resource container and harvest naming update
+
+- Increased resource container capacity to 1,000,000 units. Resource containers now show the resource subtype and spawned name, such as Titanium Aluminum (Kadaamira), including containers already saved before this update. Sampling and creature harvesting messages use the same full name.
+
 ### Committed Sampling Minigame player setting
 
 - Added a Sampling Minigame toggle under `/playerAdmin` → Sampling. It starts enabled and can be changed per player without restarting. When disabled, sampling uses the ordinary sample path instead of opening the concentrated-sampling minigame.

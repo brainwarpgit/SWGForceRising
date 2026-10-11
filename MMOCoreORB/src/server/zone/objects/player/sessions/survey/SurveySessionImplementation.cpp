@@ -225,7 +225,7 @@ void SurveySessionImplementation::startSample(const String& resname) {
 	}
 
 	StringIdChatParameter message("survey","start_sampling");
-	message.setTO(lastResourceSampleName);
+	message.setTO(resourceSpawn->getFinalClass() + " (" + resourceSpawn->getName() + ")");
 	surveyer->sendSystemMessage(message);
 
 	if (ghost->isSamplingMinigameEnabled() && !doGamble &&

@@ -870,7 +870,7 @@ void CreatureManagerImplementation::droidHarvest(Creature* creature, CreatureObj
 	StringIdChatParameter harvestMessage("skl_use", creatureHealth);
 
 	harvestMessage.setDI(quantityExtracted);
-	harvestMessage.setTU(resourceSpawn->getFinalClass());
+	harvestMessage.setTU(resourceSpawn->getFinalClass() + " (" + resourceSpawn->getName() + ")");
 
 	owner->sendSystemMessage(harvestMessage);
 
@@ -888,7 +888,7 @@ void CreatureManagerImplementation::droidHarvest(Creature* creature, CreatureObj
 
 		bonusMessage.setTU(droid->getDisplayedName());
 		bonusMessage.setDI(quantityExtracted);
-		bonusMessage.setTO(resourceSpawn->getFinalClass());
+		bonusMessage.setTO(resourceSpawn->getFinalClass() + " (" + resourceSpawn->getName() + ")");
 		bonusMessage.setTT(creature->getObjectNameStringIdFile(), creature->getObjectNameStringIdName());
 
 		ChatSystemMessage* sysMessage = new ChatSystemMessage(bonusMessage);
@@ -1020,7 +1020,7 @@ void CreatureManagerImplementation::harvest(Creature* creature, CreatureObject* 
 	StringIdChatParameter harvestMessage("skl_use", creatureHealth);
 
 	harvestMessage.setDI(quantityExtracted);
-	harvestMessage.setTU(resourceSpawn->getFinalClass());
+	harvestMessage.setTU(resourceSpawn->getFinalClass() + " (" + resourceSpawn->getName() + ")");
 
 	player->sendSystemMessage(harvestMessage);
 
@@ -1038,7 +1038,7 @@ void CreatureManagerImplementation::harvest(Creature* creature, CreatureObject* 
 
 		bonusMessage.setTU(player->getFirstName());
 		bonusMessage.setDI(quantityExtracted);
-		bonusMessage.setTO(resourceSpawn->getFinalClass());
+		bonusMessage.setTO(resourceSpawn->getFinalClass() + " (" + resourceSpawn->getName() + ")");
 		bonusMessage.setTT(creature->getObjectNameStringIdFile(), creature->getObjectNameStringIdName());
 
 		ChatSystemMessage* sysMessage = new ChatSystemMessage(bonusMessage);

@@ -9,6 +9,18 @@
 #include "server/zone/packets/resource/ResourceContainerObjectMessage6.h"
 #include "server/zone/objects/creature/CreatureObject.h"
 
+void ResourceContainerImplementation::notifyLoadFromDatabase() {
+	TangibleObjectImplementation::notifyLoadFromDatabase();
+
+	if (spawnObject == nullptr)
+		return;
+
+	String name = spawnObject->getName();
+	String displayName = name == "swgfr_stored_power" ? String("Stored Power") : spawnObject->getFinalClass() + " (" + name + ")";
+	if (getCustomObjectName().toString() != displayName)
+		setCustomObjectName(displayName, false);
+}
+
 void ResourceContainerImplementation::fillAttributeList(AttributeListMessage* alm, CreatureObject* object) {
 	TangibleObjectImplementation::fillAttributeList(alm, object);
 

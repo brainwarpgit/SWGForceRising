@@ -243,7 +243,7 @@ Reference<ResourceContainer*> ResourceSpawnImplementation::createResource(int un
    	if (units != 0)
    		newResource->setQuantity(units);
 
-	newResource->setCustomObjectName(spawnName == "swgfr_stored_power" ? String("Stored Power") : getFamilyName(), false);
+	newResource->setCustomObjectName(spawnName == "swgfr_stored_power" ? String("Stored Power") : getFinalClass() + " (" + spawnName + ")", false);
 
    	++containerReferenceCount;
 

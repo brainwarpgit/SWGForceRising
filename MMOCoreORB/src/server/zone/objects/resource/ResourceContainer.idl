@@ -17,7 +17,7 @@ class ResourceContainer extends TangibleObject {
 	protected ResourceSpawn spawnObject;
 	protected int stackQuantity;
 
-	public static final int MAXSIZE = 100000;
+	public static final int MAXSIZE = 1000000;
 
 	public ResourceContainer() {
 		stackQuantity = 0;
@@ -30,6 +30,8 @@ class ResourceContainer extends TangibleObject {
 
 		Logger.setLoggingName("ResourceContainer");
 	}
+
+	public native void notifyLoadFromDatabase();
 
 	/**
 	 * Destroys this object from database

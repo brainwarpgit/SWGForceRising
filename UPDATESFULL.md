@@ -2,6 +2,12 @@
 
 ## 2026-10-10
 
+### Committed resource container and harvest naming update
+
+- Raised `ResourceContainer::MAXSIZE` from 100,000 to 1,000,000. Existing stack limits for sampling, inventory combination, hopper withdrawals, and resource container client baselines use this constant.
+- Newly created resource containers use the final resource subtype followed by the spawned name in parentheses, for example `Titanium Aluminum (Kadaamira)`. Saved containers refresh that display name when loaded. The special Stored Power container keeps its existing name.
+- Sampling start, result, and failure messages, plus manual and droid creature-harvest messages, now include the full subtype and spawned name. The user verified the change in game; the assistant did not build or run Core3.
+
 ### Committed Sampling Minigame player setting
 
 - Added a persisted per-player `samplingMinigameDisabled` setting, false by default so existing and new players retain current sampling behavior. `/playerAdmin` has a separate Sampling category for the Sampling Minigame toggle, with the existing colored enabled/disabled states. The categories remain alphabetical, and Harvesting retains Area Harvest. Players can toggle their own preference; game admins can edit another online player's preference through the established target/name flow. The change is saved immediately and the menu reopens in Sampling.

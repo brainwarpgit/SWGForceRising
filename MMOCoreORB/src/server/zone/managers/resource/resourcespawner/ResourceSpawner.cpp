@@ -939,6 +939,12 @@ void ResourceSpawner::sendSampleResults(TransactionLog& trx, CreatureObject* pla
 		trx.abort() << "Missing active survey session";
 		return;
 	}
+	ManagedReference<ResourceSpawn*> resourceSpawn = resourceMap->get(resname.toLowerCase());
+	if (resourceSpawn == nullptr) {
+		trx.abort() << "Missing sampled resource spawn";
+		return;
+	}
+	String displayName = resourceSpawn->getFinalClass() + " (" + resourceSpawn->getName() + ")";
 
 	ManagedReference<SurveyTool*> surveyTool = session->getActiveSurveyTool().get();
 	PlayerObject* ghost = player->getPlayerObject();
@@ -960,7 +966,7 @@ void ResourceSpawner::sendSampleResults(TransactionLog& trx, CreatureObject* pla
 	// If density is too low, we can't obtain a sample
 	if (density < .10f) {
 		StringIdChatParameter message("survey", "efficiency_too_low");
-		message.setTO(resname);
+		message.setTO(displayName);
 		player->sendSystemMessage(message);
 		player->setPosture(CreaturePosture::UPRIGHT, true);
 		trx.abort() << message.toString();
@@ -972,7 +978,7 @@ void ResourceSpawner::sendSampleResults(TransactionLog& trx, CreatureObject* pla
 
 	if ((density * 100) < (32 - ((surveySkill / 20) * 6)) || density < .10) {
 		StringIdChatParameter message("survey", "density_below_threshold");
-		message.setTO(resname);
+		message.setTO(displayName);
 		player->sendSystemMessage(message);
 		player->setPosture(CreaturePosture::UPRIGHT, true);
 		trx.abort() << message.toString();
@@ -986,7 +992,7 @@ void ResourceSpawner::sendSampleResults(TransactionLog& trx, CreatureObject* pla
 	// Was the sample successful or not
 	if (!session->tryGamble() && richSampleLocation == nullptr && sampleRate < 40) {
 		StringIdChatParameter message("survey", "sample_failed");
-		message.setTO(resname);
+		message.setTO(displayName);
 		player->sendSystemMessage(message);
 		trx.abort() << message.toString();
 		return;
@@ -1026,7 +1032,7 @@ void ResourceSpawner::sendSampleResults(TransactionLog& trx, CreatureObject* pla
 	if (unitsExtracted < 2) {
 		// Send message to player about trace amounts
 		StringIdChatParameter message("survey", "trace_amount");
-		message.setTO(resname);
+		message.setTO(displayName);
 		message.setDI(unitsExtracted);
 		player->sendSystemMessage(message);
 		trx.abort() << message.toString();
@@ -1035,12 +1041,9 @@ void ResourceSpawner::sendSampleResults(TransactionLog& trx, CreatureObject* pla
 
 	// Send message to player about unit extraction
 	StringIdChatParameter message("survey", "sample_located");
-	message.setTO(resname);
+	message.setTO(displayName);
 	message.setDI(unitsExtracted);
 	player->sendSystemMessage(message);
-
-	// We need the spawn object to track extraction
-	ManagedReference<ResourceSpawn*> resourceSpawn = resourceMap->get(resname.toLowerCase());
 
 	Locker clocker(resourceSpawn, player);
 

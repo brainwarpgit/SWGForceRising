@@ -2207,7 +2207,7 @@ void StructureManager::withdrawPower(StructureObject* structure, CreatureObject*
 	}
 	structure->updateStructureStatus();
 	if (amount <= 0 || amount > ResourceContainer::MAXSIZE || amount > structure->getSurplusPower()) {
-		creature->sendSystemMessage("Enter an amount within the structure's available power, up to 100,000 units.");
+		creature->sendSystemMessage("Enter an amount within the structure's available power, up to 1,000,000 units.");
 		return;
 	}
 	ResourceManager* manager = server->getResourceManager();
