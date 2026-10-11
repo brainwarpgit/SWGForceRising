@@ -1,5 +1,11 @@
 # Project Updates
 
+## 2026-10-11
+
+### Committed bazaar listing limits
+
+- Raised the maximum bazaar listing price to 1,000,000 credits and the simultaneous sales limit to 50.
+
 ## 2026-10-10
 
 ### Committed account safety deposit

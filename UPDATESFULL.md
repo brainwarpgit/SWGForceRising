@@ -1,5 +1,11 @@
 # Detailed Project Updates
 
+## 2026-10-11
+
+### Committed bazaar listing limits
+
+- Raised `MAXBAZAARPRICE` from 20,000 to 1,000,000 credits and `MAXSALES` from 25 to 50 in the auction manager. The price constant guards both new listings and bazaar bids. The sales limit governs bazaar listings and consigned items on player vendors, which share the commodity count. The user verified the change in game; the assistant did not build or run Core3.
+
 ## 2026-10-10
 
 ### Committed account safety deposit
