@@ -2,6 +2,10 @@
 
 ## 2026-10-11
 
+### Committed admin veteran reward testing
+
+- Added an optional full-admin mode for unlimited veteran reward claims. Admins can select any configured reward repeatedly without using account claims; regular players keep the normal rules.
+
 ### Committed crafting tool skill timing
 
 - Crafting tools now reduce the final item-creation countdown using the schematic's assembly skill, up to 50% at skill 125. The adjusted timer applies to both completed items and practice crafting. While working, the tool's Examine window shows the item being made and its time reduction with labels supplied by the update TRE.

@@ -267,6 +267,8 @@ Core3 = {
 	PlayerManager = {
 		-- Track PvP victims by account; fixes the old missing Core3 namespace.
 		AccountVictimList = false,
+		-- Allow full admins to claim any veteran reward repeatedly for testing.
+		AdminUnlimitedVeteranRewards = false,
 		AdvancedWaypoints = false,
 		DisableGroupVisibility = false,
 		GalaxyWideGrouping = false,

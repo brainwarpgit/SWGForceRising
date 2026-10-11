@@ -846,6 +846,10 @@ namespace conf {
 		}
 
 
+		inline bool getAdminUnlimitedVeteranRewards() {
+			return getBool("Core3.PlayerManager.AdminUnlimitedVeteranRewards", false);
+		}
+
 		/*
 
 			JTL Configs

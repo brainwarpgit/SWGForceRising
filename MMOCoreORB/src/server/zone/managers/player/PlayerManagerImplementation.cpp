@@ -6,6 +6,7 @@
  */
 
 #include "server/zone/managers/player/PlayerManager.h"
+#include "conf/ConfigManager.h"
 #include <utility>
 #include <mutex>
 
@@ -5955,8 +5956,16 @@ void PlayerManagerImplementation::claimVeteranRewards(CreatureObject* player) {
 	timeActiveMsg.setDI( account->getAgeInDays() );
 	player->sendSystemMessage(timeActiveMsg );
 
-	// Verify player is eligible for a reward
-	int milestone = getEligibleMilestone(ghost, account);
+	bool adminUnlimited = ghost->isAdmin() && ConfigManager::instance()->getAdminUnlimitedVeteranRewards();
+	if (adminUnlimited)
+		player->sendSystemMessage("Admin veteran reward testing is enabled. Rewards do not consume account claims.");
+
+	// Admin testing sees every configured reward without consuming account milestones.
+	int milestone = adminUnlimited ? 0 : getEligibleMilestone(ghost, account);
+	if (adminUnlimited) {
+		for (int i = 0; i < veteranRewards.size(); ++i)
+			milestone = Math::max(milestone, (int)veteranRewards.get(i).getMilestone());
+	}
 
 	if (milestone < 0) {
 		player->sendSystemMessage("@veteran:not_eligible"); // You are not currently eligible for a veteran reward.
@@ -5992,7 +6001,7 @@ void PlayerManagerImplementation::claimVeteranRewards(CreatureObject* player) {
 			continue;
 
 		// Filter out one-time rewards already claimed
-		if (reward.isOneTime() && ghost->hasChosenVeteranReward(reward.getTemplateFile())) {
+		if (!adminUnlimited && reward.isOneTime() && ghost->hasChosenVeteranReward(reward.getTemplateFile())) {
 			continue;
 		}
 
@@ -6045,8 +6054,15 @@ void PlayerManagerImplementation::confirmVeteranReward(CreatureObject* player, i
 	}
 
 	VeteranReward reward = veteranRewards.get(itemIndex);
+	bool adminUnlimited = ghost->isAdmin() && ConfigManager::instance()->getAdminUnlimitedVeteranRewards();
+	if (!adminUnlimited && (rewardSession->getMilestone() != getEligibleMilestone(ghost, account) ||
+			reward.getMilestone() > rewardSession->getMilestone())) {
+		player->sendSystemMessage("@veteran:reward_error");
+		cancelVeteranRewardSession(player);
+		return;
+	}
 
-	if (reward.isOneTime() && ghost->hasChosenVeteranReward(reward.getTemplateFile())) {
+	if (!adminUnlimited && reward.isOneTime() && ghost->hasChosenVeteranReward(reward.getTemplateFile())) {
 		player->sendSystemMessage("@veteran:reward_error"); //	The reward could not be granted.
 		cancelVeteranRewardSession(player);
 		return;
@@ -6055,7 +6071,7 @@ void PlayerManagerImplementation::confirmVeteranReward(CreatureObject* player, i
 	rewardSession->setSelectedRewardIndex(itemIndex);
 
 	// Generate confirmation dialog if item is one-time.  Otherwise, just generate it.
-	if (reward.isOneTime()) {
+	if (reward.isOneTime() && !adminUnlimited) {
 		ManagedReference<SuiMessageBox*> suibox = new SuiMessageBox(player, SuiWindowType::CONFIRM_VETERAN_REWARD);
 		suibox->setPromptTitle("@veteran_new:unique_are_you_sure_box_title"); // Reward
 		suibox->setPromptText( "@veteran_new:item_unique_are_you_sure"); // The item you are selecting can only be selected as a reward item once for the the lifetime of your account. Are you sure you wish to continue selecting this item?
@@ -6094,12 +6110,29 @@ void PlayerManagerImplementation::generateVeteranReward(CreatureObject* player) 
 		return;
 	}
 
+	bool adminUnlimited = ghost->isAdmin() && ConfigManager::instance()->getAdminUnlimitedVeteranRewards();
+	int rewardIndex = rewardSession->getSelectedRewardIndex();
+	if (rewardIndex < 0 || rewardIndex >= veteranRewards.size() ||
+			(!adminUnlimited && rewardSession->getMilestone() != getEligibleMilestone(ghost, account))) {
+		player->sendSystemMessage("@veteran:reward_error");
+		cancelVeteranRewardSession(player);
+		return;
+	}
+
+	VeteranReward reward = veteranRewards.get(rewardIndex);
+	if (!adminUnlimited && (reward.getMilestone() > rewardSession->getMilestone() ||
+			(reward.isOneTime() && ghost->hasChosenVeteranReward(reward.getTemplateFile())))) {
+		player->sendSystemMessage("@veteran:reward_error");
+		cancelVeteranRewardSession(player);
+		return;
+	}
+
 	// Final check to see if milestone has already been claimed on any of the player's characters
 	// (prevent claiming while multi-logged)
 
 	bool milestoneClaimed = false;
 
-	if (!ghost->getChosenVeteranReward(rewardSession->getMilestone()).isEmpty()) {
+	if (!adminUnlimited && !ghost->getChosenVeteranReward(rewardSession->getMilestone()).isEmpty()) {
 		milestoneClaimed = true;
 	}
 
@@ -6118,7 +6151,6 @@ void PlayerManagerImplementation::generateVeteranReward(CreatureObject* player) 
 		return;
 	}
 
-	VeteranReward reward = veteranRewards.get(rewardSession->getSelectedRewardIndex());
 	Reference<SceneObject*> rewardSceno = server->createObject(reward.getTemplateFile().hashCode(), 1);
 
 	if (rewardSceno == nullptr) {
@@ -6143,20 +6175,20 @@ void PlayerManagerImplementation::generateVeteranReward(CreatureObject* player) 
 	inventory->broadcastObject(rewardSceno, true);
 	player->sendSystemMessage("@veteran:reward_given");  // Your reward has been placed in your inventory.
 
-	// Record reward in all characters registered to the account
-	GalaxyAccountInfo* accountInfo = account->getGalaxyAccountInfo(player->getZoneServer()->getGalaxyName());
-
-	// sorosuub_space_yacht_deed
-	if (reward.isJtlReward()) {
-		accountInfo->addChosenVeteranReward(1, reward.getTemplateFile());
-	} else {
-		accountInfo->addChosenVeteranReward(rewardSession->getMilestone(), reward.getTemplateFile());
+	if (!adminUnlimited) {
+		// Record reward in all characters registered to the account.
+		GalaxyAccountInfo* accountInfo = account->getGalaxyAccountInfo(player->getZoneServer()->getGalaxyName());
+		if (reward.isJtlReward()) {
+			accountInfo->addChosenVeteranReward(1, reward.getTemplateFile());
+		} else {
+			accountInfo->addChosenVeteranReward(rewardSession->getMilestone(), reward.getTemplateFile());
+		}
 	}
 
 	cancelVeteranRewardSession(player);
 
 	// If player is eligible for another reward, kick off selection
-	if (getEligibleMilestone(ghost, account ) >= 0) {
+	if (!adminUnlimited && getEligibleMilestone(ghost, account ) >= 0) {
 		player->enqueueCommand(STRING_HASHCODE("claimveteranreward"), 0, 0, "");
 	}
 }
