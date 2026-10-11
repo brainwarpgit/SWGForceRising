@@ -10,6 +10,8 @@
 #include "server/zone/objects/creature/CreatureObject.h"
 #include "server/zone/objects/building/BuildingObject.h"
 #include "server/zone/ZoneServer.h"
+#include "server/zone/objects/factorycrate/FactoryCrate.h"
+#include "server/zone/objects/resource/ResourceContainer.h"
 
 class AuctionQueryHeadersResponseMessage : public BaseMessage {
 
@@ -18,9 +20,10 @@ class AuctionQueryHeadersResponseMessage : public BaseMessage {
 	SortedVector<String> locationList;
 
 	ManagedReference<CreatureObject*> player;
+	bool showUnitPrices;
 
 public:
-	AuctionQueryHeadersResponseMessage(int screen, int counter, CreatureObject* player) : BaseMessage() {
+	AuctionQueryHeadersResponseMessage(int screen, int counter, CreatureObject* player, bool showUnitPrices) : BaseMessage() {
 		insertShort(0x08);
 		insertInt(0xFA500E52);  // opcode
 
@@ -30,6 +33,7 @@ public:
 		setCompression(true);
 
 		this->player = player;
+		this->showUnitPrices = showUnitPrices;
 
 		locationList.setNoDuplicateInsertPlan();
 	}
@@ -65,6 +69,24 @@ public:
 			AuctionItem* il = itemList.get(i);
 
 	    	UnicodeString name = il->getItemName();
+			if (showUnitPrices) {
+				ManagedReference<SceneObject*> object = player->getZoneServer()->getObject(il->getAuctionedItemObjectID());
+				int quantity = 1;
+				if (object != nullptr && object->isResourceContainer())
+					quantity = cast<ResourceContainer*>(object.get())->getQuantity();
+				else if (object != nullptr && object->isFactoryCrate())
+					quantity = cast<FactoryCrate*>(object.get())->getUseCount();
+
+				if (quantity > 1) {
+					int64 cents = ((int64)il->getPrice() * 100 + quantity / 2) / quantity;
+					String unitPrice = String::valueOf(cents / 100);
+					if (cents == 0 && il->getPrice() > 0)
+						unitPrice = "<0.01";
+					if (cents % 100 != 0)
+						unitPrice += "." + (cents % 100 < 10 ? String("0") : String("")) + String::valueOf(cents % 100);
+					name = UnicodeString(name.toString() + " [x" + String::valueOf(quantity) + " @ " + unitPrice + " cr/u]");
+				}
+			}
 	    	insertUnicode(name); //name
 		}
 	}

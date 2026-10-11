@@ -1603,7 +1603,7 @@ bool AuctionManagerImplementation::checkItemCategory(int category, AuctionItem* 
 	return false;
 }
 AuctionQueryHeadersResponseMessage* AuctionManagerImplementation::fillAuctionQueryHeadersResponseMessage(CreatureObject* player, SceneObject* vendor, TerminalListVector* terminalList, int searchType, uint32 itemCategory, const UnicodeString& filterText, int minPrice, int maxPrice, bool includeEntranceFee, int clientCounter, int offset) {
-	AuctionQueryHeadersResponseMessage* reply = new AuctionQueryHeadersResponseMessage(searchType, clientCounter, player);
+	AuctionQueryHeadersResponseMessage* reply = new AuctionQueryHeadersResponseMessage(searchType, clientCounter, player, vendor->isVendor());
 
 #ifdef DEBUG_AUCTION_SEARCH
 	Logger::console.info(true) << __FUNCTION__ << "()"

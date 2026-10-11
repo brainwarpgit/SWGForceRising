@@ -2,6 +2,10 @@
 
 ## 2026-10-11
 
+### Committed vendor listing quantities
+
+- Vendor listings for resource stacks and factory crates show their item count and approximate price per unit in a compact name suffix.
+
 ### Committed bazaar listing limits
 
 - Raised the maximum bazaar listing price to 1,000,000 credits and the simultaneous sales limit to 50.

@@ -2,6 +2,10 @@
 
 ## 2026-10-11
 
+### Committed vendor listing quantities
+
+- Vendor listing rows append a compact `xN @ P cr/u` label to the displayed item name for resource containers and factory crates with more than one unit. The normal price column remains the total asking price. Unit price is rounded to the nearest cent; values below one cent display `<0.01`. This changes only the outgoing listing display, not stored item names, searches, sorting, or sale prices. Bazaar rows and single items keep their existing names. The user reported and verified a fix for a `UnicodeString` append build error, then verified the feature in game. The assistant did not build or run Core3.
+
 ### Committed bazaar listing limits
 
 - Raised `MAXBAZAARPRICE` from 20,000 to 1,000,000 credits and `MAXSALES` from 25 to 50 in the auction manager. The price constant guards both new listings and bazaar bids. The sales limit governs bazaar listings and consigned items on player vendors, which share the commodity count. The user verified the change in game; the assistant did not build or run Core3.
