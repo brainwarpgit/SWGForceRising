@@ -29,7 +29,7 @@ public:
 			city = trainer->getCityRegion().get();
 
 		PlayerObject* ghost = player->getPlayerObject();
-		if (city == nullptr || ghost == nullptr || (!city->isMayor(player->getObjectID()) && !ghost->isAdmin()))
+		if (city == nullptr || ghost == nullptr || (!city->hasMayorAuthority(player) && !ghost->isAdmin()))
 			return;
 
 		String role = StringIdManager::instance()->getStringId(trainer->getObjectName()->getFullPath().hashCode()).toString();

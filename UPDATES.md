@@ -2,6 +2,10 @@
 
 ## 2026-10-10
 
+### Committed account-wide mayor management
+
+- Characters on the named mayor's account can manage that mayor's city, including city menus, treasury, zoning, trainers, decorations, and civic placement. Each city still has one named mayor for elections and residence, so different characters on one account can be named mayor of different cities.
+
 ### Committed player vendor counts in structure reports
 
 - Building Structure Status now shows its player vendor count. The city Structure Report also shows a count for each civic building.

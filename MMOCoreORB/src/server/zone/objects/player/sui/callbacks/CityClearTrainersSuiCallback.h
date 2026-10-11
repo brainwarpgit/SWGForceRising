@@ -25,7 +25,7 @@ public:
 
 		auto city = cityRegion.get();
 		auto ghost = player->getPlayerObject();
-		if (city == nullptr || ghost == nullptr || (!city->isMayor(player->getObjectID()) && !ghost->isAdmin()))
+		if (city == nullptr || ghost == nullptr || (!city->hasMayorAuthority(player) && !ghost->isAdmin()))
 			return;
 
 		Locker cityLock(city, player);

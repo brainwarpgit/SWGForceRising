@@ -209,9 +209,8 @@ class CityRegion extends ManagedObject implements Logger {
 	}
 
 	@dirty
-	public boolean isMilitiaMember(unsigned long objectid) {
-		return (militiaMembers.contains(objectid) || mayorID == objectid);
-	}
+	@read
+	public native boolean isMilitiaMember(unsigned long objectid);
 
 	@preLocked
 	public native void addZoningRights(unsigned long objectid, unsigned int duration = 86400);
@@ -440,6 +439,18 @@ class CityRegion extends ManagedObject implements Logger {
 	public boolean isMayor(unsigned long objectid) {
 		return mayorID == objectid;
 	}
+
+	@read
+	public native boolean hasMayorAuthority(CreatureObject player);
+
+	@read
+	public native CreatureObject getMayorCreature();
+
+	@read
+	public native boolean mayorHasAbility(final string ability);
+
+	@read
+	public native boolean mayorHasSkill(final string skill);
 
 	@read
 	public boolean isZoningEnabled() {

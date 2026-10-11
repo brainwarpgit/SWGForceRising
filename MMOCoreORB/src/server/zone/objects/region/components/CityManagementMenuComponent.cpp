@@ -30,7 +30,7 @@ void CityManagementMenuComponent::fillObjectMenuResponse(SceneObject* sceneObjec
 		return;
 	}
 
-	if (city->isMayor(player->getObjectID()) && city->getQuickTreasuryAmount() > 0) {
+	if (city->hasMayorAuthority(player) && city->getQuickTreasuryAmount() > 0) {
 		menuResponse->addRadialMenuItem(243, 3, "Quick Options");
 		menuResponse->addRadialMenuItemToRadialID(243, 244, 3,
 				StructureManager::formatQuickAmount(city->getQuickTreasuryAmount()) + " Treasury Deposit");
@@ -46,7 +46,7 @@ void CityManagementMenuComponent::fillObjectMenuResponse(SceneObject* sceneObjec
 	menuResponse->addRadialMenuItem(210, 3, "@city/city:treasury_management"); // City Treasury
 	menuResponse->addRadialMenuItemToRadialID(210, 215, 3, "@city/city:treasury_status"); //Treasury Report
 	menuResponse->addRadialMenuItemToRadialID(210, 220, 3, "@city/city:treasury_deposit"); //Treasury Deposit
-	if (city->isMayor(player->getObjectID()))
+	if (city->hasMayorAuthority(player))
 		menuResponse->addRadialMenuItemToRadialID(210, 247, 3, "Set Quick Treasury Deposit Amount");
 
 #ifdef CITY_DEBUG
@@ -61,13 +61,13 @@ void CityManagementMenuComponent::fillObjectMenuResponse(SceneObject* sceneObjec
 	}
 #endif
 
-	if (!city->isMayor(player->getObjectID()) && !ghost->isStaff())
+	if (!city->hasMayorAuthority(player) && !ghost->isStaff())
 		return;
 
 	menuResponse->addRadialMenuItem(216, 3, "@city/city:city_management"); //City Management
 	menuResponse->addRadialMenuItemToRadialID(216, 217, 3, "@city/city:city_name"); //Change City Name
 
-	if (!city->isMayor(player->getObjectID()) && !ghost->isAdmin())
+	if (!city->hasMayorAuthority(player) && !ghost->isAdmin())
 		return;
 
 	if (city->isRegistered()) {
@@ -88,7 +88,7 @@ void CityManagementMenuComponent::fillObjectMenuResponse(SceneObject* sceneObjec
 	menuResponse->addRadialMenuItemToRadialID(216, 232, 3, "List Trainers");
 	menuResponse->addRadialMenuItemToRadialID(216, 233, 3, "Clear All Trainers");
 
-	if (!city->isMayor(player->getObjectID()))
+	if (!city->hasMayorAuthority(player))
 		return;
 
 	menuResponse->addRadialMenuItemToRadialID(210, 221, 3, "@city/city:treasury_withdraw"); //Treasury Withdraw
@@ -141,7 +141,7 @@ int CityManagementMenuComponent::handleObjectMenuSelect(SceneObject* sceneObject
 		cityManager->sendManageMilitia(city, player, sceneObject);
 		break;
 	case 219: //Adjust Taxes
-		if (city->isMayor(player->getObjectID())) {
+		if (city->hasMayorAuthority(player)) {
 			cityManager->promptAdjustTaxes(city, player, sceneObject);
 		}
 		break;
@@ -167,11 +167,11 @@ int CityManagementMenuComponent::handleObjectMenuSelect(SceneObject* sceneObject
 		cityManager->promptCitySpecialization(city, player, sceneObject);
 		break;
 	case 232: // List Trainers
-		if (city->isMayor(player->getObjectID()) || ghost->isAdmin())
+		if (city->hasMayorAuthority(player) || ghost->isAdmin())
 			cityManager->sendTrainerList(city, player);
 		break;
 	case 233: // Clear All Trainers
-		if (city->isMayor(player->getObjectID()) || ghost->isAdmin())
+		if (city->hasMayorAuthority(player) || ghost->isAdmin())
 			cityManager->promptClearTrainers(city, player);
 		break;
 	case 226: //Toggle Zoning Enabled

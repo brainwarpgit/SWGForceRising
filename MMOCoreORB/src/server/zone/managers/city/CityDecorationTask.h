@@ -55,7 +55,7 @@ public:
 
 		CityManager* cityManager = mayor->getZoneServer()->getCityManager();
 
-		if(!city->isMayor(mayor->getObjectID())) {
+		if(!city->hasMayorAuthority(mayor)) {
 			mayor->sendSystemMessage("@player_structure:cant_place_civic"); //This structure must be placed within the borders of the city in which you are mayor.
 			return;
 		}
@@ -65,7 +65,7 @@ public:
 			return;
 		}
 
-		if ((obj->isCityStreetLamp() && !mayorGhost->hasAbility("place_streetlamp")) || (obj->isCityStatue() && !mayorGhost->hasAbility("place_statue")) || (obj->isCityFountain() && !mayorGhost->hasAbility("place_fountain"))) {
+		if ((obj->isCityStreetLamp() && !city->mayorHasAbility("place_streetlamp")) || (obj->isCityStatue() && !city->mayorHasAbility("place_statue")) || (obj->isCityFountain() && !city->mayorHasAbility("place_fountain"))) {
 			mayor->sendSystemMessage("@city/city:no_skill_deco"); // You lack the skill to place this decoration in your city.
 			return;
 		}
@@ -137,7 +137,7 @@ public:
 		if(city == nullptr)
 			return;
 
-		if(!city->isMayor(mayor->getObjectID())) {
+		if(!city->hasMayorAuthority(mayor)) {
 			return;
 		}
 

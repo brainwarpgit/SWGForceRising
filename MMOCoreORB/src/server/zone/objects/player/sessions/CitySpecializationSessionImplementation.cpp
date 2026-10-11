@@ -24,7 +24,7 @@ int CitySpecializationSessionImplementation::initializeSession() {
 	if (ghost == nullptr)
 		return cancelSession();
 
-	if (!cityRegion->isMayor(creatureObject->getObjectID()) && !ghost->isAdmin())
+	if (!cityRegion->hasMayorAuthority(creatureObject) && !ghost->isAdmin())
 		return cancelSession();
 
 	ManagedReference<SuiListBox*> sui = new SuiListBox(creatureObject, SuiWindowType::CITY_SPEC, 0x00);
@@ -87,9 +87,12 @@ int CitySpecializationSessionImplementation::sendConfirmationBox(const String& c
 			return cancelSession();
 		}
 
-		if (!creatureObject->checkCooldownRecovery("city_specialization")) {
+		ManagedReference<CreatureObject*> namedMayor = cityRegion->getMayorCreature();
+		if (namedMayor == nullptr)
+			return cancelSession();
+		if (!namedMayor->checkCooldownRecovery("city_specialization")) {
 			StringIdChatParameter params("city/city", "spec_time"); //You can't set another city spec right now. Time Remaining: %TO
-			const Time* timeRemaining = creatureObject->getCooldownTime("city_specialization");
+			const Time* timeRemaining = namedMayor->getCooldownTime("city_specialization");
 			params.setTO(String::valueOf(round(fabs(timeRemaining->miliDifference() / 1000.f))) + " seconds");
 			creatureObject->sendSystemMessage(params);
 

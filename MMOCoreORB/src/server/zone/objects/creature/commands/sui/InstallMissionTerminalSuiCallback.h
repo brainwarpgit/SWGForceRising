@@ -36,7 +36,7 @@ public:
 		if (city == nullptr || cityManager == nullptr)
 			return;
 
-		if (!city->isMayor(player->getObjectID()))
+		if (!city->hasMayorAuthority(player))
 			return;
 
 		if (!cityManager->canSupportMoreMissionTerminals(city)) {
@@ -53,12 +53,12 @@ public:
 		if (ghost == nullptr)
 			return;
 
-		if (!ghost->hasAbility("installmissionterminal"))
+		if (!city->mayorHasAbility("installmissionterminal"))
 			return;
 
 		int option = Integer::valueOf(args->get(0).toString());
 
-		if ((option == 5 || option == 6) && !ghost->hasAbility("place_faction_terminal")) {
+		if ((option == 5 || option == 6) && !city->mayorHasAbility("place_faction_terminal")) {
 			player->sendSystemMessage("@city/city:no_factional"); // You must have Martial Policy IV: Faction to place faction aligned mission terminals.
 			return;
 		}

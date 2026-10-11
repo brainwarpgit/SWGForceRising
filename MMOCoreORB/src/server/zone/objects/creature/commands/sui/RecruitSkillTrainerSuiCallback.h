@@ -85,7 +85,7 @@ public:
 		if (ghost == nullptr)
 			return;
 
-		if ((!city->isMayor(player->getObjectID()) || !ghost->hasAbility("recruitskilltrainer")) && !ghost->isAdmin())
+		if ((!city->hasMayorAuthority(player) || !city->mayorHasAbility("recruitskilltrainer")) && !ghost->isAdmin())
 			return;
 
 		int option = Integer::valueOf(args->get(0).toString());

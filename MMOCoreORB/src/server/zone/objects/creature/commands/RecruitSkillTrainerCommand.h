@@ -28,9 +28,6 @@ public:
 		if (ghost == nullptr)
 			return GENERALERROR;
 
-		if (!ghost->hasAbility("recruitskilltrainer") && !ghost->isAdmin())
-			return GENERALERROR;
-
 		if (creature->isIncapacitated() || creature->isDead())
 			return GENERALERROR;
 
@@ -41,7 +38,9 @@ public:
 			return GENERALERROR;
 		}
 
-		if (!city->isMayor(creature->getObjectID()) && !ghost->isAdmin())
+		if (!city->hasMayorAuthority(creature) && !ghost->isAdmin())
+			return GENERALERROR;
+		if (!city->mayorHasAbility("recruitskilltrainer") && !ghost->isAdmin())
 			return GENERALERROR;
 
 		ManagedReference<SuiListBox*> suiTrainerType = new SuiListBox(creature, SuiWindowType::RECRUIT_SKILL_TRAINER, 0);

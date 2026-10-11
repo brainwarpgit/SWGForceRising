@@ -2,6 +2,12 @@
 
 ## 2026-10-10
 
+### Committed account-wide mayor management
+
+- City management permissions now recognize characters sharing the named mayor's account. This covers city terminal actions, militia and zoning rights, trainer recruitment and removal, mission terminals, decorations, civic deed placement, and the related callbacks. Actions requiring Politician abilities use the named mayor's skills; treasury withdrawal, specialization, and renaming use the named mayor's shared cooldown so alts do not gain extra uses.
+- Civic structures placed by an authorized alt remain owned by the named mayor. Elections, mayor registration, residence, and other identity rules continue to use the single named mayor character, allowing separate characters on one account to be mayor of separate cities without merging their offices. The user verified the completed change; the assistant did not build or run Core3.
+- Addressed the user-reported compile errors in `CityRegionImplementation.cpp`: the account-authority check now compares directly against the mayor ID in its const method, and duplicate cleanup copies managed references one at a time instead of invoking engine3's raw-memory bulk copy. The user verified the completed change.
+
 ### Committed player vendor counts in structure reports
 
 - Buildings count player vendor objects directly placed in their cells. Structure Status shows `Player Vendors: N` beside the storage information, and the city Structure Report appends the count to civic building entries. The count excludes vendors carried in inventories and ordinary NPCs.

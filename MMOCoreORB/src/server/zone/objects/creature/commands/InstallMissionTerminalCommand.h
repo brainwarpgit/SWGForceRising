@@ -28,15 +28,14 @@ public:
 		if (ghost == nullptr)
 			return GENERALERROR;
 
-		if (!ghost->hasAbility("installmissionterminal"))
-			return GENERALERROR;
-
 		ManagedReference<CityRegion*> city = creature->getCityRegion().get();
 
 		if (city == nullptr)
 			return GENERALERROR;
 
-		if (!city->isMayor(creature->getObjectID()))
+		if (!city->hasMayorAuthority(creature))
+			return GENERALERROR;
+		if (!city->mayorHasAbility("installmissionterminal"))
 			return GENERALERROR;
 
 		ManagedReference<SuiListBox*> suiTerminalType = new SuiListBox(creature, SuiWindowType::INSTALL_MISSION_TERMINAL, 0);

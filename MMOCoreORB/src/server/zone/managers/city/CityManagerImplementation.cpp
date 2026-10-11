@@ -395,7 +395,7 @@ void CityManagerImplementation::promptCitySpecialization(CityRegion* city, Creat
 	if (ghost == nullptr)
 		return;
 
-	if (!city->isMayor(mayor->getObjectID()) && !ghost->isAdmin()) {
+	if (!city->hasMayorAuthority(mayor) && !ghost->isAdmin()) {
 		return;
 	}
 
@@ -405,14 +405,22 @@ void CityManagerImplementation::promptCitySpecialization(CityRegion* city, Creat
 }
 
 void CityManagerImplementation::changeCitySpecialization(CityRegion* city, CreatureObject* mayor, const String& spec) {
+	if (city == nullptr || mayor == nullptr || mayor->getPlayerObject() == nullptr)
+		return;
 	Locker _clock(city, mayor);
+	if (!city->hasMayorAuthority(mayor) && !mayor->getPlayerObject()->isAdmin())
+		return;
+	ManagedReference<CreatureObject*> namedMayor = city->getMayorCreature();
+	if (namedMayor == nullptr || (!spec.isEmpty() && !mayor->getPlayerObject()->isPrivileged() &&
+			!namedMayor->checkCooldownRecovery("city_specialization")))
+		return;
 
 	city->setCitySpecialization(spec);
 
 	PlayerObject* ghost = mayor->getPlayerObject().get();
 
-	if (ghost != nullptr && !ghost->isPrivileged())
-		mayor->addCooldown("city_specialization", citySpecializationCooldown); //1 week.
+	if (ghost != nullptr && !ghost->isPrivileged() && namedMayor != nullptr)
+		namedMayor->addCooldown("city_specialization", citySpecializationCooldown); //1 week.
 
 	StringIdChatParameter params("city/city", "spec_set"); //The city's specialization has been set to %TO.
 
@@ -541,7 +549,7 @@ String describeCityTrainer(SceneObject* trainer) {
 
 void CityManagerImplementation::sendTrainerList(CityRegion* city, CreatureObject* creature) {
 	auto ghost = creature->getPlayerObject();
-	if (city == nullptr || ghost == nullptr || (!city->isMayor(creature->getObjectID()) && !ghost->isAdmin()))
+	if (city == nullptr || ghost == nullptr || (!city->hasMayorAuthority(creature) && !ghost->isAdmin()))
 		return;
 
 	ManagedReference<SuiListBox*> list = new SuiListBox(creature, 0);
@@ -565,7 +573,7 @@ void CityManagerImplementation::sendTrainerList(CityRegion* city, CreatureObject
 
 void CityManagerImplementation::promptClearTrainers(CityRegion* city, CreatureObject* creature) {
 	auto ghost = creature->getPlayerObject();
-	if (city == nullptr || ghost == nullptr || (!city->isMayor(creature->getObjectID()) && !ghost->isAdmin()))
+	if (city == nullptr || ghost == nullptr || (!city->hasMayorAuthority(creature) && !ghost->isAdmin()))
 		return;
 
 	Vector<uint64> trainerIDs;
@@ -593,10 +601,13 @@ void CityManagerImplementation::promptClearTrainers(CityRegion* city, CreatureOb
 }
 
 void CityManagerImplementation::promptWithdrawCityTreasury(CityRegion* city, CreatureObject* mayor, SceneObject* terminal) {
-	if (!city->isMayor(mayor->getObjectID()))
+	if (!city->hasMayorAuthority(mayor))
+		return;
+	ManagedReference<CreatureObject*> namedMayor = city->getMayorCreature();
+	if (namedMayor == nullptr)
 		return;
 
-	if (!mayor->checkCooldownRecovery("city_withdrawal") && !mayor->getPlayerObject()->isPrivileged()) {
+	if (!namedMayor->checkCooldownRecovery("city_withdrawal") && !mayor->getPlayerObject()->isPrivileged()) {
 		mayor->sendSystemMessage("@city/city:withdraw_daily"); //You may only withdraw from the city treasury once per day.
 		return;
 	}
@@ -615,6 +626,11 @@ void CityManagerImplementation::withdrawFromCityTreasury(CityRegion* city, Creat
 
 	Locker locker(mayor);
 	Locker clocker(city, mayor);
+	if (!city->hasMayorAuthority(mayor))
+		return;
+	ManagedReference<CreatureObject*> namedMayor = city->getMayorCreature();
+	if (namedMayor == nullptr)
+		return;
 
 	int minWithdrawal = city->getMinWithdrawal();
 
@@ -630,7 +646,7 @@ void CityManagerImplementation::withdrawFromCityTreasury(CityRegion* city, Creat
 		return;
 	}
 
-	if (!mayor->checkCooldownRecovery("city_withdrawal") && !mayor->getPlayerObject()->isPrivileged()) {
+	if (!namedMayor->checkCooldownRecovery("city_withdrawal") && !mayor->getPlayerObject()->isPrivileged()) {
 		mayor->sendSystemMessage("@city/city:withdraw_daily"); //You may only withdraw from the city treasury once per day.
 		session->cancelSession();
 		return;
@@ -657,7 +673,7 @@ void CityManagerImplementation::withdrawFromCityTreasury(CityRegion* city, Creat
 		city->subtractFromCityTreasury(value);
 	}
 
-	mayor->addCooldown("city_withdrawal", CityManagerImplementation::treasuryWithdrawalCooldown);
+	namedMayor->addCooldown("city_withdrawal", CityManagerImplementation::treasuryWithdrawalCooldown);
 
 	session->cancelSession();
 
@@ -674,7 +690,7 @@ void CityManagerImplementation::withdrawFromCityTreasury(CityRegion* city, Creat
 }
 
 void CityManagerImplementation::promptQuickCityTreasuryAmount(CityRegion* city, CreatureObject* mayor, SceneObject* terminal) {
-	if (city == nullptr || mayor == nullptr || terminal == nullptr || !city->isMayor(mayor->getObjectID())
+	if (city == nullptr || mayor == nullptr || terminal == nullptr || !city->hasMayorAuthority(mayor)
 			|| terminal->getCityRegion().get() != city || !terminal->isInRange(mayor, 16.f))
 		return;
 	PlayerObject* ghost = mayor->getPlayerObject();
@@ -696,7 +712,7 @@ void CityManagerImplementation::setQuickCityTreasuryAmount(CityRegion* city, Cre
 	if (city == nullptr || mayor == nullptr || terminal == nullptr || amount < 0 || amount > 100000000)
 		return;
 	Locker locker(city, mayor);
-	if (!city->isMayor(mayor->getObjectID()) || terminal->getCityRegion().get() != city
+	if (!city->hasMayorAuthority(mayor) || terminal->getCityRegion().get() != city
 			|| !terminal->isInRange(mayor, 16.f))
 		return;
 	city->setQuickTreasuryAmount(amount);
@@ -704,7 +720,7 @@ void CityManagerImplementation::setQuickCityTreasuryAmount(CityRegion* city, Cre
 }
 
 void CityManagerImplementation::quickDepositCityTreasury(CityRegion* city, CreatureObject* mayor, SceneObject* terminal) {
-	if (city == nullptr || mayor == nullptr || terminal == nullptr || !city->isMayor(mayor->getObjectID())
+	if (city == nullptr || mayor == nullptr || terminal == nullptr || !city->hasMayorAuthority(mayor)
 			|| terminal->getCityRegion().get() != city || !terminal->isInRange(mayor, 16.f))
 		return;
 	int amount = city->getQuickTreasuryAmount();
@@ -1604,11 +1620,11 @@ void CityManagerImplementation::sendManageMilitia(CityRegion* city, CreatureObje
 	if (ghost == nullptr)
 		return;
 
-	if (!city->isMayor(creature->getObjectID()) && !ghost->isAdmin()) {
+	if (!city->hasMayorAuthority(creature) && !ghost->isAdmin()) {
 		return;
 	}
 
-	if (!ghost->hasAbility("manage_militia") && !ghost->isAdmin()) {
+	if (!city->mayorHasAbility("manage_militia") && !ghost->isAdmin()) {
 		creature->sendSystemMessage("@city/city:cant_militia"); //You lack the skill to manage the city militia.
 		return;
 	}
@@ -1660,7 +1676,7 @@ void CityManagerImplementation::addMilitiaMember(CityRegion* city, CreatureObjec
 	if (ghost == nullptr)
 		return;
 
-	if (!city->isMayor(mayor->getObjectID()) && !ghost->isAdmin())
+	if (!city->hasMayorAuthority(mayor) && !ghost->isAdmin())
 		return;
 
 	PlayerManager* playerManager = zoneServer->getPlayerManager();
@@ -1702,7 +1718,7 @@ void CityManagerImplementation::removeMilitiaMember(CityRegion* city, CreatureOb
 	if (ghost == nullptr)
 		return;
 
-	if (!city->isMayor(mayor->getObjectID()) && !ghost->isAdmin())
+	if (!city->hasMayorAuthority(mayor) && !ghost->isAdmin())
 		return;
 
 	ManagedReference<SceneObject*> obj = zoneServer->getObject(militiaid);
@@ -1853,10 +1869,10 @@ void CityManagerImplementation::promptRegisterCity(CityRegion* city, CreatureObj
 	if (ghost == nullptr)
 		return;
 
-	if (!city->isMayor(creature->getObjectID()) && !ghost->isAdmin())
+	if (!city->hasMayorAuthority(creature) && !ghost->isAdmin())
 		return;
 
-	if (!ghost->hasAbility("city_map") && !ghost->isAdmin()) {
+	if (!city->mayorHasAbility("city_map") && !ghost->isAdmin()) {
 		creature->sendSystemMessage("@city/city:cant_register"); //You lack the ability to register your city!
 		return;
 	}
@@ -1883,7 +1899,7 @@ void CityManagerImplementation::promptUnregisterCity(CityRegion* city, CreatureO
 	if (ghost == nullptr)
 		return;
 
-	if (!city->isMayor(creature->getObjectID()) && !ghost->isAdmin())
+	if (!city->hasMayorAuthority(creature) && !ghost->isAdmin())
 		return;
 
 	ManagedReference<SuiMessageBox*> box = new SuiMessageBox(creature, SuiWindowType::CITY_REGISTER);
@@ -1987,7 +2003,7 @@ void CityManagerImplementation::promptAdjustTaxes(CityRegion* city, CreatureObje
 	if (ghost == nullptr)
 		return;
 
-	if (!ghost->hasAbility("manage_taxes")) {
+	if (!city->hasMayorAuthority(mayor) || !city->mayorHasAbility("manage_taxes")) {
 		mayor->sendSystemMessage("@city/city:cant_tax"); //You lack the knowledge to manage the city's taxes.
 		return;
 	}
@@ -2024,7 +2040,7 @@ void CityManagerImplementation::promptSetTax(CityRegion* city, CreatureObject* m
 	if (ghost == nullptr)
 		return;
 
-	if (!ghost->hasAbility("manage_taxes")) {
+	if (!city->hasMayorAuthority(mayor) || !city->mayorHasAbility("manage_taxes")) {
 		mayor->sendSystemMessage("@city/city:cant_tax"); //You lack the knowledge to manage the city's taxes.
 		return;
 	}
@@ -2490,10 +2506,11 @@ void CityManagerImplementation::sendChangeCityName(CityRegion* city, CreatureObj
 	if(ghost->hasSuiBoxWindowType(SuiWindowType::CITY_RENAME))
 		return;
 
-	if (!ghost->isStaff() && !city->isMayor(mayor->getObjectID()))
+	if (!ghost->isStaff() && !city->hasMayorAuthority(mayor))
 		return;
 
-	if(!mayor->checkCooldownRecovery("rename_city_cooldown") && !ghost->isStaff()) {
+	ManagedReference<CreatureObject*> namedMayor = city->getMayorCreature();
+	if (namedMayor == nullptr || (!namedMayor->checkCooldownRecovery("rename_city_cooldown") && !ghost->isStaff())) {
 		mayor->sendSystemMessage("You can't change the city name now");
 		return;
 	}
@@ -2545,11 +2562,11 @@ void CityManagerImplementation::promptToggleZoningEnabled(CityRegion* city, Crea
 	if (ghost == nullptr)
 		return;
 
-	if (!city->isMayor(mayor->getObjectID()) && !ghost->isAdmin()) {
+	if (!city->hasMayorAuthority(mayor) && !ghost->isAdmin()) {
 		return;
 	}
 
-	if (!mayor->hasSkill("social_politician_novice") && !ghost->isAdmin()) {
+	if (!city->mayorHasSkill("social_politician_novice") && !ghost->isAdmin()) {
 		mayor->sendSystemMessage("@city/city:zoning_skill"); // You must be a Politician to enable city zoning.
 		return;
 	}
@@ -2612,7 +2629,7 @@ void CityManagerImplementation::alignAmenity(CityRegion* city, CreatureObject* p
 	if (amenity == nullptr || player == nullptr || city == nullptr)
 		return;
 
-	if (!city->isMayor(player->getObjectID()) || amenity->getParent().get() != nullptr)
+	if (!city->hasMayorAuthority(player) || amenity->getParent().get() != nullptr)
 		return;
 
 	amenity->updateDirection(Math::deg2rad(90 * direction));

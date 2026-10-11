@@ -68,7 +68,7 @@ int PlaceCityHallComponent::notifyStructurePlaced(StructureDeed* deed, CreatureO
 	if (ghost != nullptr && structure->isBuildingObject()) {
 		ManagedReference<CityRegion*> city = structure->getCityRegion().get();
 
-		if (city != nullptr && city->isMayor(creature->getObjectID())) {
+		if (city != nullptr && city->hasMayorAuthority(creature)) {
 			Locker locker(city);
 
 			city->setCityHall(structure);
@@ -77,7 +77,9 @@ int PlaceCityHallComponent::notifyStructurePlaced(StructureDeed* deed, CreatureO
 
 			locker.release();
 
-			StructureManager::instance()->declareResidence(creature, structure, true);
+			ManagedReference<CreatureObject*> namedMayor = city->getMayorCreature();
+			if (namedMayor != nullptr)
+				StructureManager::instance()->declareResidence(namedMayor, structure, true);
 		}
 	}
 

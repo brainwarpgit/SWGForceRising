@@ -42,7 +42,7 @@ public:
 		if (ghost == nullptr)
 			return;
 
-		if (!city->isMayor(player->getObjectID()) && !ghost->isAdmin()) {
+		if (!city->hasMayorAuthority(player) && !ghost->isAdmin()) {
 			return;
 		}
 

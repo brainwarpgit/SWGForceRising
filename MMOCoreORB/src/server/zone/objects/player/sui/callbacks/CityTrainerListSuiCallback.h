@@ -28,7 +28,7 @@ public:
 
 		auto city = cityRegion.get();
 		auto ghost = player->getPlayerObject();
-		if (city == nullptr || ghost == nullptr || (!city->isMayor(player->getObjectID()) && !ghost->isAdmin()))
+		if (city == nullptr || ghost == nullptr || (!city->hasMayorAuthority(player) && !ghost->isAdmin()))
 			return;
 
 		bool removePressed = Bool::valueOf(args->get(0).toString());

@@ -18,7 +18,7 @@ void MissionTerminalImplementation::fillObjectMenuResponse(ObjectMenuResponse* m
 
 	ManagedReference<CityRegion*> city = player->getCityRegion().get();
 
-	if (city != nullptr && city->isMayor(player->getObjectID()) && getParent().get() == nullptr) {
+	if (city != nullptr && city->hasMayorAuthority(player) && getParent().get() == nullptr) {
 
 		menuResponse->addRadialMenuItem(72, 3, "@city/city:mt_remove"); // Remove
 
@@ -78,7 +78,7 @@ int MissionTerminalImplementation::handleObjectMenuSelect(CreatureObject* player
 
 	} else if (selectedID == 72) {
 
-		if (city != nullptr && city->isMayor(player->getObjectID())) {
+		if (city != nullptr && city->hasMayorAuthority(player)) {
 			CityRemoveAmenityTask* task = new CityRemoveAmenityTask(_this.getReferenceUnsafeStaticCast(), city);
 			task->execute();
 

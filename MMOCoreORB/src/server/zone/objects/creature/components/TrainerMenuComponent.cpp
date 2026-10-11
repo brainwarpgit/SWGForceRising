@@ -32,7 +32,7 @@ void TrainerMenuComponent::fillObjectMenuResponse(SceneObject* sceneObject, Obje
 	ManagedReference<CityRegion*> city = getRecruitedTrainerCity(sceneObject);
 
 	PlayerObject* ghost = player->getPlayerObject();
-	if (city != nullptr && ghost != nullptr && (city->isMayor(player->getObjectID()) || ghost->isAdmin()) && city->isCitySkillTrainer(sceneObject)) {
+	if (city != nullptr && ghost != nullptr && (city->hasMayorAuthority(player) || ghost->isAdmin()) && city->isCitySkillTrainer(sceneObject)) {
 		menuResponse->addRadialMenuItem(249, 3, "Rename City NPC");
 		menuResponse->addRadialMenuItem(72, 3, "@city/city:mt_remove"); // Remove
 	}
@@ -42,7 +42,7 @@ int TrainerMenuComponent::handleObjectMenuSelect(SceneObject* sceneObject, Creat
 	if (selectedID == 249) {
 		ManagedReference<CityRegion*> city = getRecruitedTrainerCity(sceneObject);
 		PlayerObject* ghost = player->getPlayerObject();
-		if (city == nullptr || ghost == nullptr || (!city->isMayor(player->getObjectID()) && !ghost->isAdmin()) ||
+		if (city == nullptr || ghost == nullptr || (!city->hasMayorAuthority(player) && !ghost->isAdmin()) ||
 				!city->isCitySkillTrainer(sceneObject) || !sceneObject->isInRange(player, 20))
 			return 0;
 
@@ -62,7 +62,7 @@ int TrainerMenuComponent::handleObjectMenuSelect(SceneObject* sceneObject, Creat
 		ManagedReference<CityRegion*> city = getRecruitedTrainerCity(sceneObject);
 
 		PlayerObject* ghost = player->getPlayerObject();
-		if (city != nullptr && ghost != nullptr && (city->isMayor(player->getObjectID()) || ghost->isAdmin()) && city->isCitySkillTrainer(sceneObject)) {
+		if (city != nullptr && ghost != nullptr && (city->hasMayorAuthority(player) || ghost->isAdmin()) && city->isCitySkillTrainer(sceneObject)) {
 			CityRemoveAmenityTask* task = new CityRemoveAmenityTask(sceneObject, city);
 			task->execute();
 

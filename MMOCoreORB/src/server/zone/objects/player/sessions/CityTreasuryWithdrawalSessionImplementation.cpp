@@ -22,7 +22,7 @@ int CityTreasuryWithdrawalSessionImplementation::initializeSession() {
 
 	PlayerObject* ghost = creatureObject->getPlayerObject();
 
-	if (ghost == nullptr || !cityRegion->isMayor(creatureObject->getObjectID()))
+	if (ghost == nullptr || !cityRegion->hasMayorAuthority(creatureObject))
 		return cancelSession();
 
 	ManagedReference<SuiInputBox*> input = new SuiInputBox(creatureObject, SuiWindowType::CITY_TREASURY_WITHDRAWAL_REASON);

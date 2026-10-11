@@ -77,7 +77,10 @@ public:
 			return;
 		}
 
-		if(cityRegion->getMayorID() != creature->getObjectID() && !ghost->isStaff())
+		if (!cityRegion->hasMayorAuthority(creature) && !ghost->isStaff())
+			return;
+		ManagedReference<CreatureObject*> namedMayor = cityRegion->getMayorCreature();
+		if (namedMayor == nullptr || (!ghost->isStaff() && !namedMayor->checkCooldownRecovery("rename_city_cooldown")))
 			return;
 
 		Locker mlock(cityManager, creature);
@@ -111,7 +114,7 @@ public:
 		if(isRegistered)
 			cityManager->registerCity(cityRegion, creature);
 
-		creature->addCooldown("rename_city_cooldown", 604800 * 4); // 4 week cooldown.  need to investigate
+		namedMayor->addCooldown("rename_city_cooldown", 604800 * 4); // 4 week cooldown.
 		creature->sendSystemMessage("@city/city:name_changed"); // The city name has been successfully changed.");
 	}
 };

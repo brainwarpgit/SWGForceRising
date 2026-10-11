@@ -32,6 +32,45 @@
 
 int BoardShuttleCommand::MAXIMUM_PLAYER_COUNT = 3000;
 
+CreatureObject* CityRegionImplementation::getMayorCreature() const {
+	if (mayorID == 0 || zone == nullptr || zone->getZoneServer() == nullptr)
+		return nullptr;
+	return zone->getZoneServer()->getObject(mayorID).castTo<CreatureObject*>();
+}
+
+bool CityRegionImplementation::mayorHasAbility(const String& ability) const {
+	ManagedReference<CreatureObject*> mayor = getMayorCreature();
+	PlayerObject* ghost = mayor != nullptr ? mayor->getPlayerObject() : nullptr;
+	return ghost != nullptr && ghost->hasAbility(ability);
+}
+
+bool CityRegionImplementation::mayorHasSkill(const String& skill) const {
+	ManagedReference<CreatureObject*> mayor = getMayorCreature();
+	return mayor != nullptr && mayor->hasSkill(skill);
+}
+
+bool CityRegionImplementation::hasMayorAuthority(CreatureObject* player) const {
+	if (player == nullptr || !player->isPlayerCreature() || mayorID == 0)
+		return false;
+	if (mayorID == player->getObjectID())
+		return true;
+	PlayerObject* playerGhost = player->getPlayerObject();
+	if (playerGhost == nullptr || playerGhost->getAccountID() == 0)
+		return false;
+	ManagedReference<CreatureObject*> mayor = getMayorCreature();
+	PlayerObject* mayorGhost = mayor != nullptr ? mayor->getPlayerObject() : nullptr;
+	return mayorGhost != nullptr && mayorGhost->getAccountID() == playerGhost->getAccountID();
+}
+
+bool CityRegionImplementation::isMilitiaMember(uint64 objectid) const {
+	if (militiaMembers.contains(objectid) || mayorID == objectid)
+		return true;
+	if (zone == nullptr || zone->getZoneServer() == nullptr)
+		return false;
+	ManagedReference<CreatureObject*> player = zone->getZoneServer()->getObject(objectid).castTo<CreatureObject*>();
+	return player != nullptr && hasMayorAuthority(player);
+}
+
 void CityRegionImplementation::initializeTransientMembers() {
 	ManagedObjectImplementation::initializeTransientMembers();
 
@@ -1050,7 +1089,8 @@ void CityRegionImplementation::cleanupDuplicateCityStructures() {
 	}
 
 	structures.removeAll();
-	structures.addAll(singleStructures);
+	for (int i = 0; i < singleStructures.size(); ++i)
+		structures.add(singleStructures.get(i));
 
 	singleStructures.removeAll();
 
@@ -1062,7 +1102,8 @@ void CityRegionImplementation::cleanupDuplicateCityStructures() {
 	}
 
 	commercialStructures.removeAll();
-	commercialStructures.addAll(singleStructures);
+	for (int i = 0; i < singleStructures.size(); ++i)
+		commercialStructures.add(singleStructures.get(i));
 
 	Vector<ManagedReference<SceneObject*> > singleDecorations;
 
@@ -1074,7 +1115,8 @@ void CityRegionImplementation::cleanupDuplicateCityStructures() {
 	}
 
 	cityDecorations.removeAll();
-	cityDecorations.addAll(singleDecorations);
+	for (int i = 0; i < singleDecorations.size(); ++i)
+		cityDecorations.add(singleDecorations.get(i));
 }
 
 void CityRegionImplementation::removeDecorationsOutsideCity(int newRadius) {

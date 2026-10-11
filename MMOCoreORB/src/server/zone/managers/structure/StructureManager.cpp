@@ -612,7 +612,7 @@ int StructureManager::placeStructureFromDeed(CreatureObject* creature, Structure
 			return 1;
 		}
 
-		if (serverTemplate->isCivicStructure() && !city->isMayor(creature->getObjectID())) {
+		if (serverTemplate->isCivicStructure() && !city->hasMayorAuthority(creature)) {
 			creature->sendSystemMessage("@player_structure:cant_place_civic"); //"This structure must be placed within the borders of the city in which you are mayor."
 			return 1;
 		}
@@ -636,7 +636,8 @@ int StructureManager::placeStructureFromDeed(CreatureObject* creature, Structure
 	if (ghost != nullptr) {
 		String abilityRequired = serverTemplate->getAbilityRequired();
 
-		if (!abilityRequired.isEmpty() && !ghost->hasAbility(abilityRequired)) {
+		if (!abilityRequired.isEmpty() && !ghost->hasAbility(abilityRequired) &&
+				!(serverTemplate->isCivicStructure() && city != nullptr && city->hasMayorAuthority(creature) && city->mayorHasAbility(abilityRequired))) {
 			creature->sendSystemMessage("@player_structure:" + abilityRequired);
 			return 1;
 		}
@@ -742,15 +743,33 @@ StructureObject* StructureManager::placeStructure(CreatureObject* creature, cons
 	}
 
 	StructureObject* structureObject = cast<StructureObject*>(obj.get());
+	ManagedReference<CreatureObject*> structureOwner = creature;
+	if (serverTemplate->isCivicStructure()) {
+		SortedVector<ManagedReference<ActiveArea*>> areas;
+		zone->getInRangeActiveAreas(x, 0, y, &areas, true);
+		for (int i = 0; i < areas.size(); ++i) {
+			ActiveArea* area = areas.get(i).get();
+			if (area == nullptr || !area->isRegion())
+				continue;
+			ManagedReference<CityRegion*> city = dynamic_cast<Region*>(area)->getCityRegion().get();
+			if (city != nullptr && city->hasMayorAuthority(creature)) {
+				structureOwner = city->getMayorCreature();
+				break;
+			}
+		}
+		if (structureOwner == nullptr)
+			structureOwner = creature;
+	}
+	ManagedReference<PlayerObject*> ownerGhost = structureOwner->getPlayerObject();
 
 	Locker sLocker(structureObject);
 
 	try {
 		structureObject->grantPermission("ADMIN", creature->getObjectID());
-		structureObject->setOwner(creature->getObjectID(), lotReservation);
+		structureObject->setOwner(structureOwner->getObjectID(), lotReservation);
 
-		if (ghost != nullptr) {
-			ghost->addOwnedStructure(structureObject);
+		if (ownerGhost != nullptr) {
+			ownerGhost->addOwnedStructure(structureObject);
 		}
 
 		if (structureObject->isTurret() || structureObject->isMinefield() || structureObject->isScanner()) {
@@ -779,8 +798,8 @@ StructureObject* StructureManager::placeStructure(CreatureObject* creature, cons
 
 		return structureObject;
 	} catch (...) {
-		if (ghost != nullptr)
-			ghost->removeOwnedStructure(structureObject);
+		if (ownerGhost != nullptr)
+			ownerGhost->removeOwnedStructure(structureObject);
 		structureObject->destroyObjectFromWorld(true);
 		structureObject->destroyObjectFromDatabase(true);
 		error("Structure placement failed; released its account lots.");
