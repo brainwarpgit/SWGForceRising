@@ -6,6 +6,7 @@
 #define OPENCONTAINERCOMMAND_H_
 
 #include "server/zone/objects/scene/SceneObject.h"
+#include "server/zone/objects/scene/AccountSafetyDepositAccess.h"
 #include "server/zone/objects/tangible/Container.h"
 #include "server/zone/objects/tangible/RelockLootContainerEvent.h"
 
@@ -42,6 +43,9 @@ public:
 
 		ManagedReference<SceneObject*> rootParent = objectToOpen->getRootParent();
 		bool clientObject = rootParent != nullptr && rootParent->isClientObject();
+		bool accountDeposit = AccountSafetyDepositAccess::getRoot(objectToOpen) != nullptr;
+		if (accountDeposit && !AccountSafetyDepositAccess::canAccess(objectToOpen, creature))
+			return GENERALERROR;
 
 		if (craftingStation) {
 			if (!creature->isInRange(objectsParent, 12.0f)) {
@@ -59,7 +63,7 @@ public:
 				creature->sendSystemMessage(msgParam);
 				return GENERALERROR;
 			}
-		} else if (objectToOpen->isTurret() || (!playerItem && (objectsParent == nullptr || clientObject))) { //Perform checks if not player item and outside, or inside in clientObject structure
+		} else if (!accountDeposit && (objectToOpen->isTurret() || (!playerItem && (objectsParent == nullptr || clientObject)))) { //Perform checks if not player item and outside, or inside in clientObject structure
 			if (!creature->isInRange(objectToOpen, 7.0f)) {
 				StringIdChatParameter param;
 				param.setStringId("@container_error_message:container09_prose"); // You are out of range of %TT.

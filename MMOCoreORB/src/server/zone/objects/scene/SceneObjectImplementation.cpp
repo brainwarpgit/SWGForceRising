@@ -26,6 +26,7 @@
 #include "server/zone/GroundZone.h"
 #include "server/zone/SpaceZone.h"
 #include "server/zone/ZoneServer.h"
+#include "server/zone/CloseObjectsVector.h"
 
 #include "variables/StringId.h"
 
@@ -461,6 +462,15 @@ void SceneObjectImplementation::notifyLoadFromDatabase() {
 			}
 		}
 
+	}
+
+	// Detached account deposits keep a zone for item transfers but never enter the world.
+	if (serverObjectCRC == STRING_HASHCODE("object/tangible/bank/account_bank.iff") ||
+			(serverObjectCRC == STRING_HASHCODE("object/tangible/bank/character_bank.iff") &&
+			 customName.toString() == "Account Safety Deposit")) {
+		if (closeobjects == nullptr)
+			closeobjects = new CloseObjectsVector();
+		return;
 	}
 
 	// Players are sent into the zone or parent when they connect

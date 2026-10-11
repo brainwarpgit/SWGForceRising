@@ -2,6 +2,10 @@
 
 ## 2026-10-10
 
+### Committed account safety deposit
+
+- Bank terminals now offer a separate Account Safety Deposit shared by characters on the same account. Its own client template displays 500 slots, existing account deposits switch to it without moving their items, and changes are sent to other characters with the deposit open. Account members can use stored items' regular rename and destroy actions and navigate nested containers. Personal safety deposits remain unchanged.
+
 ### Committed account-wide mayor management
 
 - Characters on the named mayor's account can manage that mayor's city, including city menus, treasury, zoning, trainers, decorations, and civic placement. Each city still has one named mayor for elections and residence, so different characters on one account can be named mayor of different cities.

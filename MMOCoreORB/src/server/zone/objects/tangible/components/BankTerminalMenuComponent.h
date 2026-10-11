@@ -18,7 +18,8 @@ protected:
 		DEPOSIT     = 73,
 		WITHDRAW    = 68,
 		DEPOSITALL  = 69,
-		WITHDRAWALL = 70
+		WITHDRAWALL = 70,
+		ACCOUNT_DEPOSIT = 74
 	};
 
 	// @TODO Move this to a proper configuration manager so no rebuild is necessary

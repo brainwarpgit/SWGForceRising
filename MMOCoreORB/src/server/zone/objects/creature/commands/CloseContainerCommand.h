@@ -7,6 +7,7 @@
 
 #include "server/zone/objects/scene/SceneObject.h"
 #include "server/zone/objects/creature/CreatureObject.h"
+#include "server/zone/CloseObjectsVector.h"
 
 class CloseContainerCommand : public QueueCommand {
 public:
@@ -48,7 +49,6 @@ public:
 			return GENERALERROR;
 
 		Locker clocker(container, creature);
-
 		container->closeContainerTo(creature, false);
 		container->notifyCloseContainer(creature);
 

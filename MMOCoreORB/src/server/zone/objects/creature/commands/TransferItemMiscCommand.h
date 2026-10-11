@@ -7,15 +7,19 @@
 
 #include "server/ServerCore.h"
 #include "server/zone/ZoneServer.h"
+#include "server/zone/CloseObjectsVector.h"
 #include "server/zone/objects/scene/SceneObject.h"
 #include "server/zone/objects/building/BuildingObject.h"
 #include "server/zone/managers/objectcontroller/ObjectController.h"
 #include "server/zone/managers/player/PlayerManager.h"
 #include "server/zone/objects/player/sessions/TradeSession.h"
+#include "server/zone/objects/player/PlayerObject.h"
+#include "server/login/account/Account.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
 #include "server/zone/managers/collision/CollisionManager.h"
 #include "server/zone/objects/scene/TransferErrorCode.h"
 #include "QueueCommand.h"
+#include <memory>
 
 class TransferItemMiscCommand : public QueueCommand {
 	class StorageBuildingLock {
@@ -49,6 +53,16 @@ class TransferItemMiscCommand : public QueueCommand {
 			return nullptr;
 		auto building = cast<BuildingObject*>(root.get());
 		return !building->isStaticBuilding() && building->getBaseLotSize() > 0 ? building : nullptr;
+	}
+
+	static SceneObject* getAccountDepositRoot(SceneObject* object) {
+		if (object == nullptr)
+			return nullptr;
+		ManagedReference<SceneObject*> root = object->getRootParent();
+		SceneObject* candidate = root != nullptr ? root.get() : object;
+		return candidate->getParent().get() == nullptr &&
+				(candidate->getServerObjectCRC() == STRING_HASHCODE("object/tangible/bank/account_bank.iff") ||
+				 candidate->getServerObjectCRC() == STRING_HASHCODE("object/tangible/bank/character_bank.iff")) ? candidate : nullptr;
 	}
 
 public:
@@ -151,6 +165,32 @@ public:
 			return GENERALERROR;
 		}
 
+		ManagedReference<SceneObject*> sourceAccountDeposit = getAccountDepositRoot(objectToTransfer);
+		ManagedReference<SceneObject*> destinationAccountDeposit = getAccountDepositRoot(destinationObject);
+		ManagedReference<SceneObject*> accountDeposit = sourceAccountDeposit != nullptr ? sourceAccountDeposit : destinationAccountDeposit;
+		if (accountDeposit != nullptr) {
+			PlayerObject* ghost = creature->getPlayerObject();
+			ManagedReference<Account*> account = ghost != nullptr ? ghost->getAccount() : nullptr;
+			ZoneServer* zoneServer = creature->getZoneServer();
+			if (account == nullptr || zoneServer == nullptr || creature->getZone() == nullptr || !creature->isNearBank() ||
+					account->getAccountSafetyDepositID(zoneServer->getGalaxyID()) != accountDeposit->getObjectID() ||
+					(sourceAccountDeposit != nullptr && destinationAccountDeposit != nullptr &&
+					sourceAccountDeposit != destinationAccountDeposit)) {
+				creature->sendSystemMessage("You cannot access that account safety deposit from here.");
+				trx.abort() << "Unauthorized account safety deposit transfer";
+				return GENERALERROR;
+			}
+		}
+		std::unique_ptr<Locker> accountDepositLocker;
+		if (accountDeposit != nullptr) {
+			accountDepositLocker.reset(new Locker(accountDeposit.get(), creature));
+			if (creature->getZone() == nullptr || !creature->isNearBank()) {
+				trx.abort() << "Account safety deposit access changed during transfer";
+				return GENERALERROR;
+			}
+			accountDeposit->setZone(creature->getZone());
+		}
+
 		// Serialize capacity changes with the entire admission/transfer operation.
 		// Include outgoing and inventory moves inside the building so no transfer
 		// waits for its building while another transfer holds a child container.
@@ -181,7 +221,7 @@ public:
 			}
 		}
 
-		if (!objectToTransfer->checkContainerPermission(creature, ContainerPermissions::MOVECONTAINER)) {
+		if (sourceAccountDeposit == nullptr && !objectToTransfer->checkContainerPermission(creature, ContainerPermissions::MOVECONTAINER)) {
 			creature->sendSystemMessage("@error_message:perm_no_move");
 			trx.abort() << "No permission to move objectToTransfer";
 			return GENERALERROR;
@@ -199,7 +239,7 @@ public:
 			return GENERALERROR;
 		}
 
-		if (!objectToTransfer->isVendor() && !objectsParent->checkContainerPermission(creature, ContainerPermissions::MOVEOUT)) {
+		if (!objectToTransfer->isVendor() && sourceAccountDeposit == nullptr && !objectsParent->checkContainerPermission(creature, ContainerPermissions::MOVEOUT)) {
 			trx.abort() << "Not allowed to move object out of parent";
 			return GENERALERROR;
 		}
@@ -246,7 +286,9 @@ public:
 
 			float maxDistance =  16.5;
 
-			if (rootParent != nullptr && !rootParent->isBuildingObject() && !rootParent->isPobShip() && parent != nullptr && !parent->isBuildingObject() && !parent->isPobShip()) {
+			if (sourceAccountDeposit != nullptr) {
+				// The account deposit is a private persistent root, not a world object near the player.
+			} else if (rootParent != nullptr && !rootParent->isBuildingObject() && !rootParent->isPobShip() && parent != nullptr && !parent->isBuildingObject() && !parent->isPobShip()) {
 				float rootDist = rootParent->getDistanceTo(creature);
 
 				if (rootDist > maxDistance) { // Handles Hoppers in Factories
@@ -384,7 +426,7 @@ public:
 			return GENERALERROR;
 		}
 
-		if (!objectToTransfer->isVendor() && !destinationObject->checkContainerPermission(creature, ContainerPermissions::MOVEIN)) {
+		if (!objectToTransfer->isVendor() && destinationAccountDeposit == nullptr && !destinationObject->checkContainerPermission(creature, ContainerPermissions::MOVEIN)) {
 			trx.abort() << "Not allowed to move object into destinationObject";
 			return GENERALERROR;
 		}
@@ -417,6 +459,23 @@ public:
 		if (!objectController->transferObject(objectToTransfer, destinationObject, transferType, true)){
 			trx.abort() << "transferObject failed";
 			return GENERALERROR;
+		}
+		if (destinationAccountDeposit != nullptr)
+			creature->sendMessage(objectToTransfer->link(destinationObject->getObjectID(), transferType));
+		if (accountDeposit != nullptr && accountDeposit->getCloseObjects() != nullptr) {
+			Vector<ManagedReference<TreeEntry*>> viewers;
+			accountDeposit->getCloseObjects()->safeCopyReceiversTo(viewers, CloseObjectsVector::PLAYERTYPE);
+			for (int i = 0; i < viewers.size(); ++i) {
+				CreatureObject* viewer = cast<CreatureObject*>(viewers.get(i).get());
+				if (viewer == nullptr || viewer == creature || viewer->getClient() == nullptr)
+					continue;
+				if (sourceAccountDeposit == nullptr)
+					objectToTransfer->sendTo(viewer, true);
+				else if (destinationAccountDeposit == nullptr)
+					objectToTransfer->sendDestroyTo(viewer);
+				else
+					viewer->sendMessage(objectToTransfer->link(destinationObject->getObjectID(), transferType));
+			}
 		}
 		destinationStorageLock.release();
 		sourceStorageLock.release();

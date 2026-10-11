@@ -10,6 +10,7 @@
 #include "server/zone/objects/creature/CreatureObject.h"
 #include "server/zone/objects/player/PlayerObject.h"
 #include "server/zone/objects/player/sessions/SlicingSession.h"
+#include "server/zone/objects/scene/AccountSafetyDepositAccess.h"
 
 int ContainerComponent::canAddObject(SceneObject* sceneObject, SceneObject* object, int containmentType, String& errorDescription) const {
 	if (sceneObject == object) {
@@ -158,6 +159,9 @@ int ContainerComponent::canAddObject(SceneObject* sceneObject, SceneObject* obje
 }
 
 bool ContainerComponent::checkContainerPermission(SceneObject* sceneObject, CreatureObject* creature, uint16 permission) const {
+	if (AccountSafetyDepositAccess::getRoot(sceneObject) != nullptr)
+		return AccountSafetyDepositAccess::canAccess(sceneObject, creature);
+
 	auto permissions = sceneObject->getContainerPermissions();
 
 	// creature->info(true) << "ContainerComponent::checkContainerPermission -- Perm: " << permission << " Object ID: " << sceneObject->getObjectID();
@@ -354,7 +358,10 @@ bool ContainerComponent::transferObject(SceneObject* sceneObject, SceneObject* o
 	if ((containmentType >= 4) && (objZone == nullptr)) {
 		sceneObject->broadcastObject(object, true);
 	} else if (notifyClient) {
-		sceneObject->broadcastMessage(object->link(sceneObject->getObjectID(), containmentType), true);
+		ManagedReference<SceneObject*> root = sceneObject->getRootParent();
+		SceneObject* containerRoot = root != nullptr ? root.get() : sceneObject;
+		if (containerRoot->getServerObjectCRC() != STRING_HASHCODE("object/tangible/bank/account_bank.iff"))
+			sceneObject->broadcastMessage(object->link(sceneObject->getObjectID(), containmentType), true);
 	}
 
 	notifyObjectInserted(sceneObject, object);
@@ -491,4 +498,3 @@ int ContainerComponent::notifyObjectInserted(SceneObject* sceneObject, SceneObje
 int ContainerComponent::notifyObjectRemoved(SceneObject* sceneObject, SceneObject* object, SceneObject* destination) const {
 	return sceneObject->notifyObjectRemoved(object);
 }
-

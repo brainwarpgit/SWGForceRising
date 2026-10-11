@@ -14,6 +14,7 @@
 #include "templates/tangible/ContainerTemplate.h"
 #include "server/zone/objects/creature/ai/AiAgent.h"
 #include "server/zone/objects/player/PlayerObject.h"
+#include "server/zone/objects/scene/AccountSafetyDepositAccess.h"
 
 void ContainerImplementation::initializeTransientMembers() {
 	TangibleObjectImplementation::initializeTransientMembers();
@@ -67,6 +68,8 @@ int ContainerImplementation::handleObjectMenuSelect(CreatureObject* player, byte
 			inputBox->setPromptTitle("@sui:set_name_title");
 			inputBox->setPromptText("@sui:set_name_prompt");
 			inputBox->setUsingObject(_this.getReferenceUnsafeStaticCast());
+			if (AccountSafetyDepositAccess::canAccess(_this.getReferenceUnsafeStaticCast(), player))
+				inputBox->setForceCloseDistance(-1);
 			inputBox->setMaxInputSize(255);
 
 			inputBox->setDefaultInput(getCustomObjectName().toString());

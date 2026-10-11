@@ -99,3 +99,9 @@ object_tangible_bank_shared_character_bank = SharedTangibleObjectTemplate:new {
 }
 
 ObjectTemplates:addClientTemplate(object_tangible_bank_shared_character_bank, "object/tangible/bank/shared_character_bank.iff")
+
+object_tangible_bank_shared_account_bank = SharedTangibleObjectTemplate:new {
+	clientTemplateFileName = "object/tangible/bank/shared_account_bank.iff"
+}
+
+ObjectTemplates:addClientTemplate(object_tangible_bank_shared_account_bank, "object/tangible/bank/shared_account_bank.iff")

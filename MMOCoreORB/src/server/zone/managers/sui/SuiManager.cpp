@@ -7,6 +7,7 @@
 #include "server/zone/ZoneProcessServer.h"
 #include "server/zone/objects/creature/CreatureObject.h"
 #include "server/zone/objects/player/sui/SuiWindowType.h"
+#include "server/zone/objects/scene/AccountSafetyDepositAccess.h"
 #include "server/zone/objects/player/sui/banktransferbox/SuiBankTransferBox.h"
 #include "server/zone/objects/player/sui/characterbuilderbox/SuiCharacterBuilderBox.h"
 #include "server/zone/objects/player/sui/transferbox/SuiTransferBox.h"
@@ -120,6 +121,9 @@ void SuiManager::handleSetObjectName(CreatureObject* player, SuiBox* suiBox, uin
 	ManagedReference<SceneObject*> object = suiBox->getUsingObject().get();
 
 	if (object == nullptr)
+		return;
+	if (AccountSafetyDepositAccess::getRoot(object) != nullptr &&
+			!AccountSafetyDepositAccess::canAccess(object, player))
 		return;
 
 	if (args->size() < 1)

@@ -37,6 +37,9 @@ class Account extends ManagedObject implements Logger {
 	@dereferenced
 	protected VectorMap<unsigned int, int> structureLotBonuses;
 
+	@dereferenced
+	protected VectorMap<unsigned int, unsigned long> accountSafetyDeposits;
+
 	protected transient unsigned int banExpires;
 	protected transient string banReason;
 	protected transient unsigned int banAdmin;
@@ -135,6 +138,18 @@ class Account extends ManagedObject implements Logger {
 	public native boolean adjustStructureLotBonus(unsigned int galaxyID, int delta);
 
 	public native void initializeStructureLotBonus(unsigned int galaxyID, int legacyBonus);
+
+	@read
+	public unsigned long getAccountSafetyDepositID(unsigned int galaxyID) {
+		if (!accountSafetyDeposits.contains(galaxyID))
+			return 0;
+		return accountSafetyDeposits.get(galaxyID);
+	}
+
+	@preLocked
+	public void setAccountSafetyDepositID(unsigned int galaxyID, unsigned long objectID) {
+		accountSafetyDeposits.put(galaxyID, objectID);
+	}
 
 	@read
 	public unsigned int getStationID() {

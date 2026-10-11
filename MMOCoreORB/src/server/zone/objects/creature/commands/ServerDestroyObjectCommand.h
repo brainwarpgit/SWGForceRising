@@ -12,6 +12,8 @@
 #include "server/zone/objects/tangible/tool/antidecay/AntiDecayKit.h"
 #include "server/zone/managers/auction/AuctionsMap.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
+#include "server/zone/objects/scene/AccountSafetyDepositAccess.h"
+#include "server/zone/CloseObjectsVector.h"
 
 class ServerDestroyObjectCommand : public QueueCommand {
 public:
@@ -90,7 +92,8 @@ public:
 
 		TransactionLog trx(creature, TrxCode::SERVERDESTROYOBJECT, object);
 
-		if (object->isASubChildOf(creature)) {
+		if (object->isASubChildOf(creature) || (AccountSafetyDepositAccess::getRoot(object) != object &&
+				AccountSafetyDepositAccess::canAccess(object, creature))) {
 			if (object->isTangibleObject()) {
 				ManagedReference<TangibleObject*> tano = cast<TangibleObject*>(object.get());
 
@@ -150,8 +153,19 @@ public:
 				trx.exportRelated();
 			}
 
+			ManagedReference<SceneObject*> accountDeposit = AccountSafetyDepositAccess::getRoot(object);
 			if (!destroyObject(object, creature))
 				return GENERALERROR;
+			if (accountDeposit != nullptr && accountDeposit->getCloseObjects() != nullptr) {
+				Vector<ManagedReference<TreeEntry*>> viewers;
+				accountDeposit->getCloseObjects()->safeCopyReceiversTo(viewers, CloseObjectsVector::PLAYERTYPE);
+				for (int i = 0; i < viewers.size(); ++i) {
+					CreatureObject* viewer = cast<CreatureObject*>(viewers.get(i).get());
+					if (viewer != nullptr && viewer != creature && viewer->getClient() != nullptr &&
+							AccountSafetyDepositAccess::canAccess(accountDeposit, viewer))
+						object->sendDestroyTo(viewer);
+				}
+			}
 		}
 
 		return SUCCESS;

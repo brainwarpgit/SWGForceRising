@@ -9,6 +9,9 @@
 #define DISCONNECTCLIENTEVENT_H_
 
 #include "server/zone/objects/player/PlayerObject.h"
+#include "server/login/account/Account.h"
+#include "server/zone/ZoneServer.h"
+#include "server/zone/CloseObjectsVector.h"
 #ifdef WITH_SWGREALMS_API
 #include "server/login/SWGRealmsAPI.h"
 #endif // WITH_SWGREALMS_API
@@ -40,6 +43,19 @@ public:
 
 		if (ghost == nullptr)
 			return;
+
+		ManagedReference<Account*> account = ghost->getAccount();
+		ZoneServer* zoneServer = player->getZoneServer();
+		if (account != nullptr && zoneServer != nullptr) {
+			uint64 bankID = account->getAccountSafetyDepositID(zoneServer->getGalaxyID());
+			if (bankID != 0) {
+				ManagedReference<SceneObject*> bank = zoneServer->getObject(bankID);
+				if (bank != nullptr && bank->getCloseObjects() != nullptr) {
+					Locker bankLocker(bank, player);
+					bank->getCloseObjects()->drop(player.get());
+				}
+			}
+		}
 
 #ifdef WITH_SWGREALMS_API
 		String eventTypeStr;

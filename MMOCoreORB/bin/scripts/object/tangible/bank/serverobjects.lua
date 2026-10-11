@@ -46,3 +46,4 @@
 
 -- Server Objects
 includeFile("tangible/bank/character_bank.lua")
+includeFile("tangible/bank/account_bank.lua")

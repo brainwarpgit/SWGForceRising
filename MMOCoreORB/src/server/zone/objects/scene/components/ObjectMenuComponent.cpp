@@ -10,6 +10,7 @@
 #include "server/zone/objects/building/BuildingObject.h"
 #include "server/zone/objects/ship/PobShipObject.h"
 #include "server/zone/objects/creature/CreatureObject.h"
+#include "server/zone/objects/scene/AccountSafetyDepositAccess.h"
 #include "server/zone/packets/object/ObjectMenuResponse.h"
 
 void ObjectMenuComponent::fillObjectMenuResponse(SceneObject* sceneObject, ObjectMenuResponse* menuResponse, CreatureObject* player) const {
@@ -22,6 +23,11 @@ void ObjectMenuComponent::fillObjectMenuResponse(SceneObject* sceneObject, Objec
 		return;
 
 	ManagedReference<SceneObject*> rootParent = sceneObject->getRootParent();
+	if (rootParent != nullptr && rootParent != sceneObject &&
+			AccountSafetyDepositAccess::canAccess(sceneObject, player)) {
+		menuResponse->addRadialMenuItem(14, 3, "@ui:destroy");
+		return;
+	}
 
 	if (rootParent == nullptr) {
 		return;

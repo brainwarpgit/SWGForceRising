@@ -7,12 +7,16 @@
 
 #include "server/zone/objects/creature/CreatureObject.h"
 #include "server/zone/objects/player/PlayerObject.h"
+#include "server/login/account/Account.h"
 #include "BankTerminalMenuComponent.h"
 #include "server/zone/packets/object/ObjectMenuResponse.h"
 #include "server/zone/objects/scene/SceneObject.h"
+#include "server/zone/objects/scene/variables/ContainerPermissions.h"
 #include "server/zone/objects/player/sui/banktransferbox/SuiBankTransferBox.h"
 #include "server/zone/objects/player/sui/callbacks/BankTerminalSuiCallback.h"
 #include "server/zone/Zone.h"
+#include "server/zone/ZoneServer.h"
+#include "server/zone/CloseObjectsVector.h"
 #include "server/zone/objects/region/CityRegion.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
 
@@ -22,6 +26,7 @@ void BankTerminalMenuComponent::fillObjectMenuResponse(SceneObject* sceneObject,
 
 	menuResponse->addRadialMenuItemToRadialID(20, 68, 3, "@sui:bank_credits"); // Deposit/Withdrawal
 	menuResponse->addRadialMenuItemToRadialID(20, 73, 3, "@sui:bank_items"); //Safety Deposit
+	menuResponse->addRadialMenuItemToRadialID(20, ACCOUNT_DEPOSIT, 3, "Account Safety Deposit");
 
 	if (creature->getCashCredits() > 0)
 		menuResponse->addRadialMenuItemToRadialID(20, 69, 3, "@sui:bank_depositall"); // Deposit all
@@ -127,6 +132,54 @@ int BankTerminalMenuComponent::handleObjectMenuSelect(SceneObject* sceneObject, 
 		}
 
 		return 0;
+	} else if (selectedID == ACCOUNT_DEPOSIT) {
+		ManagedReference<Account*> account = ghost->getAccount();
+		if (account == nullptr || !creature->isNearBank())
+			return 0;
+
+		Locker accountLocker(account);
+		uint32 galaxyID = playerZone->getZoneServer()->getGalaxyID();
+		uint64 bankID = account->getAccountSafetyDepositID(galaxyID);
+		ManagedReference<SceneObject*> bank = bankID != 0 ? playerZone->getZoneServer()->getObject(bankID) : nullptr;
+		if (bank == nullptr && bankID == 0) {
+			bank = playerZone->getZoneServer()->createObject(STRING_HASHCODE("object/tangible/bank/account_bank.iff"), 2);
+			if (bank == nullptr) {
+				creature->sendSystemMessage("The account safety deposit could not be created. Please try again later.");
+				return 0;
+			}
+			bank->setContainerVolumeLimit(500);
+			bank->setCustomObjectName(UnicodeString("Account Safety Deposit"), false);
+			ContainerPermissions* permissions = bank->getContainerPermissionsForUpdate();
+			permissions->setOwner(0);
+			permissions->setInheritPermissionsFromParent(false);
+			permissions->setDefaultDenyPermission(ContainerPermissions::OPEN);
+			permissions->setDefaultDenyPermission(ContainerPermissions::MOVEIN);
+			permissions->setDefaultDenyPermission(ContainerPermissions::MOVEOUT);
+			permissions->setDefaultDenyPermission(ContainerPermissions::MOVECONTAINER);
+			bank->setZone(playerZone);
+			bank->updateToDatabase();
+			account->setAccountSafetyDepositID(galaxyID, bank->getObjectID());
+		} else if (bank == nullptr) {
+			creature->sendSystemMessage("The account safety deposit could not be loaded. Please contact an administrator.");
+			return 0;
+		}
+
+		Locker bankLocker(bank);
+		if (bank->getCloseObjects() == nullptr)
+			bank->setCloseObjects(new CloseObjectsVector());
+		if (bank->getServerObjectCRC() == STRING_HASHCODE("object/tangible/bank/character_bank.iff")) {
+			bank->setServerObjectCRC(STRING_HASHCODE("object/tangible/bank/account_bank.iff"));
+			bank->setClientObjectCRC(STRING_HASHCODE("object/tangible/bank/shared_account_bank.iff"));
+			bank->setCustomObjectName(UnicodeString("Account Safety Deposit"), false);
+			bank->updateToDatabase();
+		}
+		if (bank->getContainerVolumeLimit() != 500)
+			bank->setContainerVolumeLimit(500);
+		bank->setZone(playerZone);
+		bank->sendTo(creature, true);
+		bank->openContainerTo(creature);
+		bank->getCloseObjects()->put(creature);
+		return 0;
 	} else if (selectedID == DEPOSITALL) {
 		uint32 cash = creature->getCashCredits();
 
@@ -158,4 +211,3 @@ int BankTerminalMenuComponent::handleObjectMenuSelect(SceneObject* sceneObject, 
 
 	return 0;
 }
-
