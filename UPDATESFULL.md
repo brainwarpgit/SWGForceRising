@@ -2,6 +2,10 @@
 
 ## 2026-10-10
 
+### Committed global safety deposit access
+
+- Enabled the existing global safety deposit switch in the bank terminal menu. Any bank terminal now opens the character's existing bank container regardless of the planet recorded as their bank location, including characters who have not joined a bank. Credits, bank membership, and stored items are unchanged. The user verified the behavior in game; the assistant did not build or run Core3.
+
 ### Committed factory crate capacity update
 
 - Set the factory crate default capacity to 1,000. Factory production uses that capacity for every schematic whose crate size is greater than one; schematic values of zero and one retain their existing non-crated behavior. The individual Lua schematic values remain as source data, but no longer limit cratable factory output.

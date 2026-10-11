@@ -2,6 +2,10 @@
 
 ## 2026-10-10
 
+### Committed global safety deposit access
+
+- Safety deposit boxes can now be opened at bank terminals on any planet. Each character keeps the same existing bank container and contents.
+
 ### Committed factory crate capacity update
 
 - Factories now fill crates to 1,000 items for every cratable product. Existing factory crates can also hold up to 1,000; products configured to be uncrated remain uncrated.
