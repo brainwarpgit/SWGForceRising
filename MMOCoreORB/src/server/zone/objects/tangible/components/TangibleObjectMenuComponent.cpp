@@ -9,6 +9,9 @@
 #include "server/zone/objects/player/sessions/SlicingSession.h"
 #include "server/zone/packets/object/ObjectMenuResponse.h"
 #include "server/zone/objects/player/PlayerObject.h"
+#include "server/zone/objects/player/sui/colorbox/SuiColorBox.h"
+#include "server/zone/objects/player/sui/callbacks/ColorArmorSuiCallback.h"
+#include "server/zone/objects/tangible/components/WearableColorOptions.h"
 
 void TangibleObjectMenuComponent::fillObjectMenuResponse(SceneObject* sceneObject, ObjectMenuResponse* menuResponse, CreatureObject* player) const {
 	ObjectMenuComponent::fillObjectMenuResponse(sceneObject, menuResponse, player);
@@ -19,6 +22,18 @@ void TangibleObjectMenuComponent::fillObjectMenuResponse(SceneObject* sceneObjec
 		return;
 
 	TangibleObject* tano = cast<TangibleObject*>( sceneObject);
+	if (WearableColorOptions::canChange(sceneObject, player)) {
+		Vector<String> palettes;
+		WearableColorOptions::getPalettes(sceneObject, palettes);
+		if (palettes.size() > 0) {
+			menuResponse->addRadialMenuItem(WearableColorOptions::COLOR_CHANGE, 3, "Color Change");
+			if (palettes.size() > 1) {
+				for (int i = 0; i < palettes.size() && i < WearableColorOptions::MAX_COLOR_CHANNELS; ++i)
+					menuResponse->addRadialMenuItemToRadialID(WearableColorOptions::COLOR_CHANGE,
+							WearableColorOptions::FIRST_COLOR_CHANNEL + i, 3, "Color " + String::valueOf(i + 1));
+			}
+		}
+	}
 
 	// Figure out what the object is and if its able to be Sliced.
 	if(tano->isSliceable() && !tano->isSecurityTerminal()) { // Check to see if the player has the correct skill level
@@ -63,6 +78,40 @@ void TangibleObjectMenuComponent::fillObjectMenuResponse(SceneObject* sceneObjec
 int TangibleObjectMenuComponent::handleObjectMenuSelect(SceneObject* sceneObject, CreatureObject* player, byte selectedID) const {
 	if (!sceneObject->isTangibleObject())
 		return 0;
+
+	if ((selectedID == WearableColorOptions::COLOR_CHANGE ||
+			(selectedID >= WearableColorOptions::FIRST_COLOR_CHANNEL &&
+			selectedID < WearableColorOptions::FIRST_COLOR_CHANNEL + WearableColorOptions::MAX_COLOR_CHANNELS)) &&
+			sceneObject->isWearableObject()) {
+		if (!WearableColorOptions::canChange(sceneObject, player))
+			return 0;
+
+		Vector<String> palettes;
+		WearableColorOptions::getPalettes(sceneObject, palettes);
+		if (palettes.size() == 0)
+			return 0;
+
+		ManagedReference<PlayerObject*> ghost = player->getPlayerObject();
+		ZoneServer* server = player->getZoneServer();
+		if (ghost == nullptr || server == nullptr)
+			return 0;
+
+		int selected = selectedID == WearableColorOptions::COLOR_CHANGE ? 0 :
+			selectedID - WearableColorOptions::FIRST_COLOR_CHANNEL;
+		if ((palettes.size() > 1 && selectedID == WearableColorOptions::COLOR_CHANGE) ||
+			selected < 0 || selected >= palettes.size() ||
+			selected >= WearableColorOptions::MAX_COLOR_CHANNELS)
+			return 0;
+
+		ManagedReference<SuiColorBox*> box = new SuiColorBox(player, SuiWindowType::COLOR_ARMOR);
+		box->setCallback(new ColorArmorSuiCallback(server));
+		box->setColorPalette(palettes.get(selected));
+		box->setUsingObject(sceneObject);
+		box->setSkillMod(255);
+		ghost->addSuiBox(box);
+		player->sendMessage(box->generateMessage());
+		return 1;
+	}
 
 	TangibleObject* tano = cast<TangibleObject*>( sceneObject);
 
@@ -109,4 +158,3 @@ int TangibleObjectMenuComponent::handleObjectMenuSelect(SceneObject* sceneObject
 		return ObjectMenuComponent::handleObjectMenuSelect(sceneObject, player, selectedID);
 
 }
-

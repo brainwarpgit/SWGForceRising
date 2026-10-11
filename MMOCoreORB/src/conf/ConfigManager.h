@@ -845,10 +845,18 @@ namespace conf {
 			return cachedValue;
 		}
 
+		inline bool getWearableColorChangeEnabled() {
+			return getBool("Core3.WearableColorChange.WearablesEnabled", false);
+		}
+
+		inline bool getArmorColorChangeEnabled() {
+			return getBool("Core3.WearableColorChange.ArmorEnabled", false);
+		}
 
 		inline bool getAdminUnlimitedVeteranRewards() {
 			return getBool("Core3.PlayerManager.AdminUnlimitedVeteranRewards", false);
 		}
+
 
 		/*
 

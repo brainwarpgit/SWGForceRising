@@ -8,6 +8,7 @@
 #include "server/zone/objects/creature/CreatureObject.h"
 #include "WearableObjectMenuComponent.h"
 #include "server/zone/packets/object/ObjectMenuResponse.h"
+#include "WearableColorOptions.h"
 
 void WearableObjectMenuComponent::fillObjectMenuResponse(SceneObject* sceneObject, ObjectMenuResponse* menuResponse, CreatureObject* player) const {
 	if (!sceneObject->isTangibleObject())
@@ -26,6 +27,11 @@ void WearableObjectMenuComponent::fillObjectMenuResponse(SceneObject* sceneObjec
 }
 
 int WearableObjectMenuComponent::handleObjectMenuSelect(SceneObject* sceneObject, CreatureObject* player, byte selectedID) const {
+	if (selectedID == WearableColorOptions::COLOR_CHANGE ||
+			(selectedID >= WearableColorOptions::FIRST_COLOR_CHANNEL &&
+			selectedID < WearableColorOptions::FIRST_COLOR_CHANNEL + WearableColorOptions::MAX_COLOR_CHANNELS))
+		return TangibleObjectMenuComponent::handleObjectMenuSelect(sceneObject, player, selectedID);
+
 	if (!sceneObject->isASubChildOf(player))
 		return 0;
 

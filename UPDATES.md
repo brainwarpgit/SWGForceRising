@@ -6,6 +6,10 @@
 
 - Added an optional full-admin mode for unlimited veteran reward claims. Admins can select any configured reward repeatedly without using account claims; regular players keep the normal rules.
 
+### Committed wearable and armor color options
+
+- Added configurable Color Change options for wearables and armor. Items with multiple appearance palettes show their color channels directly under the Color Change radial; selecting one opens its picker. The default configuration disables both options.
+
 ### Committed crafting tool skill timing
 
 - Crafting tools now reduce the final item-creation countdown using the schematic's assembly skill, up to 50% at skill 125. The adjusted timer applies to both completed items and practice crafting. While working, the tool's Examine window shows the item being made and its time reduction with labels supplied by the update TRE.
