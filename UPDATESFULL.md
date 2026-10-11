@@ -2,6 +2,11 @@
 
 ## 2026-10-11
 
+### Committed themepark escort turn-in and reward settings
+
+- Added `Core3.ThemeParkLogic.EscortTurnInWithoutNpc` to both configuration files: `true` in the default `config.lua` and `false` in the ignored `config-local.lua`. With this option enabled, a themepark escort is eligible for turn-in after the player has spoken to the target and started its follow behavior; the target no longer has to be within 64 meters of the quest giver. Setting it to `false` restores the proximity requirement. Escort death still fails the mission. Mission cleanup removes escort return areas and the new started state, including when the target never reaches the giver. This applies to `ThemeParkLogic` escorts, not separate quest-task or space escorts.
+- Added per-themepark `creditRewardMultiplier` and `factionRewardMultiplier` fields to `ThemeParkLogic`, both defaulting to 1. They scale credit and faction rewards when those methods award them, round fractional values to whole units, and cap the results at signed 32-bit limits; other reward types are unchanged. An individual themepark may override either field in its screenplay definition. The user verified the changes in game; the assistant did not build or run Core3.
+
 ### Committed village phase status and timer recovery
 
 - Added `/fsVillage` for any player outside combat while Village Jedi progression is active. A read-only SUI window reports the current phase, countdown, and next change time using the server clock. Added the command to `SWGFR_update_01`'s client command table and added its command-browser name and description to `cmd_n.stf` and `cmd_d.stf`; the rebuilt update TRE must be installed on the client and server. The village screenplay now recalculates and reschedules its persistent event from its saved last-change timestamp at startup. If a duration change makes the phase overdue, it schedules an immediate transition instead of leaving the event on its former schedule or stuck overdue; subsequent overdue phases advance until the schedule catches up. A missing event is recreated without resetting an existing village phase when its last-change timestamp is present. Manual phase changes still reset the schedule from the current time. The user verified the feature in game; the assistant did not build or run Core3.

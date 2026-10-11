@@ -230,6 +230,7 @@ namespace server {
 		static int useCovertOvert(lua_State* L);
 		static int drawClientPath(lua_State* L);
 		static int isHelperDroidEnabled(lua_State* L);
+		static int isThemeParkEscortTurnInWithoutNpc(lua_State* L);
 
 		// JTL
 		static int generateShipDeed(lua_State* L);

@@ -873,6 +873,10 @@ namespace conf {
 			return getBool("Core3.buffsoverwrite", false);
 		}
 
+		inline bool getThemeParkEscortTurnInWithoutNpc() {
+			return getBool("Core3.ThemeParkLogic.EscortTurnInWithoutNpc", true);
+		}
+
 		inline bool getNoFactionRestrictionsOnWearables() {
 			return getBool("Core3.NoFactionRestrictionsOnWearables", false);
 		}

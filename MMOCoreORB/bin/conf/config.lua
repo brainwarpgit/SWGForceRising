@@ -322,6 +322,10 @@ Core3 = {
 		-- Seconds that a sliced terminal grants bonus mission payouts; 0 disables the bonus.
 		TerminalSliceBonusDurationSeconds = 60,
 	},
+	ThemeParkLogic = {
+		-- Allow turn-in after recruiting the escort target, even if it falls behind.
+		EscortTurnInWithoutNpc = true,
+	},
 	GCWManager = {
 		useCovertOvertSystem = false,
 	},

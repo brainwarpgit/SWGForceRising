@@ -2,6 +2,10 @@
 
 ## 2026-10-11
 
+### Committed themepark escort turn-in and reward settings
+
+- Themepark escorts can be turned in after recruiting the target even if it falls behind, controlled by `Core3.ThemeParkLogic.EscortTurnInWithoutNpc` (enabled by default). Each themepark can set its own credit and faction reward multipliers, both 1× by default.
+
 ### Committed village phase status and timer recovery
 
 - Added `/fsVillage` for players outside combat to see the current village phase, time remaining, and next change in server time in a read-only SUI window. Its command-table entry and browser strings are staged in the update TRE source. Village startup now reconciles its persistent phase event with the configured duration so timer changes and overdue events continue progressing.

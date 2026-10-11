@@ -18,7 +18,9 @@ ThemeParkLogic = ScreenPlay:new {
 	missionCompletionMessageStf = "",
 	planetName = "",
 	faction = 0,
-	requiredFaction = ""
+	requiredFaction = "",
+	creditRewardMultiplier = 1,
+	factionRewardMultiplier = 1
 }
 
 function ThemeParkLogic:start()
@@ -1966,8 +1968,10 @@ function ThemeParkLogic:giveCredits(pConversingPlayer, amount)
 		return
 	end
 
-	CreatureObject(pConversingPlayer):addCashCredits(amount, true)
-	CreatureObject(pConversingPlayer):sendSystemMessageWithDI("@theme_park/messages:theme_park_credits_pp", amount)
+	local credits = math.floor(amount * math.max(0, self.creditRewardMultiplier or 1) + 0.5)
+	credits = math.min(credits, 2147483647)
+	CreatureObject(pConversingPlayer):addCashCredits(credits, true)
+	CreatureObject(pConversingPlayer):sendSystemMessageWithDI("@theme_park/messages:theme_park_credits_pp", credits)
 end
 
 function ThemeParkLogic:giveFaction(pConversingPlayer, faction, points)
@@ -1977,7 +1981,14 @@ function ThemeParkLogic:giveFaction(pConversingPlayer, faction, points)
 		return
 	end
 
-	PlayerObject(pGhost):increaseFactionStanding(faction, points)
+	local scaledPoints = points * math.max(0, self.factionRewardMultiplier or 1)
+	if (scaledPoints >= 0) then
+		scaledPoints = math.floor(scaledPoints + 0.5)
+	else
+		scaledPoints = math.ceil(scaledPoints - 0.5)
+	end
+	scaledPoints = math.max(-2147483648, math.min(scaledPoints, 2147483647))
+	PlayerObject(pGhost):increaseFactionStanding(faction, scaledPoints)
 end
 
 function ThemeParkLogic:giveItemReward(pConversingPlayer, itemTemplate)
@@ -2023,6 +2034,14 @@ end
 
 function ThemeParkLogic:cleanUpMission(pConversingPlayer)
 	local playerID = CreatureObject(pConversingPlayer):getObjectID()
+	local escortAreaID = readData(playerID .. ":escortAreaID")
+	local pEscortArea = getSceneObject(escortAreaID)
+	if (pEscortArea ~= nil) then
+		deleteData(escortAreaID .. ":escortNpcID")
+		SceneObject(pEscortArea):destroyObjectFromWorld()
+	end
+	deleteData(playerID .. ":escortAreaID")
+	deleteData(playerID .. ":escortStarted")
 
 	local pGhost = CreatureObject(pConversingPlayer):getPlayerObject()
 
@@ -2152,6 +2171,11 @@ function ThemeParkLogic:followPlayer(pConversingNpc, pConversingPlayer)
 	AiAgent(pConversingNpc):setFollowObject(pConversingPlayer)
 
 	AiAgent(pConversingNpc):setAITemplate()
+	writeData(CreatureObject(pConversingPlayer):getObjectID() .. ":escortStarted", 1)
+end
+
+function ThemeParkLogic:hasStartedEscort(pConversingPlayer)
+	return pConversingPlayer ~= nil and readData(CreatureObject(pConversingPlayer):getObjectID() .. ":escortStarted") == 1
 end
 
 function ThemeParkLogic:getMissionType(activeNpcNumber, pConversingPlayer)
@@ -2214,7 +2238,6 @@ function ThemeParkLogic:resetCurrentMission(pConversingPlayer)
 	deleteData(playerID .. ":breechNpcID")
 	deleteData(playerID .. ":breechTriggered")
 	deleteData(playerID .. ":breechAreaID")
-	deleteData(playerID .. ":escortAreaID")
 	deleteData(playerID .. ":hasPreReqItem")
 	deleteData(playerID .. ":genericGiverID")
 	deleteStringData(playerID .. ":activeScreenPlay")

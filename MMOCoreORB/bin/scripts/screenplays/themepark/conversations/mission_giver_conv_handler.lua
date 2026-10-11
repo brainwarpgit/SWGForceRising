@@ -128,7 +128,10 @@ function mission_giver_conv_handler:handleScreenInit(pConvTemplate, pPlayer, pNp
 			end
 		elseif npcCompare == 0 then
 			if self.themePark:missionStatus(pPlayer) == 1 then
-				if self.themePark:getMissionType(activeNpcNumber, pPlayer) == "escort" and self.themePark:escortedNpcCloseEnough(pPlayer) == true then
+				local turnInWithoutNpc = isThemeParkEscortTurnInWithoutNpc()
+				if self.themePark:getMissionType(activeNpcNumber, pPlayer) == "escort" and
+					((turnInWithoutNpc and self.themePark:hasStartedEscort(pPlayer)) or
+					(not turnInWithoutNpc and self.themePark:escortedNpcCloseEnough(pPlayer))) then
 					nextScreenName = "npc_reward_n"
 				else
 					nextScreenName = "npc_work_n"

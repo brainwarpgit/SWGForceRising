@@ -467,6 +467,7 @@ void DirectorManager::initializeLuaEngine(Lua* luaEngine) {
 	luaEngine->registerFunction("rescheduleServerEvent", rescheduleServerEvent);
 	luaEngine->registerFunction("getServerEventID", getServerEventID);
 	luaEngine->registerFunction("getServerEventTimeLeft", getServerEventTimeLeft);
+	luaEngine->registerFunction("isThemeParkEscortTurnInWithoutNpc", isThemeParkEscortTurnInWithoutNpc);
 	luaEngine->registerFunction("createObserver", createObserver);
 	luaEngine->registerFunction("dropObserver", dropObserver);
 	luaEngine->registerFunction("hasObserver", hasObserver);
@@ -5136,6 +5137,12 @@ int DirectorManager::sellSpaceLoot(lua_State* L) {
 
 int DirectorManager::isHelperDroidEnabled(lua_State* L) {
 	lua_pushboolean(L, ConfigManager::instance()->isHelperDroidEnabled());
+
+	return 1;
+}
+
+int DirectorManager::isThemeParkEscortTurnInWithoutNpc(lua_State* L) {
+	lua_pushboolean(L, ConfigManager::instance()->getThemeParkEscortTurnInWithoutNpc());
 
 	return 1;
 }
