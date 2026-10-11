@@ -12,6 +12,7 @@
 #include "server/zone/objects/creature/events/InjuryTreatmentTask.h"
 #include "server/zone/objects/creature/buffs/DelayedBuff.h"
 #include "server/zone/managers/collision/CollisionManager.h"
+#include "conf/ConfigManager.h"
 
 class HealWoundCommand : public QueueCommand {
 	int mindCost;
@@ -111,18 +112,20 @@ public:
 			return false;
 		}
 
-		int medicalRatingNotIncludingCityBonus = creature->getSkillMod("private_medical_rating") - creature->getSkillModOfType("private_medical_rating", SkillModManager::CITY);
-		if (medicalRatingNotIncludingCityBonus <= 0) {
-			creature->sendSystemMessage("@healing_response:must_be_near_droid"); //You must be in a hospital, at a campsite, or near a surgical droid to do that.
-			return false;
-		} else {
-			// Building private medical rating always takes precedence, If it a client object structure, no medical rating will prevent buffs/wound healing.
-			ManagedReference<SceneObject*> root = creature->getRootParent();
+		if (!ConfigManager::instance()->getWoundsBuffsAnywhere()) {
+			int medicalRatingNotIncludingCityBonus = creature->getSkillMod("private_medical_rating") - creature->getSkillModOfType("private_medical_rating", SkillModManager::CITY);
+			if (medicalRatingNotIncludingCityBonus <= 0) {
+				creature->sendSystemMessage("@healing_response:must_be_near_droid"); //You must be in a hospital, at a campsite, or near a surgical droid to do that.
+				return false;
+			} else {
+				// Building private medical rating always takes precedence, If it a client object structure, no medical rating will prevent buffs/wound healing.
+				ManagedReference<SceneObject*> root = creature->getRootParent();
 
-			if (root != nullptr && root->isClientObject()) {
-				if (creature->getSkillModOfType("private_medical_rating", SkillModManager::STRUCTURE) == 0) {
-					creature->sendSystemMessage("@healing_response:must_be_in_hospital"); // You must be in a hospital or at a campsite to do that.
-					return false;
+				if (root != nullptr && root->isClientObject()) {
+					if (creature->getSkillModOfType("private_medical_rating", SkillModManager::STRUCTURE) == 0) {
+						creature->sendSystemMessage("@healing_response:must_be_in_hospital"); // You must be in a hospital or at a campsite to do that.
+						return false;
+					}
 				}
 			}
 		}

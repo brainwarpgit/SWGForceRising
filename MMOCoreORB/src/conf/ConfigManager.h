@@ -865,6 +865,14 @@ namespace conf {
 			return getBool("Core3.playercreationalllanguages", false);
 		}
 
+		inline bool getWoundsBuffsAnywhere() {
+			return getBool("Core3.woundsbuffsanywhere", false);
+		}
+
+		inline bool getBuffsOverwrite() {
+			return getBool("Core3.buffsoverwrite", false);
+		}
+
 		inline bool getNoFactionRestrictionsOnWearables() {
 			return getBool("Core3.NoFactionRestrictionsOnWearables", false);
 		}

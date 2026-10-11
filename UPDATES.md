@@ -2,6 +2,10 @@
 
 ## 2026-10-11
 
+### Committed medical treatment options
+
+- Added configuration options for medic/doctor wound treatment and enhancement buffs anywhere, and for new medical buffs to replace existing buffs regardless of strength. Fixed enhancement packs granting a timed but zero-strength buff outside medical areas.
+
 ### Committed starting novice skills and languages
 
 - Added configurable grants for all six novice professions on character creation and all languages for new and existing players. Existing players receive missing languages when they enter the game.

@@ -14,6 +14,7 @@
 #include "server/zone/objects/creature/BuffAttribute.h"
 #include "server/zone/objects/creature/buffs/DelayedBuff.h"
 #include "server/zone/managers/collision/CollisionManager.h"
+#include "conf/ConfigManager.h"
 
 class HealEnhanceCommand : public QueueCommand {
 	float mindCost;
@@ -88,19 +89,21 @@ public:
 			return false;
 		}
 
-		int medicalRatingNotIncludingCityBonus = enhancer->getSkillMod("private_medical_rating") - enhancer->getSkillModOfType("private_medical_rating", SkillModManager::CITY);
+		if (!ConfigManager::instance()->getWoundsBuffsAnywhere()) {
+			int medicalRatingNotIncludingCityBonus = enhancer->getSkillMod("private_medical_rating") - enhancer->getSkillModOfType("private_medical_rating", SkillModManager::CITY);
 
-		if (medicalRatingNotIncludingCityBonus <= 0) {
-			enhancer->sendSystemMessage("@healing_response:must_be_near_droid"); // You must be in a hospital, at a campsite, or near a surgical droid to do that.
-			return false;
-		} else {
-			// Building private medical rating always takes precedence, If it a client object structure, no medical rating will prevent buffs/wound healing.
-			ManagedReference<SceneObject*> root = enhancer->getRootParent();
+			if (medicalRatingNotIncludingCityBonus <= 0) {
+				enhancer->sendSystemMessage("@healing_response:must_be_near_droid"); // You must be in a hospital, at a campsite, or near a surgical droid to do that.
+				return false;
+			} else {
+				// Building private medical rating always takes precedence, If it a client object structure, no medical rating will prevent buffs/wound healing.
+				ManagedReference<SceneObject*> root = enhancer->getRootParent();
 
-			if (root != nullptr && root->isClientObject()) {
-				if (enhancer->getSkillModOfType("private_medical_rating", SkillModManager::STRUCTURE) == 0) {
-					enhancer->sendSystemMessage("@healing_response:must_be_in_hospital"); // You must be in a hospital or at a campsite to do that.
-					return false;
+				if (root != nullptr && root->isClientObject()) {
+					if (enhancer->getSkillModOfType("private_medical_rating", SkillModManager::STRUCTURE) == 0) {
+						enhancer->sendSystemMessage("@healing_response:must_be_in_hospital"); // You must be in a hospital or at a campsite to do that.
+						return false;
+					}
 				}
 			}
 		}
@@ -343,7 +346,7 @@ public:
 							uint32 currentBuff = getBuffStrength(buff, attribute);
 							uint32 newBuff = getEnhancePackStrength(enhancePack, enhancer, patient);
 
-							if (newBuff < currentBuff) {
+							if (newBuff < currentBuff && !ConfigManager::instance()->getBuffsOverwrite()) {
 								enhancePack = nullptr;
 								attribute = BuffAttribute::UNKNOWN;
 							} else {
@@ -384,7 +387,7 @@ public:
 		// Applies battle fatigue
 		uint32 buffPower = getEnhancePackStrength(enhancePack, enhancer, patient);
 
-		if (buffPower < currentBuff) {
+		if (buffPower < currentBuff && !ConfigManager::instance()->getBuffsOverwrite()) {
 			if (patient == enhancer)
 				enhancer->sendSystemMessage("Your current enhancements are of greater power and cannot be re-applied.");
 			else

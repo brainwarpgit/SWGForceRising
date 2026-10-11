@@ -266,6 +266,8 @@ Core3 = {
 	},
 	playercreationallnoviceskills = false,
 	playercreationalllanguages = false,
+	woundsbuffsanywhere = false,
+	buffsoverwrite = false,
 	PlayerManager = {
 		-- Track PvP victims by account; fixes the old missing Core3 namespace.
 		AccountVictimList = false,
