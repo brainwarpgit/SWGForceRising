@@ -428,6 +428,20 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 		addRacialMods(playerCreature, fileName, &playerTemplate->getStartingSkills(), &playerTemplate->getStartingItems(), true);
 	}
 
+	if (ConfigManager::instance()->getPlayerCreationAllNoviceSkills()) {
+		static const char* noviceSkills[] = {
+			"combat_brawler_novice", "combat_marksman_novice", "crafting_artisan_novice",
+			"science_medic_novice", "outdoors_scout_novice", "social_entertainer_novice"
+		};
+		for (const char* skillName : noviceSkills) {
+			if (!playerCreature->hasSkill(skillName))
+				skillManager->awardSkill(skillName, playerCreature, false, true, true);
+		}
+	}
+
+	if (ConfigManager::instance()->getPlayerCreationAllLanguages())
+		skillManager->grantAllLanguages(playerCreature, false);
+
 	if (ghost != nullptr) {
 		int accID = client->getAccountID();
 		ghost->setAccountID(accID);

@@ -548,6 +548,9 @@ void PlayerObjectImplementation::notifySceneReady() {
 		return;
 	}
 
+	if (ConfigManager::instance()->getPlayerCreationAllLanguages())
+		SkillManager::instance()->grantAllLanguages(creature, true);
+
 	//Join GuildChat
 	ManagedReference<ChatManager*> chatManager = zoneServer->getChatManager();
 	ManagedReference<GuildObject*> guild = creature->getGuildObject().get();

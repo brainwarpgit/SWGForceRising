@@ -4,6 +4,7 @@
  */
 
 #include "SkillManager.h"
+#include "conf/ConfigManager.h"
 #include "SkillModManager.h"
 #include "SkillSurrenderPlan.h"
 #include "PerformanceManager.h"
@@ -381,6 +382,25 @@ void SkillManager::removeDroidCommands(PlayerObject* ghost) {
 /*bool SkillManager::checkPrerequisiteSkill(const String& skillName, CreatureObject* creature) {
 	return true;
 }*/
+
+void SkillManager::grantAllLanguages(CreatureObject* creature, bool notifyClient) {
+	if (creature == nullptr)
+		return;
+
+	static const char* languages[] = {
+		"basic", "bothan", "ithorian", "lekku", "moncalamari", "rodian",
+		"sullustan", "trandoshan", "twilek", "wookiee", "zabrak"
+	};
+	static const char* forms[] = { "comprehend", "speak" };
+
+	for (const char* language : languages) {
+		for (const char* form : forms) {
+			String skillName = String("social_language_") + language + "_" + form;
+			if (!creature->hasSkill(skillName))
+				awardSkill(skillName, creature, notifyClient, true, true);
+		}
+	}
+}
 
 bool SkillManager::awardSkill(const String& skillName, CreatureObject* creature, bool notifyClient, bool awardRequiredSkills, bool noXpRequired) {
 	auto skill = skillMap.get(skillName.hashCode());
@@ -1413,7 +1433,8 @@ bool SkillManager::fulfillsSkillPrerequisites(const String& skillName, CreatureO
 	}
 
 	auto requiredSpecies = skill->getSpeciesRequired();
-	if (requiredSpecies->size() > 0) {
+	if (requiredSpecies->size() > 0 &&
+			!(skillName.beginsWith("social_language_") && ConfigManager::instance()->getPlayerCreationAllLanguages())) {
 		bool foundSpecies = false;
 		for (int i = 0; i < requiredSpecies->size(); i++) {
 			if (creature->getSpeciesName() == requiredSpecies->get(i)) {

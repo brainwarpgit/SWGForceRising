@@ -2,6 +2,10 @@
 
 ## 2026-10-11
 
+### Committed starting novice skills and languages
+
+- Added configurable grants for all six novice professions on character creation and all languages for new and existing players. Existing players receive missing languages when they enter the game.
+
 ### Committed wearable race and faction options
 
 - Added configuration switches to let every race equip wearable items and to remove faction requirements from wearables. Both are enabled in the local configuration and disabled by default.

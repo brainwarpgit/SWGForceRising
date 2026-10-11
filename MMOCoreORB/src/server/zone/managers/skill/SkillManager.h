@@ -79,6 +79,7 @@ public:
 	void removeDroidCommands(PlayerObject* ghost);
 
 	bool awardSkill(const String& skillName, CreatureObject* creature, bool notifyClient = true, bool awardRequiredSkills = false, bool noXpRequired = false);
+	void grantAllLanguages(CreatureObject* creature, bool notifyClient);
 	bool regrantSkills(CreatureObject* creature);
 	void awardDraftSchematics(Skill* skill, PlayerObject* ghost, bool notifyClient = true);
 

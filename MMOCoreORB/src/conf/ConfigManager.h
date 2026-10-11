@@ -857,6 +857,14 @@ namespace conf {
 			return getBool("Core3.RacesCanWearAllWearables", false);
 		}
 
+		inline bool getPlayerCreationAllNoviceSkills() {
+			return getBool("Core3.playercreationallnoviceskills", false);
+		}
+
+		inline bool getPlayerCreationAllLanguages() {
+			return getBool("Core3.playercreationalllanguages", false);
+		}
+
 		inline bool getNoFactionRestrictionsOnWearables() {
 			return getBool("Core3.NoFactionRestrictionsOnWearables", false);
 		}

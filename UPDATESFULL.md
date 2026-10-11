@@ -2,6 +2,10 @@
 
 ## 2026-10-11
 
+### Committed starting novice skills and languages
+
+- Added `Core3.playercreationallnoviceskills` and `Core3.playercreationalllanguages`. Both are false in the default `config.lua` and true in the ignored `config-local.lua`. New characters keep their selected starting profession and racial skills, then receive any missing novice Brawler, Marksman, Artisan, Medic, Scout, and Entertainer skills when the novice option is enabled. The language option grants both speaking and comprehension for all 11 configured languages at creation and grants any missing language skills to existing players on scene ready, including their next login. Because Wookiee speech and Lekku have normal species requirements, the option also permits learning language skills across species. Grants use the existing skill manager so language modifiers and client updates follow the usual path; repeat scene-ready calls skip skills already known. Novice skills are not granted retroactively. The user verified the feature in game; the assistant did not build or run Core3.
+
 ### Committed wearable race and faction options
 
 - Added `Core3.RacesCanWearAllWearables` and `Core3.NoFactionRestrictionsOnWearables` to both configuration files. They default to false in `config.lua` and are true in the ignored `config-local.lua`. When enabled, player equipment transfers skip the template race list and the Imperial/Rebel faction and on-leave checks for wearable objects and wearable containers. Other equipment checks, including armor encumbrance and required certifications, still apply; weapon restrictions stay unchanged. This is a server-side permission change and cannot provide missing client appearance assets for a race. The user verified the feature in game; the assistant did not build or run Core3.

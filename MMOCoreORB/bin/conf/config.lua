@@ -264,6 +264,8 @@ Core3 = {
 		-- Shared account base lots are this limit times StructureManager.LotsPerCharacter.
 		MaxCharactersPerGalaxy = 10,
 	},
+	playercreationallnoviceskills = false,
+	playercreationalllanguages = false,
 	PlayerManager = {
 		-- Track PvP victims by account; fixes the old missing Core3 namespace.
 		AccountVictimList = false,
