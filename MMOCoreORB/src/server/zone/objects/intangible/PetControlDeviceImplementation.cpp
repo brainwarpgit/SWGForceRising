@@ -145,8 +145,8 @@ void PetControlDeviceImplementation::callObject(CreatureObject* player, bool ini
 		}
 	}
 
-	// Only Bomb droids can be called while in combat and while feigning death
-	if ((((isBombDroid && !initialCall) || !isBombDroid) && (player->isInCombat() || player->isIncapacitated())) || (isBombDroid && initialCall && player->isIncapacitated() && !player->isFeigningDeath())) {
+	// Bomb droids called directly from a deed retain their feign-death exception.
+	if (player->isIncapacitated() && !(isBombDroid && initialCall && player->isFeigningDeath())) {
 		player->sendSystemMessage("@pet/pet_menu:cant_call"); // You cannot call this pet right now.
 		return;
 	}
@@ -306,20 +306,22 @@ void PetControlDeviceImplementation::callObject(CreatureObject* player, bool ini
 	}
 
 	if (player->getCurrentCamp() == nullptr && player->getCityRegion() == nullptr && !ghost->isPrivileged() && !isBombDroid) {
-		Reference<CallPetTask*> callPet = new CallPetTask(_this.getReferenceUnsafeStaticCast(), player, "call_pet");
+		int delaySeconds = Math::min(86400, Math::max(0, ConfigManager::instance()->getPetCallTimeOutsideCitySeconds()));
+		if (delaySeconds > 0) {
+			Reference<CallPetTask*> callPet = new CallPetTask(_this.getReferenceUnsafeStaticCast(), player, "call_pet");
 
-		StringIdChatParameter message("pet/pet_menu", "call_pet_delay"); // Calling pet in %DI seconds. Combat will terminate pet call.
-		message.setDI(15);
-		player->sendSystemMessage(message);
+			player->sendSystemMessage("Calling pet in " + String::valueOf(delaySeconds) + " seconds.");
 
-		player->addPendingTask("call_pet", callPet, 15 * 1000);
+			player->addPendingTask("call_pet", callPet, delaySeconds * 1000);
+		} else {
+			if (!player->checkCooldownRecovery("petCallOrStoreCooldown")) {
+				player->sendSystemMessage("@pet/pet_menu:cant_call_1sec");
+				return;
+			}
 
-		if (petControlObserver == nullptr) {
-			petControlObserver = new PetControlObserver(_this.getReferenceUnsafeStaticCast());
-			petControlObserver->deploy();
+			spawnObject(player);
+			player->updateCooldownTimer("petCallOrStoreCooldown", 1000);
 		}
-
-		player->registerObserver(ObserverEventType::STARTCOMBAT, petControlObserver);
 	} else { // Player is in a city or camp or the player is calling a bomb droid from a deed, spawn pet immediately
 		// Check cooldown
 		if (!player->checkCooldownRecovery("petCallOrStoreCooldown")) {
@@ -566,8 +568,8 @@ void PetControlDeviceImplementation::storeObject(CreatureObject* player, bool fo
 		return;
 
 	if (!force) {
-		// Fail if pet or player are in combat or if the pet is dead, unless forced
-		if (pet->isInCombat() || player->isInCombat() || player->isDead())
+		// Dead players cannot store pets unless forced.
+		if (player->isDead())
 			return;
 
 		// Check cooldown for call or store

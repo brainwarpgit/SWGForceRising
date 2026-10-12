@@ -2,6 +2,11 @@
 
 ## 2026-10-11
 
+### Committed combat pet and vehicle handling
+
+- Pets, including creature mounts, can now be called and stored while the player or pet is in combat. Delayed pet calls no longer abort when combat starts, but still stop if the player dies or is incapacitated; bomb-droid and other pet eligibility rules remain. Pets already in combat clear their combat state as part of the existing store task. Vehicles can now be stored while the player is in combat; calling a vehicle remains blocked in combat. The normal mounted dismount cooldown and dead-player restrictions remain.
+- Added `Core3.PetCallTimeOutsideCitySeconds` and `Core3.VehicleCallTimeOutsideCitySeconds` to both configuration files, each defaulting to 15. These delays apply outside both cities and camps for nonprivileged players; city/camp and privileged calls remain immediate. Setting either delay to 0 makes that call immediate, and the value is capped at one day to keep scheduling arithmetic safe. Pet call messaging no longer says combat cancels the call. The user verified the behavior in game before commit.
+
 ### Committed themepark escort turn-in and reward settings
 
 - Added `Core3.ThemeParkLogic.EscortTurnInWithoutNpc` to both configuration files: `true` in the default `config.lua` and `false` in the ignored `config-local.lua`. With this option enabled, a themepark escort is eligible for turn-in after the player has spoken to the target and started its follow behavior; the target no longer has to be within 64 meters of the quest giver. Setting it to `false` restores the proximity requirement. Escort death still fails the mission. Mission cleanup removes escort return areas and the new started state, including when the target never reaches the giver. This applies to `ThemeParkLogic` escorts, not separate quest-task or space escorts.

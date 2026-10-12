@@ -306,6 +306,9 @@ Core3 = {
 	CombatManager = {
 		AllowSameAccountLinkDeadBeneficialActions = true,
 	},
+	-- Seconds to call a pet or vehicle outside a city or camp; 0 calls immediately.
+	PetCallTimeOutsideCitySeconds = 15,
+	VehicleCallTimeOutsideCitySeconds = 15,
 	MissionManager = {
 		AnonymousBountyTerminals = false,
 		-- Milliseconds; 48 hours.

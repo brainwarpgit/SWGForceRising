@@ -18,6 +18,7 @@
 #include "server/zone/objects/player/sessions/TradeSession.h"
 #include "server/zone/managers/player/PlayerManager.h"
 #include "server/zone/objects/player/PlayerObject.h"
+#include "conf/ConfigManager.h"
 
 void VehicleControlDeviceImplementation::generateObject(CreatureObject* player) {
 	if (player->isDead() || player->isIncapacitated())
@@ -96,20 +97,26 @@ void VehicleControlDeviceImplementation::generateObject(CreatureObject* player) 
 	}
 
 	if (player->getCurrentCamp() == nullptr && player->getCityRegion() == nullptr && !ghost->isPrivileged()) {
-		Reference<CallMountTask*> callMount = new CallMountTask(_this.getReferenceUnsafeStaticCast(), player, "call_mount");
+		int delaySeconds = Math::min(86400, Math::max(0, ConfigManager::instance()->getVehicleCallTimeOutsideCitySeconds()));
+		if (delaySeconds > 0) {
+			Reference<CallMountTask*> callMount = new CallMountTask(_this.getReferenceUnsafeStaticCast(), player, "call_mount");
 
-		StringIdChatParameter message("pet/pet_menu", "call_vehicle_delay");
-		message.setDI(15);
-		player->sendSystemMessage(message);
+			StringIdChatParameter message("pet/pet_menu", "call_vehicle_delay");
+			message.setDI(delaySeconds);
+			player->sendSystemMessage(message);
 
-		player->addPendingTask("call_mount", callMount, 15 * 1000);
+			player->addPendingTask("call_mount", callMount, delaySeconds * 1000);
 
-		if (vehicleControlObserver == nullptr) {
-			vehicleControlObserver = new VehicleControlObserver(_this.getReferenceUnsafeStaticCast());
-			vehicleControlObserver->deploy();
+			if (vehicleControlObserver == nullptr) {
+				vehicleControlObserver = new VehicleControlObserver(_this.getReferenceUnsafeStaticCast());
+				vehicleControlObserver->deploy();
+			}
+
+			player->registerObserver(ObserverEventType::STARTCOMBAT, vehicleControlObserver);
+		} else {
+			Locker clocker(controlledObject, player);
+			spawnObject(player);
 		}
-
-		player->registerObserver(ObserverEventType::STARTCOMBAT, vehicleControlObserver);
 
 	} else {
 		Locker clocker(controlledObject, player);
@@ -196,7 +203,7 @@ void VehicleControlDeviceImplementation::storeObject(CreatureObject* player, boo
 	/*if (!controlledObject->isInQuadTree())
 		return;*/
 
-	if (!force && (player->isInCombat() || player->isDead()))
+	if (!force && player->isDead())
 		return;
 
 	if (player->isRidingMount() && player->getParent() == controlledObject) {

@@ -2,6 +2,10 @@
 
 ## 2026-10-11
 
+### Committed combat pet and vehicle handling
+
+- Pets and creature mounts can be called or stored during combat; vehicles can be stored during combat. Separate outside-city call timers for pets and vehicles default to 15 seconds.
+
 ### Committed themepark escort turn-in and reward settings
 
 - Themepark escorts can be turned in after recruiting the target even if it falls behind, controlled by `Core3.ThemeParkLogic.EscortTurnInWithoutNpc` (enabled by default). Each themepark can set its own credit and faction reward multipliers, both 1× by default.

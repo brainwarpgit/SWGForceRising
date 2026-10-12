@@ -23,7 +23,7 @@ public:
 
 		player->removePendingTask("call_pet");
 
-		if(player->isInCombat())
+		if (player->isDead() || player->isIncapacitated())
 			return;
 
 		Locker locker2(device);

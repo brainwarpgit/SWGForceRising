@@ -877,6 +877,14 @@ namespace conf {
 			return getBool("Core3.ThemeParkLogic.EscortTurnInWithoutNpc", true);
 		}
 
+		inline int getPetCallTimeOutsideCitySeconds() {
+			return getInt("Core3.PetCallTimeOutsideCitySeconds", 15);
+		}
+
+		inline int getVehicleCallTimeOutsideCitySeconds() {
+			return getInt("Core3.VehicleCallTimeOutsideCitySeconds", 15);
+		}
+
 		inline bool getNoFactionRestrictionsOnWearables() {
 			return getBool("Core3.NoFactionRestrictionsOnWearables", false);
 		}
