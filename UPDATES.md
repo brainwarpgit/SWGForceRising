@@ -1,5 +1,11 @@
 # Project Updates
 
+## 2026-10-12
+
+### Committed Unarmed Master meditation
+
+- Unarmed Masters now heal 15–25 battle fatigue every five seconds while meditating, including when they have no wounds to heal. Each tick reports the amount healed.
+
 ## 2026-10-11
 
 ### Committed combat pet and vehicle handling

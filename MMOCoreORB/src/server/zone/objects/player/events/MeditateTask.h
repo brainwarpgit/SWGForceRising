@@ -62,31 +62,51 @@ public:
 						woundedPools.add(i);
 				}
 
-				//Return without rescheduling because everything that can be healed has been?
-				if (woundedPools.size() <= 0)
-					return;
+				if (woundedPools.size() > 0) {
+					int heal = 20 + System::random(10);
 
-				int heal = 20 + System::random(10);
+					if (meditateMod >= 100)
+						heal = 30 + System::random(20);
 
-				if (meditateMod >= 100)
-					heal = 30 + System::random(20);
+					// Select a random Attribute that has wounds...
+					uint8 pool = woundedPools.get(System::random(woundedPools.size() - 1));
 
-				// Select a random Attribute that has wounds...
-				uint8 pool = woundedPools.get(System::random(woundedPools.size() - 1));
+					int wounds = player->getWounds(pool);
 
-				int wounds = player->getWounds(pool);
+					//Cap the heal at the amount of wounds the creature has.
+					heal = Math::min(wounds, heal);
 
-				//Cap the heal at the amount of wounds the creature has.
-				heal = Math::min(wounds, heal);
+					player->healWound(player, pool, heal, true, false);
 
-				player->healWound(player, pool, heal, true, false);
-
-				// Sending System healing Message (wounds)
-				healParams.setStringId("teraskasi", "prose_curewound"); // [meditation] Your %TO wounds heal by %DI points.
-				healParams.setTO(CreatureAttribute::getName(pool));
-				healParams.setDI(heal);
-				player->sendSystemMessage(healParams);
+					// Sending System healing Message (wounds)
+					healParams.setStringId("teraskasi", "prose_curewound"); // [meditation] Your %TO wounds heal by %DI points.
+					healParams.setTO(CreatureAttribute::getName(pool));
+					healParams.setDI(heal);
+					player->sendSystemMessage(healParams);
+				}
 			}
+
+			if (player->hasSkill("combat_unarmed_master") && player->getShockWounds() > 0) {
+				int battleFatigue = player->getShockWounds();
+				int healAmount = 15 + static_cast<int>(System::random(10));
+				int healed = Math::min(battleFatigue, healAmount);
+				player->addShockWounds(-healed, true, false);
+				player->sendSystemMessage("[meditation] Your battle fatigue heals by " + String::valueOf(healed) + " points.");
+			}
+
+			bool hasWounds = false;
+			if (meditateMod >= 75) {
+				for (uint8 i = 0; i < 9; ++i) {
+					if (player->getWounds(i) > 0) {
+						hasWounds = true;
+						break;
+					}
+				}
+			}
+
+			if (!player->isBleeding() && !player->isPoisoned() && !player->isDiseased() &&
+					!hasWounds && (!player->hasSkill("combat_unarmed_master") || player->getShockWounds() == 0))
+				return;
 
 			if (meditateTask != nullptr)
 				meditateTask->reschedule(5000);

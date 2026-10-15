@@ -1,5 +1,11 @@
 # Detailed Project Updates
 
+## 2026-10-12
+
+### Committed Unarmed Master meditation
+
+- The Meditate task now removes 15–25 battle fatigue every five-second tick for characters with `combat_unarmed_master`, capped at the fatigue remaining, and sends a system message with the amount healed. It continues while eligible wounds or battle fatigue remain, so an Unarmed Master can meditate away battle fatigue even with no wounds. Existing wound and damage-over-time healing remain. The user verified this in game before commit.
+
 ## 2026-10-11
 
 ### Committed combat pet and vehicle handling
